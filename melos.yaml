@@ -1,0 +1,7 @@
+name: needle_orm
+
+packages:
+  - packages/**
+
+#scripts:
+#  analyze: melos exec -- "dart analyze ."

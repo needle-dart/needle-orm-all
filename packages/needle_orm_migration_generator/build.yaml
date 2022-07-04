@@ -1,0 +1,14 @@
+targets:
+  $default:
+    builders:
+      needle_orm_migration_generator:
+        enabled: true
+
+builders:
+  needle_orm_migration_generator:
+    import: "package:needle_orm_migration_generator/needle_orm_migration_generator.dart"
+    builder_factories: ["ormMigrationGenerator"]
+    build_extensions: { ".dart": [".orm_mig.g.dart"] }
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
