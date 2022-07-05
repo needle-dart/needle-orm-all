@@ -10,7 +10,7 @@ abstract class Database {
   const Database(this.databaseType, this.databaseVersion);
 
   factory Database.lookup(String dsName) {
-    throw 'DataSource[$dsName] not exist!';
+    throw 'Database[$dsName] not exist!';
   }
 
   /// Executes a single query.

@@ -361,37 +361,37 @@ packages:
   needle_orm:
     dependency: "direct main"
     description:
-      path: "../needle_orm"
-      relative: true
-    source: path
+      name: needle_orm
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "0.0.3"
   needle_orm_generator:
     dependency: "direct dev"
     description:
-      path: "../needle_orm_generator"
-      relative: true
-    source: path
+      name: needle_orm_generator
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "0.0.3"
   needle_orm_mariadb:
     dependency: "direct main"
     description:
-      path: "../needle_orm_mariadb"
-      relative: true
-    source: path
+      name: needle_orm_mariadb
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "0.0.3"
   needle_orm_migration_generator:
     dependency: "direct main"
     description:
-      path: "../needle_orm_migration_generator"
-      relative: true
-    source: path
+      name: needle_orm_migration_generator
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "0.0.1"
   needle_orm_postgres:
     dependency: "direct main"
     description:
-      path: "../needle_orm_postgres"
-      relative: true
-    source: path
+      name: needle_orm_postgres
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "0.0.3"
   node_preamble:
     dependency: transitive

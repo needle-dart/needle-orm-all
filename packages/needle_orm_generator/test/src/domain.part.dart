@@ -3,7 +3,7 @@ part of 'domain.dart';
 // can write business logic here.
 
 extension BizUser on User {
-  static Logger _logger = Logger('USER');
+  // static Logger _logger = Logger('USER');
   bool isAdmin() {
     return name!.startsWith('admin');
   }

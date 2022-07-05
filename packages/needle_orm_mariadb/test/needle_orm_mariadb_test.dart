@@ -30,9 +30,9 @@ void main() {
     var list = await ds.query("select * from books where id in @idList", {
       'idList': [1, 16]
     });
-    list.forEach((book) {
+    for (var book in list) {
       print(book);
-    });
+    }
   });
 
   test('test transaction', () async {
@@ -43,7 +43,6 @@ void main() {
         password: 'needle',
         db: 'needle');
     var conn = await MySqlConnection.connect(settings);
-    var ds = MariaDbDatabase(conn);
 
     await conn.transaction((ctx) async {
       var n = 50;

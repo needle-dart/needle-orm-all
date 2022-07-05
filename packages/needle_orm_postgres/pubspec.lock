@@ -172,9 +172,9 @@ packages:
   needle_orm:
     dependency: "direct main"
     description:
-      path: "../needle_orm"
-      relative: true
-    source: path
+      name: needle_orm
+      url: "https://pub.flutter-io.cn"
+    source: hosted
     version: "0.0.3"
   node_preamble:
     dependency: transitive
