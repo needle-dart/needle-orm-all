@@ -1,1 +1,1 @@
-migration generator for [Needle ORM](https://github.com/needle-dart/needle_orm.dart).
+migration generator for [Needle ORM](https://github.com/needle-dart/needle_orm_all).
