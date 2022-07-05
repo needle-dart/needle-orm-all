@@ -47,27 +47,7 @@ class Entity extends OrmAnnotation {
   // final String? name;
   final String? ds; // DataSource name
 
-  final String? prePersist;
-  final String? preUpdate;
-  final String? preRemove; // respect @SoftDelete
-  final String? preRemovePermanent;
-  final String? postPersist;
-  final String? postUpdate;
-  final String? postRemove; // respect @SoftDelete
-  final String? postRemovePermanent;
-  final String? postLoad;
-
-  const Entity(
-      {this.ds = DEFAULT_DB,
-      this.prePersist,
-      this.preUpdate,
-      this.preRemove,
-      this.preRemovePermanent,
-      this.postPersist,
-      this.postUpdate,
-      this.postRemove,
-      this.postRemovePermanent,
-      this.postLoad});
+  const Entity({this.ds = DEFAULT_DB});
 }
 
 /// [Table] annotation can be used to specify an alternative table name rather than the default one.
@@ -179,6 +159,10 @@ class PreRemove extends OrmAnnotation {
   const PreRemove();
 }
 
+class PreRemovePermanent extends OrmAnnotation {
+  const PreRemovePermanent();
+}
+
 class PostPersist extends OrmAnnotation {
   const PostPersist();
 }
@@ -189,6 +173,10 @@ class PostUpdate extends OrmAnnotation {
 
 class PostRemove extends OrmAnnotation {
   const PostRemove();
+}
+
+class PostRemovePermanent extends OrmAnnotation {
+  const PostRemovePermanent();
 }
 
 class PostLoad extends OrmAnnotation {

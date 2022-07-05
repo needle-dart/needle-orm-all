@@ -157,6 +157,7 @@ class ClassInspector {
 
   bool isTopClass = true;
   List<FieldElement> fields = [];
+  List<MethodElement> methods = [];
 
   ClassInspector(this.classElement, ConstantReader annotation)
       : name = classElement.name.removePrefix() {
@@ -171,6 +172,9 @@ class ClassInspector {
 
     this.entity = this.ormAnnotations.whereType<Entity>().first;
 
+    this.fields = classElement.fields;
+    this.methods = classElement.methods;
+
     tableName = name.toLowerCase();
   }
 
@@ -183,6 +187,17 @@ class ClassInspector {
           break;
       }
     });
+  }
+
+  MethodElement? findAnnotatedMethod<T extends OrmAnnotation>() {
+    var list = methods
+        .where((element) =>
+            element.metadata.ormAnnotations().whereType<T>().isNotEmpty)
+        .toList();
+    if (list.isEmpty) {
+      return null;
+    }
+    return list.first;
   }
 
   String generate() {
@@ -285,66 +300,75 @@ class ClassInspector {
   }
 
   String overridepostLoad() {
-    if (entity.postLoad == null) {
+    var method = findAnnotatedMethod<PostLoad>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('postLoad', entity.postLoad!);
+    return overrideEvent('postLoad', method.name);
   }
 
   String overrideprePersist() {
-    if (entity.prePersist == null) {
+    var method = findAnnotatedMethod<PrePersist>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('prePersist', entity.prePersist!);
+    return overrideEvent('prePersist', method.name);
   }
 
   String overridepostPersist() {
-    if (entity.postPersist == null) {
+    var method = findAnnotatedMethod<PostPersist>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('postPersist', entity.postPersist!);
+    return overrideEvent('postPersist', method.name);
   }
 
   String overridepreUpdate() {
-    if (entity.preUpdate == null) {
+    var method = findAnnotatedMethod<PreUpdate>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('preUpdate', entity.preUpdate!);
+    return overrideEvent('preUpdate', method.name);
   }
 
   String overridepostUpdate() {
-    if (entity.postUpdate == null) {
+    var method = findAnnotatedMethod<PostUpdate>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('postUpdate', entity.postUpdate!);
+    return overrideEvent('postUpdate', method.name);
   }
 
   String overridepreRemove() {
-    if (entity.preRemove == null) {
+    var method = findAnnotatedMethod<PreRemove>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('preRemove', entity.preRemove!);
+    return overrideEvent('preRemove', method.name);
   }
 
   String overridepostRemove() {
-    if (entity.postRemove == null) {
+    var method = findAnnotatedMethod<PostRemove>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('postRemove', entity.postRemove!);
+    return overrideEvent('postRemove', method.name);
   }
 
   String overridepreRemovePermanent() {
-    if (entity.preRemovePermanent == null) {
+    var method = findAnnotatedMethod<PostRemove>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('preRemovePermanent', entity.preRemovePermanent!);
+    return overrideEvent('preRemovePermanent', method.name);
   }
 
   String overridepostRemovePermanent() {
-    if (entity.postRemovePermanent == null) {
+    var method = findAnnotatedMethod<PostRemove>();
+    if (method == null) {
       return '';
     }
-    return overrideEvent('postRemovePermanent', entity.postRemovePermanent!);
+    return overrideEvent('postRemovePermanent', method.name);
   }
 
   String overrideGetField(ClassElement clazz) {

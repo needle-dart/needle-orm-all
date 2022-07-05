@@ -20,4 +20,18 @@ extension BizUser on User {
   void afterInsert() {
     // _logger.info('after insert user ....');
   }
+
+  void beforeRemove() {}
+
+  void beforeRemovePermanent() {}
+
+  void beforeUpdate() {}
+
+  void afterLoad() {}
+
+  void afterUpdate() {}
+
+  void afterRemove() {}
+
+  void afterRemovePermanent() {}
 }

@@ -5,6 +5,10 @@ repository: https://github.com/needle-dart/needle_orm_all.dart
 packages:
   - packages/**
 
+command:
+  bootstrap:
+    usePubspecOverrides: true
+    
 scripts:
   analyze:
     exec: dart analyze .

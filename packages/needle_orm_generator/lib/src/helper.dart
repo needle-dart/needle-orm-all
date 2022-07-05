@@ -76,6 +76,24 @@ extension OrmAnnotationConverter on ElementAnnotation {
         return ManyToOne();
       case 'ManyToMany':
         return ManyToMany();
+      case 'PrePersist':
+        return PrePersist();
+      case 'PreUpdate':
+        return PreUpdate();
+      case 'PreRemove':
+        return PreRemove();
+      case 'PreRemovePermanent':
+        return PreRemovePermanent();
+      case 'PostPersist':
+        return PostPersist();
+      case 'PostUpdate':
+        return PostUpdate();
+      case 'PostRemove':
+        return PostRemove();
+      case 'PostRemovePermanent':
+        return PostRemovePermanent();
+      case 'PostLoad':
+        return PostLoad();
       default:
         throw 'Unsupported OrmAnnotation: $name';
     }
@@ -83,18 +101,7 @@ extension OrmAnnotationConverter on ElementAnnotation {
 
   Entity toEntity() {
     assert(name == 'Entity');
-    return Entity(
-      ds: stringValue('ds')!,
-      prePersist: stringValue('prePersist'),
-      preUpdate: stringValue('preUpdate'),
-      preRemove: stringValue('preRemove'),
-      preRemovePermanent: stringValue('preRemovePermanent'),
-      postPersist: stringValue('postPersist'),
-      postUpdate: stringValue('postUpdate'),
-      postRemove: stringValue('postRemove'),
-      postRemovePermanent: stringValue('postRemovePermanent'),
-      postLoad: stringValue('postLoad'),
-    );
+    return Entity(ds: stringValue('ds')!);
   }
 
   Column toColumn() {

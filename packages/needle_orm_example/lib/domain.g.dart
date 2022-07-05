@@ -403,7 +403,8 @@ class OrmMetaInfoBaseModel extends OrmMetaClass {
               OrmMetaField('remark', 'String?', ormAnnotations: [
                 Column(),
               ]),
-            ]);
+            ],
+            methods: []);
 }
 
 class OrmMetaInfoBook extends OrmMetaClass {
@@ -425,7 +426,8 @@ class OrmMetaInfoBook extends OrmMetaClass {
               OrmMetaField('author', 'User?', ormAnnotations: [
                 ManyToOne(),
               ]),
-            ]);
+            ],
+            methods: []);
 }
 
 class OrmMetaInfoUser extends OrmMetaClass {
@@ -435,10 +437,7 @@ class OrmMetaInfoUser extends OrmMetaClass {
             superClassName: 'BaseModel',
             ormAnnotations: [
               Table(name: 'users'),
-              Entity(
-                  ds: Entity.DEFAULT_DB,
-                  prePersist: 'beforeInsert',
-                  postPersist: 'afterInsert'),
+              Entity(ds: Entity.DEFAULT_DB),
             ],
             fields: [
               OrmMetaField('name', 'String?', ormAnnotations: [
@@ -456,6 +455,35 @@ class OrmMetaInfoUser extends OrmMetaClass {
               OrmMetaField('books', 'List<_Book>?', ormAnnotations: [
                 OneToMany(mappedBy: "_author"),
               ]),
+            ],
+            methods: [
+              OrmMetaMethod('beforeInsert', ormAnnotations: [
+                PrePersist(),
+              ]),
+              OrmMetaMethod('afterInsert', ormAnnotations: [
+                PostPersist(),
+              ]),
+              OrmMetaMethod('beforeRemove', ormAnnotations: [
+                PreRemove(),
+              ]),
+              OrmMetaMethod('beforeRemovePermanent', ormAnnotations: [
+                PreRemovePermanent(),
+              ]),
+              OrmMetaMethod('beforeUpdate', ormAnnotations: [
+                PreUpdate(),
+              ]),
+              OrmMetaMethod('afterLoad', ormAnnotations: [
+                PostLoad(),
+              ]),
+              OrmMetaMethod('afterUpdate', ormAnnotations: [
+                PostUpdate(),
+              ]),
+              OrmMetaMethod('afterRemove', ormAnnotations: [
+                PostRemove(),
+              ]),
+              OrmMetaMethod('afterRemovePermanent', ormAnnotations: [
+                PostRemovePermanent(),
+              ]),
             ]);
 }
 
@@ -471,7 +499,8 @@ class OrmMetaInfoJob extends OrmMetaClass {
               OrmMetaField('name', 'String?', ormAnnotations: [
                 Column(),
               ]),
-            ]);
+            ],
+            methods: []);
 }
 
 final _allOrmClasses = [
@@ -1044,8 +1073,43 @@ class User extends BaseModel {
   }
 
   @override
+  void __preUpdate() {
+    beforeUpdate();
+  }
+
+  @override
+  void __preRemove() {
+    beforeRemove();
+  }
+
+  @override
+  void __preRemovePermanent() {
+    afterRemove();
+  }
+
+  @override
   void __postPersist() {
     afterInsert();
+  }
+
+  @override
+  void __postUpdate() {
+    afterUpdate();
+  }
+
+  @override
+  void __postRemove() {
+    afterRemove();
+  }
+
+  @override
+  void __postRemovePermanent() {
+    afterRemove();
+  }
+
+  @override
+  void __postLoad() {
+    afterLoad();
   }
 }
 

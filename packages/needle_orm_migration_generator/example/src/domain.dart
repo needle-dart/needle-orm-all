@@ -51,10 +51,7 @@ class _Book extends _BaseModel {
   _Book();
 }
 
-@Entity(
-    ds: Entity.DEFAULT_DB,
-    prePersist: 'beforeInsert',
-    postPersist: 'afterInsert')
+@Entity(ds: Entity.DEFAULT_DB)
 class _User extends _BaseModel {
   @Column()
   String? _name;

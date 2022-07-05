@@ -1,0 +1,4 @@
+# melos_managed_dependency_overrides: needle_orm
+dependency_overrides:
+  needle_orm:
+    path: ../needle_orm

@@ -11,6 +11,7 @@ class OrmMetaClass {
   final bool isAbstract;
   final List<OrmAnnotation> ormAnnotations;
   final List<OrmMetaField> fields;
+  final List<OrmMetaMethod> methods;
   final ModelInspector modelInspector;
 
   String? _tableName;
@@ -19,7 +20,8 @@ class OrmMetaClass {
       {this.superClassName,
       this.isAbstract = false,
       this.ormAnnotations = const [],
-      this.fields = const []}) {
+      this.fields = const [],
+      this.methods = const []}) {
     for (var f in fields) {
       f.clz = this;
     }
@@ -119,4 +121,12 @@ class OrmMetaField {
     if (isModelType) s += '_id';
     return s;
   }
+}
+
+class OrmMetaMethod {
+  final String name;
+  final List<OrmAnnotation> ormAnnotations;
+
+  late OrmMetaClass clz;
+  OrmMetaMethod(this.name, {this.ormAnnotations = const []});
 }

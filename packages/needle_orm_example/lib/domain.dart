@@ -58,10 +58,7 @@ class _Book extends _BaseModel {
 }
 
 @Table(name: 'users')
-@Entity(
-    ds: Entity.DEFAULT_DB,
-    prePersist: 'beforeInsert',
-    postPersist: 'afterInsert')
+@Entity(ds: Entity.DEFAULT_DB)
 class _User extends _BaseModel {
   @Column()
   String? _name;
@@ -79,6 +76,34 @@ class _User extends _BaseModel {
   List<_Book>? books;
 
   _User();
+
+  // need to implement beforeInsert() for User in domain.part.dart
+  @PrePersist()
+  void beforeInsert() {}
+
+  @PostPersist()
+  void afterInsert() {}
+
+  @PreRemove()
+  void beforeRemove() {}
+
+  @PreRemovePermanent()
+  void beforeRemovePermanent() {}
+
+  @PreUpdate()
+  void beforeUpdate() {}
+
+  @PostLoad()
+  void afterLoad() {}
+
+  @PostUpdate()
+  void afterUpdate() {}
+
+  @PostRemove()
+  void afterRemove() {}
+
+  @PostRemovePermanent()
+  void afterRemovePermanent() {}
 }
 
 @Entity()

@@ -62,6 +62,9 @@ class ClassMetaInfoGenerator {
     var fields = clazz.fields
         .map((e) => FieldMetaInfoGenerator(e).generate() + ',')
         .join('\n');
+    var methods = clazz.methods
+        .map((e) => MethodMetaInfoGenerator(e).generate() + ',')
+        .join('\n');
     var annots = clazz.metadata
         .ormTypes()
         .map((e) => e.toSource().substring(1) + ',')
@@ -77,6 +80,9 @@ class ClassMetaInfoGenerator {
                   ],
                   fields: [
                     $fields
+                  ],
+                  methods: [
+                    $methods
                   ]);
       }
       ''';
@@ -99,6 +105,25 @@ class FieldMetaInfoGenerator {
         .join('\n');
     return '''
       OrmMetaField('$name', '${type.removePrefix()}', ormAnnotations: [
+                $annots
+              ])
+      ''';
+  }
+}
+
+/// generator for fields meta info.
+class MethodMetaInfoGenerator {
+  final MethodElement method;
+  String name;
+  MethodMetaInfoGenerator(this.method) : name = method.name;
+
+  String generate() {
+    var annots = method.metadata
+        .ormTypes()
+        .map((e) => e.toSource().substring(1) + ',')
+        .join('\n');
+    return '''
+      OrmMetaMethod('$name', ormAnnotations: [
                 $annots
               ])
       ''';

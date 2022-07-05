@@ -90,18 +90,7 @@ extension OrmAnnotationConverter on ElementAnnotation {
 
   Entity toEntity() {
     assert(name == 'Entity');
-    return Entity(
-      ds: stringValue('ds')!,
-      prePersist: stringValue('prePersist'),
-      preUpdate: stringValue('preUpdate'),
-      preRemove: stringValue('preRemove'),
-      preRemovePermanent: stringValue('preRemovePermanent'),
-      postPersist: stringValue('postPersist'),
-      postUpdate: stringValue('postUpdate'),
-      postRemove: stringValue('postRemove'),
-      postRemovePermanent: stringValue('postRemovePermanent'),
-      postLoad: stringValue('postLoad'),
-    );
+    return Entity(ds: stringValue('ds')!);
   }
 
   Column toColumn() {

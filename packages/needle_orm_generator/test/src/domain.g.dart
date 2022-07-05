@@ -403,7 +403,8 @@ class OrmMetaInfoBaseModel extends OrmMetaClass {
               OrmMetaField('remark', 'String?', ormAnnotations: [
                 Column(),
               ]),
-            ]);
+            ],
+            methods: []);
 }
 
 class OrmMetaInfoBook extends OrmMetaClass {
@@ -425,7 +426,8 @@ class OrmMetaInfoBook extends OrmMetaClass {
               OrmMetaField('author', 'User?', ormAnnotations: [
                 ManyToOne(),
               ]),
-            ]);
+            ],
+            methods: []);
 }
 
 class OrmMetaInfoUser extends OrmMetaClass {
@@ -435,10 +437,7 @@ class OrmMetaInfoUser extends OrmMetaClass {
             superClassName: 'BaseModel',
             ormAnnotations: [
               Table(name: 'users'),
-              Entity(
-                  ds: Entity.DEFAULT_DB,
-                  prePersist: 'beforeInsert',
-                  postPersist: 'afterInsert'),
+              Entity(ds: Entity.DEFAULT_DB),
             ],
             fields: [
               OrmMetaField('name', 'String?', ormAnnotations: [
@@ -456,6 +455,14 @@ class OrmMetaInfoUser extends OrmMetaClass {
               OrmMetaField('books', 'List<_Book>?', ormAnnotations: [
                 OneToMany(mappedBy: "_author"),
               ]),
+            ],
+            methods: [
+              OrmMetaMethod('beforeInsert', ormAnnotations: [
+                PrePersist(),
+              ]),
+              OrmMetaMethod('afterInsert', ormAnnotations: [
+                PostPersist(),
+              ]),
             ]);
 }
 
@@ -471,7 +478,8 @@ class OrmMetaInfoJob extends OrmMetaClass {
               OrmMetaField('name', 'String?', ormAnnotations: [
                 Column(),
               ]),
-            ]);
+            ],
+            methods: []);
 }
 
 final _allOrmClasses = [
