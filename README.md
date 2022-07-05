@@ -31,17 +31,15 @@ some other useful annotations , just like [Ebean ORM for Java/Kotlin](https://eb
 - [x] @WhenModified
 - [ ] @WhoCreated
 - [ ] @WhoModified
-
-
-the following annotations are NOT supported directly, but are supported in @Entity :
-
-- @PreInsert
-- @PreUpdate
-- @PreDelete
-- @PostInsert
-- @PostUpdate
-- @PostDelete
-- @PostLoad
+- [x] @PreInsert
+- [x] @PreUpdate
+- [x] @PreRemove
+- [x] @PreRemovePermanent
+- [x] @PostInsert
+- [x] @PostUpdate
+- [x] @PostRemove
+- [x] @PostRemovePermanent
+- [x] @PostLoad
 
 ## Define Model
 
