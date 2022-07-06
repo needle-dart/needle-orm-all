@@ -74,7 +74,7 @@ abstract class _BaseModel {
 }
 
 @Table(name: 'tbl_user')
-@Entity(prePersist: 'beforeInsert', postPersist: 'afterInsert')
+@Entity()
 class _User extends _BaseModel {
   @Column()
   String? _name;
@@ -152,10 +152,8 @@ Future<Database> initPostgreSQL() async {
   ));
 }
 
-late Database globalDs;
-
 void main() async {
-  globalDb = await initPostgreSQL();
+  Database.register("dbPostgres", await initPostgreSQL());
 
   // Create or update :
   {
@@ -286,4 +284,4 @@ void main() async {
 Example
 --------
 
-Example project can be found here:  [needle_orm_example](https://github.com/needle-dart/needle_orm_all) .
+Example project can be found here:  [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/bin/main.dart) .
