@@ -9,8 +9,30 @@ abstract class Database {
 
   const Database(this.databaseType, this.databaseVersion);
 
-  factory Database.lookup(String dsName) {
-    throw 'Database[$dsName] not exist!';
+  static const String defaultDbName = "defaultDb";
+  static final Map<String, Database> _map = {};
+
+  static Database get defaultDb => lookup(defaultDbName)!;
+  static set defaultDb(Database db) {
+    _map[defaultDbName] = db;
+  }
+
+  static void register(String name, Database db) {
+    // first one will be the default. or you can set default db explictly
+    if (_map.isEmpty) {
+      _map[defaultDbName] = db;
+    }
+    _map[name] = db;
+  }
+
+  static Database? lookup(String dbName) {
+    return _map[dbName];
+  }
+
+  static Future<void> closeAll() async {
+    for (var db in _map.values) {
+      await db.close();
+    }
   }
 
   /// Executes a single query.

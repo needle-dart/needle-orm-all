@@ -1,6 +1,8 @@
 // ignore_for_file: constant_identifier_names
 // see javax.persistence.*
 
+import 'package:needle_orm/needle_orm.dart';
+
 /// Base class for all Models
 abstract class Model {
   /// convert model to map, with specified [fields] (default:*).
@@ -41,13 +43,10 @@ abstract class OrmClassAnnotation {}
 
 /// [Entity] annotation marks a class as a Model.
 class Entity extends OrmAnnotation {
-  //
-  static const DEFAULT_DB = 'defaultDB';
-
   // final String? name;
-  final String? ds; // DataSource name
+  final String? db; // Database name
 
-  const Entity({this.ds = DEFAULT_DB});
+  const Entity({this.db = Database.defaultDbName});
 }
 
 /// [Table] annotation can be used to specify an alternative table name rather than the default one.

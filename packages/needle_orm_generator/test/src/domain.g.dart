@@ -71,7 +71,7 @@ abstract class __Model extends Model {
   }
 
   BaseModelQuery __query(Database? db) =>
-      _modelInspector.newQuery(db ?? _globalDb, __className);
+      _modelInspector.newQuery(db ?? Database.defaultDb, __className);
 
   Future<void> insert({Database? db}) async {
     __prePersist();
@@ -230,7 +230,7 @@ abstract class _BaseModelQuery<T extends __Model, D>
   final logger = Logger('_BaseModelQuery');
 
   _BaseModelQuery({BaseModelQuery? topQuery, String? propName, Database? db})
-      : super(_modelInspector, db ?? _globalDb,
+      : super(_modelInspector, db ?? Database.defaultDb,
             topQuery: topQuery, propName: propName) {
     _modelCache = QueryModelCache(modelInspector);
   }
@@ -414,7 +414,7 @@ class OrmMetaInfoBook extends OrmMetaClass {
             superClassName: 'BaseModel',
             ormAnnotations: [
               Table(),
-              Entity(ds: "mysql_example_db"),
+              Entity(db: "mysql_example_db"),
             ],
             fields: [
               OrmMetaField('title', 'String?', ormAnnotations: [
@@ -437,7 +437,7 @@ class OrmMetaInfoUser extends OrmMetaClass {
             superClassName: 'BaseModel',
             ormAnnotations: [
               Table(name: 'users'),
-              Entity(ds: Entity.DEFAULT_DB),
+              Entity(db: Database.defaultDbName),
             ],
             fields: [
               OrmMetaField('name', 'String?', ormAnnotations: [
@@ -462,6 +462,27 @@ class OrmMetaInfoUser extends OrmMetaClass {
               ]),
               OrmMetaMethod('afterInsert', ormAnnotations: [
                 PostPersist(),
+              ]),
+              OrmMetaMethod('beforeRemove', ormAnnotations: [
+                PreRemove(),
+              ]),
+              OrmMetaMethod('beforeRemovePermanent', ormAnnotations: [
+                PreRemovePermanent(),
+              ]),
+              OrmMetaMethod('beforeUpdate', ormAnnotations: [
+                PreUpdate(),
+              ]),
+              OrmMetaMethod('afterLoad', ormAnnotations: [
+                PostLoad(),
+              ]),
+              OrmMetaMethod('afterUpdate', ormAnnotations: [
+                PostUpdate(),
+              ]),
+              OrmMetaMethod('afterRemove', ormAnnotations: [
+                PostRemove(),
+              ]),
+              OrmMetaMethod('afterRemovePermanent', ormAnnotations: [
+                PostRemovePermanent(),
               ]),
             ]);
 }
@@ -1052,8 +1073,43 @@ class User extends BaseModel {
   }
 
   @override
+  void __preUpdate() {
+    beforeUpdate();
+  }
+
+  @override
+  void __preRemove() {
+    beforeRemove();
+  }
+
+  @override
+  void __preRemovePermanent() {
+    afterRemove();
+  }
+
+  @override
   void __postPersist() {
     afterInsert();
+  }
+
+  @override
+  void __postUpdate() {
+    afterUpdate();
+  }
+
+  @override
+  void __postRemove() {
+    afterRemove();
+  }
+
+  @override
+  void __postRemovePermanent() {
+    afterRemove();
+  }
+
+  @override
+  void __postLoad() {
+    afterLoad();
   }
 }
 

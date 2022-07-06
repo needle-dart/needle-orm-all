@@ -167,7 +167,7 @@ const strModel = '''
     }
       
     BaseModelQuery __query(Database? db) =>
-        _modelInspector.newQuery(db ?? _globalDb, __className);
+        _modelInspector.newQuery(db ?? Database.defaultDb, __className);
 
     Future<void> insert({Database? db}) async {
       __prePersist();
@@ -250,7 +250,7 @@ abstract class _BaseModelQuery<T extends __Model, D>
   final logger = Logger('_BaseModelQuery');
 
   _BaseModelQuery({BaseModelQuery? topQuery, String? propName, Database? db})
-      : super(_modelInspector, db ?? _globalDb,
+      : super(_modelInspector, db ?? Database.defaultDb,
             topQuery: topQuery, propName: propName) {
     _modelCache = QueryModelCache(modelInspector);
   }

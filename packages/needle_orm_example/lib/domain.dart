@@ -11,8 +11,6 @@ part 'domain.part.dart'; // business logic code
 // all Class names and Field names must start with '_'
 // all business logic must be defined in file : 'domain.part.dart'
 
-var _globalDb = globalDb; // refer to main.dart
-
 @Entity()
 abstract class _BaseModel {
   @ID()
@@ -43,7 +41,7 @@ abstract class _BaseModel {
 }
 
 @Table()
-@Entity(ds: "mysql_example_db")
+@Entity(db: "mysql_example_db")
 class _Book extends _BaseModel {
   @Column()
   String? _title;
@@ -58,7 +56,7 @@ class _Book extends _BaseModel {
 }
 
 @Table(name: 'users')
-@Entity(ds: Entity.DEFAULT_DB)
+@Entity(db: Database.defaultDbName)
 class _User extends _BaseModel {
   @Column()
   String? _name;

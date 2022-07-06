@@ -8,14 +8,14 @@ import 'dart:async';
 import 'package:logging/logging.dart';
 import 'package:needle_orm/needle_orm.dart';
 
-late Database dbMariadb;
-late Database dbPostgres;
-
+const dbMariadb = "mariadb";
+const dbPostgres = "postgres";
 void main() async {
   initLogger();
-  dbMariadb = await initMariaDb();
-  dbPostgres = await initPostgreSQL();
-  globalDb = dbPostgres;
+
+  // the first db will be the default one as well
+  Database.register(dbPostgres, await initPostgreSQL());
+  Database.register(dbMariadb, await initMariaDb());
 
   await testCount();
   await testInsert();
@@ -49,6 +49,7 @@ void main() async {
   } catch (e, s) {
     logger.severe('testPgTransaction2 failed as expected', e, s);
   }
+  await Database.closeAll();
   exit(0);
 }
 
@@ -276,11 +277,11 @@ Future<void> testMultipleDatabases() async {
       var book = Book()
         ..price = 18 + i * 0.1
         ..title = 'Dart $i test';
-      await book.insert(db: dbMariadb);
+      await book.insert(db: Database.lookup(dbMariadb));
       log.info('\t book saved with id: ${book.id}');
     }
 
-    var q = Book.query(db: dbMariadb)
+    var q = Book.query(db: Database.lookup(dbMariadb))
       ..price.between(18, 19)
       ..title.endsWith('test');
     var total = await q.count();
@@ -295,11 +296,11 @@ Future<void> testMultipleDatabases() async {
       var book = Book()
         ..price = 18 + i * 0.1
         ..title = 'Dart $i test';
-      await book.insert(db: dbPostgres);
+      await book.insert(db: Database.lookup(dbPostgres));
       log.info('\t book saved with id: ${book.id}');
     }
 
-    var q = Book.query(db: dbPostgres)
+    var q = Book.query(db: Database.lookup(dbPostgres))
       ..price.between(18, 19)
       ..title.endsWith('test');
     var total = await q.count();
