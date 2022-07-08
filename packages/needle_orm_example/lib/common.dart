@@ -11,30 +11,47 @@ const logPrefix = 'NeedleOrmExample';
 final logger = Logger(logPrefix);
 late Database globalDb;
 
-Future<Database> initMariaDb() async {
+Future<MySqlConnection> initMariaConnection() async {
   var settings = ConnectionSettings(
       host: 'localhost',
       port: 3306,
       user: 'needle',
       password: 'needle',
       db: 'needle');
-  var conn = await MySqlConnection.connect(settings);
-  return MariaDbDatabase(conn); // used in domain.dart
+  return await MySqlConnection.connect(settings);
 }
 
-Future<Database> initPostgreSQL() async {
-  return PostgreSqlPoolDatabase(PgPool(
+Future<Database> initMariaDb() async {
+  return MariaDbDatabase(await initMariaConnection()); // used in domain.dart
+}
+
+Future<PgPool> initPgPool() async {
+  return PgPool(
     PgEndpoint(
       host: 'localhost',
       port: 5432,
-      database: 'appdb',
+      database: 'needle',
       username: 'postgres',
       password: 'postgres',
     ),
     settings: PgPoolSettings()
       ..maxConnectionAge = Duration(hours: 1)
       ..concurrency = 5,
-  ));
+  );
+}
+
+Future<PostgreSQLConnection> initPostgreSQLConnection() async {
+  return PostgreSQLConnection(
+    'localhost',
+    5432,
+    'needle',
+    username: 'postgres',
+    password: 'postgres',
+  );
+}
+
+Future<Database> initPostgreSQL() async {
+  return PostgreSqlPoolDatabase(await initPgPool());
 }
 
 void initLogger() {

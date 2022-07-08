@@ -1,7 +1,8 @@
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_migration_runner/mariadb.dart';
+import 'package:angel3_migration_runner/postgres.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:needle_orm_example/common.dart';
 
 import 'package:needle_orm_example/domain.dart';
 
@@ -13,17 +14,22 @@ void main(List<String> args) async {
   });
 
   args = ['refresh'];
-  var settings = ConnectionSettings(
-      host: 'localhost',
-      port: 3306,
-      user: 'needle',
-      password: 'needle',
-      db: 'needle');
-  var conn = await MySqlConnection.connect(settings);
 
-  var migrationRunner = MariaDbMigrationRunner(conn, migrations: [
-    BookMigration(),
-    UserMigration(),
-  ]);
-  await runMigrations(migrationRunner, args);
+  {
+    var migrationRunner =
+        MariaDbMigrationRunner(await initMariaConnection(), migrations: [
+      BookMigration(),
+      UserMigration(),
+    ]);
+    await runMigrations(migrationRunner, args);
+  }
+
+  {
+    var migrationRunner =
+        PostgresMigrationRunner(await initPostgreSQLConnection(), migrations: [
+      BookMigration(),
+      UserMigration(),
+    ]);
+    await runMigrations(migrationRunner, args);
+  }
 }

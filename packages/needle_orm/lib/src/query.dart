@@ -47,12 +47,15 @@ class ColumnQuery<T, R> {
 
   R eq(T value) => _addCondition(ColumnConditionOper.EQ, value);
 
-  Iterable<SqlCondition> toSqlConditions(String tableAlias) {
-    return conditions.map((e) => _toSqlCondition(tableAlias, e));
+  Iterable<SqlCondition> toSqlConditions(
+      String tableAlias, String? softDeleteColumnName) {
+    return conditions
+        .map((e) => _toSqlCondition(tableAlias, softDeleteColumnName, e));
   }
 
-  SqlCondition _toSqlCondition(String tableAlias, ColumnCondition cc) {
-    SqlCondition sc = SqlCondition("r.deleted = 0");
+  SqlCondition _toSqlCondition(
+      String tableAlias, String? softDeleteColumnName, ColumnCondition cc) {
+    SqlCondition sc = SqlCondition("r.$softDeleteColumnName = 0");
     String columnName = '$tableAlias.$name';
     String paramName = '${tableAlias}__$name';
     bool isRemote = false;
@@ -302,7 +305,8 @@ abstract class BaseModelQuery<M extends Model, D>
 
     return SqlJoin(tableName, _alias, joinStmt).apply((join) {
       columns.where((column) => column.hasCondition).forEach((column) {
-        join.conditions.appendAll(column.toSqlConditions(_alias));
+        join.conditions.appendAll(
+            column.toSqlConditions(_alias, clz.softDeleteField?.columnName));
       });
     });
   }
@@ -520,7 +524,9 @@ abstract class BaseModelQuery<M extends Model, D>
     q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
 
     var conditions = columns.fold<List<SqlCondition>>(
-        [], (init, e) => init..addAll(e.toSqlConditions(_alias)));
+        [],
+        (init, e) => init
+          ..addAll(e.toSqlConditions(_alias, softDeleteField.columnName)));
 
     q.conditions.appendAll(conditions);
 
@@ -548,7 +554,7 @@ abstract class BaseModelQuery<M extends Model, D>
     q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
 
     var conditions = columns.fold<List<SqlCondition>>(
-        [], (init, e) => init..addAll(e.toSqlConditions(_alias)));
+        [], (init, e) => init..addAll(e.toSqlConditions(_alias, null)));
 
     q.conditions.appendAll(conditions);
 
@@ -756,7 +762,9 @@ abstract class BaseModelQuery<M extends Model, D>
     }
 
     var conditions = columns.fold<List<SqlCondition>>(
-        [], (init, e) => init..addAll(e.toSqlConditions(_alias)));
+        [],
+        (init, e) => init
+          ..addAll(e.toSqlConditions(_alias, softDeleteField?.columnName)));
     q.conditions.appendAll(conditions);
 
     var sql = q.toSelectSql();
@@ -811,7 +819,9 @@ abstract class BaseModelQuery<M extends Model, D>
     }
 
     var conditions = columns.fold<List<SqlCondition>>(
-        [], (init, e) => init..addAll(e.toSqlConditions(_alias)));
+        [],
+        (init, e) => init
+          ..addAll(e.toSqlConditions(_alias, softDeleteField?.columnName)));
     q.conditions.appendAll(conditions);
 
     var sql = q.toCountSql(idColumnName);

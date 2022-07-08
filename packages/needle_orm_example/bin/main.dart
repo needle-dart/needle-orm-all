@@ -17,6 +17,7 @@ void main() async {
   Database.register(dbPostgres, await initPostgreSQL());
   Database.register(dbMariadb, await initMariaDb());
 
+  await clean();
   await testCount();
   await testInsert();
   await testUpdate();
@@ -53,6 +54,15 @@ void main() async {
   exit(0);
 }
 
+/// remove all rows from database.
+Future<void> clean() async {
+  Book.query(db: Database.lookup(dbPostgres)).deletePermanent();
+  User.query(db: Database.lookup(dbPostgres)).deletePermanent();
+
+  Book.query(db: Database.lookup(dbMariadb)).deletePermanent();
+  User.query(db: Database.lookup(dbMariadb)).deletePermanent();
+}
+
 Future<void> testFindByIds() async {
   var log = Logger('$logPrefix testFindByIds');
 
@@ -62,6 +72,10 @@ Future<void> testFindByIds() async {
   log.info('books list: $books');
   bool reused = books.any((book1) => existBooks.any((book2) => book1 == book2));
   log.info('reused: $reused');
+  // load properties before calling toMap(author(...))
+  for (var book in books) {
+    await book.author?.load();
+  }
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
 }
@@ -72,6 +86,10 @@ Future<void> testFindBy() async {
   var books =
       await Book.query().findBy({"author": 5100}); // can use model.id as value
   log.info('books list: $books');
+  // load properties before calling toMap(author(...))
+  for (var book in books) {
+    await book.author?.load();
+  }
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
 }

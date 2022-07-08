@@ -12,6 +12,8 @@ Get Started:
 
 # Run migration to update Database Schema
 
+Of course, all databases need to be created first, then create database schema:
+
     dart run bin/migration.dart
 
 # Run example

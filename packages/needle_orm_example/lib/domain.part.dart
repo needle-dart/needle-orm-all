@@ -12,7 +12,7 @@ extension BizUser on User {
   // @override
   void beforeInsert() {
     _version = 1;
-    _deleted = false;
+    _soft_deleted = false;
     logger.info('');
     _logger.info('beforeInsert ....');
   }
