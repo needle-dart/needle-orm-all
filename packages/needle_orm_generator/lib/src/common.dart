@@ -50,7 +50,7 @@ String strModelInspector(Iterable<String> classes) {
         return;
       }
       setFieldValue(obj, softDeleteField.name, deleted);
-      obj.__markDirty(softDeleteField.name);
+      obj.__markDirty(false, true, softDeleteField.name);
     }
     
     @override
@@ -130,8 +130,19 @@ const strModel = '''
       });
     }
 
-    void __markDirty(String fieldName){
-      __dirtyFields.add(fieldName);
+    void __markDirty(Object? oldValue, Object? newValue, String fieldName) {
+      if (oldValue == null && newValue == null) {
+        // both are null: not dirty.
+        return;
+      } else if (oldValue == null || newValue == null) {
+        // only one is null: dirty
+        __dirtyFields.add(fieldName);
+        return;
+      }
+      // both are non-null:
+      if (oldValue != newValue) {
+        __dirtyFields.add(fieldName);
+      }
     }
 
     void __cleanDirty() {

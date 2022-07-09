@@ -110,8 +110,8 @@ class FieldInspector {
         return _$name;
       }
       set $name($_cleanType v) {
+        ${notExistsInDb ? '' : '__markDirty(_$name , v , \'$name\');'}
         _$name = v;
-        ${notExistsInDb ? '' : '__markDirty(\'$name\');'}
       }
     ''';
   }

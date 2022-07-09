@@ -57,8 +57,8 @@ void main() async {
 /// remove all rows from database.
 Future<void> clean() async {
   for (var db in [Database.lookup(dbPostgres), Database.lookup(dbMariadb)]) {
-    Book.query(db: db).deletePermanent();
-    User.query(db: db).deletePermanent();
+    await Book.query(db: db).deletePermanent();
+    await User.query(db: db).deletePermanent();
   }
 }
 
@@ -203,6 +203,8 @@ Future<void> testUpdate() async {
   user.loadMap({"name": 'admin123', "xxxx": 'xxxx'});
   await user.save(); // update
   await user.save(); // should NOT update again.
+  user.name = 'admin123';
+  await user.save(); // nothing should be updated
   log.info('== 2: admin updated, id: ${user.id}');
 
   var book = Book()

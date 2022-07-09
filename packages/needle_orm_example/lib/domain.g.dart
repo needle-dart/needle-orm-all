@@ -34,8 +34,19 @@ abstract class __Model extends Model {
     });
   }
 
-  void __markDirty(String fieldName) {
-    __dirtyFields.add(fieldName);
+  void __markDirty(Object? oldValue, Object? newValue, String fieldName) {
+    if (oldValue == null && newValue == null) {
+      // both are null: not dirty.
+      return;
+    } else if (oldValue == null || newValue == null) {
+      // only one is null: dirty
+      __dirtyFields.add(fieldName);
+      return;
+    }
+    // both are non-null:
+    if (oldValue != newValue) {
+      __dirtyFields.add(fieldName);
+    }
   }
 
   void __cleanDirty() {
@@ -317,7 +328,7 @@ class _ModelInspector extends ModelInspector<__Model> {
       return;
     }
     setFieldValue(obj, softDeleteField.name, deleted);
-    obj.__markDirty(softDeleteField.name);
+    obj.__markDirty(false, true, softDeleteField.name);
   }
 
   @override
@@ -561,8 +572,8 @@ abstract class BaseModel extends __Model {
   }
 
   set id(int? v) {
+    __markDirty(_id, v, 'id');
     _id = v;
-    __markDirty('id');
   }
 
   int? _version;
@@ -572,8 +583,8 @@ abstract class BaseModel extends __Model {
   }
 
   set version(int? v) {
+    __markDirty(_version, v, 'version');
     _version = v;
-    __markDirty('version');
   }
 
   bool? _soft_deleted;
@@ -583,8 +594,8 @@ abstract class BaseModel extends __Model {
   }
 
   set soft_deleted(bool? v) {
+    __markDirty(_soft_deleted, v, 'soft_deleted');
     _soft_deleted = v;
-    __markDirty('soft_deleted');
   }
 
   DateTime? _createdAt;
@@ -594,8 +605,8 @@ abstract class BaseModel extends __Model {
   }
 
   set createdAt(DateTime? v) {
+    __markDirty(_createdAt, v, 'createdAt');
     _createdAt = v;
-    __markDirty('createdAt');
   }
 
   DateTime? _updatedAt;
@@ -605,8 +616,8 @@ abstract class BaseModel extends __Model {
   }
 
   set updatedAt(DateTime? v) {
+    __markDirty(_updatedAt, v, 'updatedAt');
     _updatedAt = v;
-    __markDirty('updatedAt');
   }
 
   String? _createdBy;
@@ -616,8 +627,8 @@ abstract class BaseModel extends __Model {
   }
 
   set createdBy(String? v) {
+    __markDirty(_createdBy, v, 'createdBy');
     _createdBy = v;
-    __markDirty('createdBy');
   }
 
   String? _lastUpdatedBy;
@@ -627,8 +638,8 @@ abstract class BaseModel extends __Model {
   }
 
   set lastUpdatedBy(String? v) {
+    __markDirty(_lastUpdatedBy, v, 'lastUpdatedBy');
     _lastUpdatedBy = v;
-    __markDirty('lastUpdatedBy');
   }
 
   String? _remark;
@@ -638,8 +649,8 @@ abstract class BaseModel extends __Model {
   }
 
   set remark(String? v) {
+    __markDirty(_remark, v, 'remark');
     _remark = v;
-    __markDirty('remark');
   }
 
   BaseModel();
@@ -796,8 +807,8 @@ class Book extends BaseModel {
   }
 
   set title(String? v) {
+    __markDirty(_title, v, 'title');
     _title = v;
-    __markDirty('title');
   }
 
   double? _price;
@@ -807,8 +818,8 @@ class Book extends BaseModel {
   }
 
   set price(double? v) {
+    __markDirty(_price, v, 'price');
     _price = v;
-    __markDirty('price');
   }
 
   User? _author;
@@ -818,8 +829,8 @@ class Book extends BaseModel {
   }
 
   set author(User? v) {
+    __markDirty(_author, v, 'author');
     _author = v;
-    __markDirty('author');
   }
 
   Book();
@@ -930,8 +941,8 @@ class User extends BaseModel {
   }
 
   set name(String? v) {
+    __markDirty(_name, v, 'name');
     _name = v;
-    __markDirty('name');
   }
 
   String? _loginName;
@@ -941,8 +952,8 @@ class User extends BaseModel {
   }
 
   set loginName(String? v) {
+    __markDirty(_loginName, v, 'loginName');
     _loginName = v;
-    __markDirty('loginName');
   }
 
   String? _address;
@@ -952,8 +963,8 @@ class User extends BaseModel {
   }
 
   set address(String? v) {
+    __markDirty(_address, v, 'address');
     _address = v;
-    __markDirty('address');
   }
 
   int? _age;
@@ -963,8 +974,8 @@ class User extends BaseModel {
   }
 
   set age(int? v) {
+    __markDirty(_age, v, 'age');
     _age = v;
-    __markDirty('age');
   }
 
   List<Book>? _books;
@@ -1145,8 +1156,8 @@ class Job extends BaseModel {
   }
 
   set name(String? v) {
+    __markDirty(_name, v, 'name');
     _name = v;
-    __markDirty('name');
   }
 
   Job();
