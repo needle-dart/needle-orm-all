@@ -56,11 +56,10 @@ void main() async {
 
 /// remove all rows from database.
 Future<void> clean() async {
-  Book.query(db: Database.lookup(dbPostgres)).deletePermanent();
-  User.query(db: Database.lookup(dbPostgres)).deletePermanent();
-
-  Book.query(db: Database.lookup(dbMariadb)).deletePermanent();
-  User.query(db: Database.lookup(dbMariadb)).deletePermanent();
+  for (var db in [Database.lookup(dbPostgres), Database.lookup(dbMariadb)]) {
+    Book.query(db: db).deletePermanent();
+    User.query(db: db).deletePermanent();
+  }
 }
 
 Future<void> testFindByIds() async {
@@ -202,7 +201,8 @@ Future<void> testUpdate() async {
 
   // load data from a map
   user.loadMap({"name": 'admin123', "xxxx": 'xxxx'});
-  user.save(); // update
+  await user.save(); // update
+  await user.save(); // should NOT update again.
   log.info('== 2: admin updated, id: ${user.id}');
 
   var book = Book()
@@ -413,6 +413,7 @@ Future<void> testPgTransaction() async {
   var q = User.query();
   log.info('count before insert : ${await q.count()}');
   var db2 = await initPostgreSQL();
+  globalDb = db2;
   await db2.transaction((db) async {
     // var query = User.Query(db: db);
     var n = 50;

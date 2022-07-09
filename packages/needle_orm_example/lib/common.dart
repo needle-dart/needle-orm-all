@@ -6,6 +6,7 @@ import 'package:needle_orm/needle_orm.dart';
 import 'package:needle_orm_mariadb/needle_orm_mariadb.dart';
 import 'package:needle_orm_postgres/needle_orm_postgres.dart';
 import 'package:postgres_pool/postgres_pool.dart';
+import 'package:stack_trace/stack_trace.dart';
 
 const logPrefix = 'NeedleOrmExample';
 final logger = Logger(logPrefix);
@@ -57,12 +58,18 @@ Future<Database> initPostgreSQL() async {
 void initLogger() {
   Logger.root.level = Level.CONFIG; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
+    var trace = Trace.current().terse;
+    var frame = trace.frames
+        .skip(2)
+        .where((element) => element.member != null)
+        .firstWhere((element) => !element.member!.startsWith("Logger"));
+    var frameInfo = "(${frame.location})";
     if (record.stackTrace != null) {
       stderr.writeln(
-          '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName}: ${record.message}: ${record.error ?? ''} \n${record.stackTrace}');
+          '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName} $frameInfo: ${record.message}: ${record.error ?? ''} \n${record.stackTrace}');
     } else {
       print(
-          '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName}: ${record.message}: ${record.error ?? ''}');
+          '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName} $frameInfo: ${record.message}: ${record.error ?? ''}');
     }
   });
 }

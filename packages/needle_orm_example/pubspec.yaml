@@ -17,6 +17,7 @@ dependencies:
   needle_orm_migration_generator: ^0.0.1
   angel3_migration: ^6.0.0
   angel3_migration_runner: ^6.0.1
+  stack_trace: ^1.10.0
 
 dev_dependencies:
   lints: ^2.0.0
