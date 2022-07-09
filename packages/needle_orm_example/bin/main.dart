@@ -21,6 +21,7 @@ void main() async {
   await testCount();
   await testInsert();
   await testUpdate();
+  await testVersion();
   await testFindByIds();
   await testFindBy();
   await testInsertBatch();
@@ -213,6 +214,33 @@ Future<void> testUpdate() async {
     ..title = 'Dart admin';
   await book.insert();
   log.info('== 3: book saved , id: ${book.id}');
+}
+
+Future<void> testVersion() async {
+  var log = Logger('$logPrefix testVersion');
+
+  var user = User();
+
+  user
+    ..name = 'administrator'
+    ..address = 'China Shanghai Pudong'
+    ..age = 23;
+
+  await user.save(); // insert
+
+  var user2 = User()
+    ..id = user.id
+    ..version = user.version
+    ..name = 'changed';
+
+  await user2.save(); // updated
+
+  try {
+    user.name = 'change again';
+    await user.save(); // optimistic lock failure expected!
+  } catch (e, st) {
+    log.severe('user update failed as expected', e, st);
+  }
 }
 
 Future<void> testLoadNestedFields() async {

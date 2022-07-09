@@ -66,6 +66,9 @@ class OrmMetaClass {
       allFields(searchParents: true).firstWhere((f) =>
           f.ormAnnotations.any((annot) => annot.runtimeType == SoftDelete));
 
+  OrmMetaField? get versionField => allFields(searchParents: true).firstWhere(
+      (f) => f.ormAnnotations.any((annot) => annot.runtimeType == Version));
+
   List<OrmMetaField> serverSideFields(ActionType actionType,
       {bool searchParents = false}) {
     var fields = allFields(searchParents: false)

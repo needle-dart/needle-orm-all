@@ -31,7 +31,8 @@ class SqlQuery {
     ].where((element) => element.isNotEmpty).join(' ');
   }
 
-  String toSoftDeleteSql(String idColumnName, String softDeleteColumnName) {
+  String toSoftDeleteSql(String idColumnName, String softDeleteColumnName,
+      String? versionColumnName) {
     var where = [
       conditions.toSql(wrap: false),
       ...joins.map((e) => e.conditions.toSql(wrap: false))
@@ -44,6 +45,8 @@ class SqlQuery {
       'set',
       softDeleteColumnName,
       '=@deleted',
+      if (versionColumnName != null)
+        ', $versionColumnName=$versionColumnName+1',
       'where',
       idColumnName,
       'in',

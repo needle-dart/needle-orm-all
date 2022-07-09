@@ -323,6 +323,11 @@ abstract class BaseModelQuery<M extends Model, D>
       modelInspector.markDeleted(model, false);
     }
 
+    var versionField = clz.versionField;
+    if (versionField != null) {
+      modelInspector.setFieldValue(model, versionField.name, 1);
+    }
+
     var dirtyMap = modelInspector.getDirtyFields(model);
     var ssFields = clz.serverSideFields(action, searchParents: true);
 
@@ -389,6 +394,13 @@ abstract class BaseModelQuery<M extends Model, D>
       }
     }
 
+    var versionField = clz.versionField;
+    if (versionField != null) {
+      for (var model in modelList) {
+        modelInspector.setFieldValue(model, versionField.name, 1);
+      }
+    }
+
     // all but id fields
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.isIdField || f.notExistsInDb);
@@ -441,8 +453,14 @@ abstract class BaseModelQuery<M extends Model, D>
     var dirtyMap = modelInspector.getDirtyFields(model);
 
     var idField = clz.idFields.first; // @TODO
+    dirtyMap.remove(idField.name);
 
-    var idValue = dirtyMap.remove(idField.name);
+    var versionField = clz.versionField;
+    if (versionField != null) {
+      dirtyMap.remove(versionField.name);
+    }
+
+    var idValue = modelInspector.getFieldValue(model, clz.idFields.first.name);
 
     var ssFields = clz.serverSideFields(action, searchParents: true);
 
@@ -464,6 +482,12 @@ abstract class BaseModelQuery<M extends Model, D>
     dirtyMap[idField.name] = idValue;
     var sql =
         'update $tableName set ${setClause.join(',')} where ${idField.name}=@${idField.name}';
+    if (versionField != null) {
+      int oldVersion =
+          modelInspector.getFieldValue(model, versionField.name) as int;
+      sql =
+          'update $tableName set ${setClause.join(',')}, ${versionField.columnName}=${oldVersion + 1} where ${idField.name}=@${idField.name} and ${versionField.columnName}=$oldVersion';
+    }
     _logger.fine('Update SQL: $sql');
 
     dirtyMap.forEach((key, value) {
@@ -474,7 +498,10 @@ abstract class BaseModelQuery<M extends Model, D>
       }
     });
 
-    await db.query(sql, dirtyMap, tableName: tableName);
+    var queryResult = await db.query(sql, dirtyMap, tableName: tableName);
+    if (versionField != null && queryResult.affectedRowCount != 1) {
+      throw 'update failed, expected 1 row affected, but ${queryResult.affectedRowCount} rows affected actually!';
+    }
   }
 
   Future<void> deleteOne(M model) async {
@@ -490,6 +517,11 @@ abstract class BaseModelQuery<M extends Model, D>
     _logger.fine('delete $tableName , fields: $idValue');
     var sql =
         'update $tableName set ${softDeleteField.columnName} = 1 where ${idField.columnName} = @id ';
+    var versionField = clz.versionField;
+    if (versionField != null) {
+      sql =
+          'update $tableName set ${softDeleteField.columnName} = 1, ${versionField.columnName}=${versionField.columnName}+1 where ${idField.columnName} = @id ';
+    }
     await db.query(sql, {"id": idValue}, tableName: tableName);
   }
 
@@ -530,7 +562,8 @@ abstract class BaseModelQuery<M extends Model, D>
 
     q.conditions.appendAll(conditions);
 
-    var sql = q.toSoftDeleteSql(idField.columnName, softDeleteField.columnName);
+    var sql = q.toSoftDeleteSql(idField.columnName, softDeleteField.columnName,
+        clz.versionField?.columnName);
     var params = q.params;
     params['deleted'] = true;
     _logger.fine('\t soft delete sql: $sql');
