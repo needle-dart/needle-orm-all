@@ -7,52 +7,75 @@ import 'dart:async';
 
 import 'package:logging/logging.dart';
 import 'package:needle_orm/needle_orm.dart';
+import 'package:test/test.dart';
 
 const dbMariadb = "mariadb";
 const dbPostgres = "postgres";
 void main() async {
-  initLogger();
+  setUp(() async {
+    initLogger();
 
-  // the first db will be the default one as well
-  Database.register(dbPostgres, await initPostgreSQL());
-  Database.register(dbMariadb, await initMariaDb());
+    // the first db will be the default one as well
+    Database.register(dbPostgres, await initPostgreSQL());
+    Database.register(dbMariadb, await initMariaDb());
+    await clean();
+  });
 
-  await clean();
-  await testCount();
-  await testInsert();
-  await testUpdate();
-  await testVersion();
-  await testFindByIds();
-  await testFindBy();
-  await testInsertBatch();
-  await testLoadNestedFields();
-  await testPaging();
-  await testSoftDelete();
-  await testPermanentDelete();
-  await testMultipleDatabases();
-  await testOneToMany();
-  // try {
-  //   await testMariaDbTransaction();
-  // } catch (e, s) {
-  //   logger.severe('testMariaDbTransaction failed as expected');
-  // }
+  tearDown(() async {
+    // await Database.closeAll();
+  });
+
+  test('testCount', testCount);
+  test('testInsert', testInsert);
+  test('testUpdate', testUpdate);
+  test('testVersion', testVersion);
+  test('testFindByIds', testFindByIds);
+  test('testFindBy', testFindBy);
+  test('testInsertBatch', testInsertBatch);
+  test('testLoadNestedFields', testLoadNestedFields);
+  test('testPaging', testPaging);
+  test('testSoftDelete', testSoftDelete);
+  test('testPermanentDelete', testPermanentDelete);
+  test('testMultipleDatabases', testMultipleDatabases);
+  test('testOneToMany', testOneToMany);
+
+  test('testTransactionMariaDbRaw', testTransactionMariaDbRaw);
+  test('testTransactionPg', testTransactionPg);
+  test('testTransactionPgRaw', testTransactionPgRaw);
+
+  // exit(0);
+}
+
+Future<void> testTransactionMariaDb() async {
+  try {
+    await testMariaDbTransaction();
+  } catch (e, s) {
+    logger.severe('testMariaDbTransaction failed as expected', e, s);
+  }
+}
+
+Future<void> testTransactionMariaDbRaw() async {
   try {
     await testMariaDbTransaction2();
   } catch (e, s) {
-    logger.severe('testMariaDbTransaction2 failed as expected', e, s);
+    logger.severe('testMariaDbTransactionRaw failed as expected', e, s);
   }
+}
+
+Future<void> testTransactionPg() async {
   try {
     await testPgTransaction();
   } catch (e, s) {
-    logger.severe('testPgTransaction failed as expected', e, s);
+    logger.severe('testTransactionPg failed as expected', e, s);
   }
+}
+
+Future<void> testTransactionPgRaw() async {
   try {
     await testPgTransaction2();
   } catch (e, s) {
-    logger.severe('testPgTransaction2 failed as expected', e, s);
+    logger.severe('testTransactionPgRaw failed as expected', e, s);
   }
-  await Database.closeAll();
-  exit(0);
 }
 
 /// remove all rows from database.

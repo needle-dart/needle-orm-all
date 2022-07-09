@@ -20,7 +20,7 @@ abstract class _BaseModel {
   int? _version;
 
   @SoftDelete()
-  bool? _soft_deleted;
+  bool? _softDeleted;
 
   @WhenCreated()
   DateTime? _createdAt;

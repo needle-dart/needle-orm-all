@@ -400,7 +400,7 @@ class OrmMetaInfoBaseModel extends OrmMetaClass {
               OrmMetaField('version', 'int?', ormAnnotations: [
                 Version(),
               ]),
-              OrmMetaField('soft_deleted', 'bool?', ormAnnotations: [
+              OrmMetaField('softDeleted', 'bool?', ormAnnotations: [
                 SoftDelete(),
               ]),
               OrmMetaField('createdAt', 'DateTime?', ormAnnotations: [
@@ -542,7 +542,7 @@ class BaseModelModelQuery<T extends BaseModel> extends _BaseModelQuery<T, int> {
 
   IntColumn id = IntColumn("id");
   IntColumn version = IntColumn("version");
-  BoolColumn soft_deleted = BoolColumn("soft_deleted");
+  BoolColumn softDeleted = BoolColumn("softDeleted");
   DateTimeColumn createdAt = DateTimeColumn("createdAt");
   DateTimeColumn updatedAt = DateTimeColumn("updatedAt");
   StringColumn createdBy = StringColumn("createdBy");
@@ -553,7 +553,7 @@ class BaseModelModelQuery<T extends BaseModel> extends _BaseModelQuery<T, int> {
   List<ColumnQuery> get columns => [
         id,
         version,
-        soft_deleted,
+        softDeleted,
         createdAt,
         updatedAt,
         createdBy,
@@ -587,15 +587,15 @@ abstract class BaseModel extends __Model {
     _version = v;
   }
 
-  bool? _soft_deleted;
-  bool? get soft_deleted {
+  bool? _softDeleted;
+  bool? get softDeleted {
     __ensureLoaded();
-    return _soft_deleted;
+    return _softDeleted;
   }
 
-  set soft_deleted(bool? v) {
-    __markDirty(_soft_deleted, v, 'soft_deleted');
-    _soft_deleted = v;
+  set softDeleted(bool? v) {
+    __markDirty(_softDeleted, v, 'softDeleted');
+    _softDeleted = v;
   }
 
   DateTime? _createdAt;
@@ -668,8 +668,8 @@ abstract class BaseModel extends __Model {
         return _id;
       case "version":
         return _version;
-      case "soft_deleted":
-        return _soft_deleted;
+      case "softDeleted":
+        return _softDeleted;
       case "createdAt":
         return _createdAt;
       case "updatedAt":
@@ -697,8 +697,8 @@ abstract class BaseModel extends __Model {
       case "version":
         version = value;
         break;
-      case "soft_deleted":
-        soft_deleted = value is bool
+      case "softDeleted":
+        softDeleted = value is bool
             ? value
             : (0 == value || null == value || "" == value ? false : true);
         break;
@@ -733,8 +733,8 @@ abstract class BaseModel extends __Model {
       version != null && filter.contains("version")
           ? m["version"] = version
           : "";
-      soft_deleted != null && filter.contains("soft_deleted")
-          ? m["soft_deleted"] = soft_deleted
+      softDeleted != null && filter.contains("softDeleted")
+          ? m["softDeleted"] = softDeleted
           : "";
       createdAt != null && filter.contains("createdAt")
           ? m["createdAt"] = createdAt?.toIso8601String()
@@ -755,7 +755,7 @@ abstract class BaseModel extends __Model {
     return {
       if (filter.contains('id')) "id": id,
       if (filter.contains('version')) "version": version,
-      if (filter.contains('soft_deleted')) "soft_deleted": soft_deleted,
+      if (filter.contains('softDeleted')) "softDeleted": softDeleted,
       if (filter.contains('createdAt'))
         "createdAt": createdAt?.toIso8601String(),
       if (filter.contains('updatedAt'))
