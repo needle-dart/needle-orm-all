@@ -169,15 +169,20 @@ const strModel = '''
     BaseModelQuery __query(Database? db) =>
         _modelInspector.newQuery(db ?? Database.defaultDb, __className);
 
+
     Future<void> insert({Database? db}) async {
       __prePersist();
       await __query(db).insert(this);
+      __cleanDirty();
       __postPersist();
     }
 
     Future<void> update({Database? db}) async {
       __preUpdate();
-      await __query(db).update(this);
+      if (__dirtyFields.isNotEmpty) {
+        await __query(db).update(this);
+        __cleanDirty();
+      }
       __postUpdate();
     }
 
