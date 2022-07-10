@@ -18,7 +18,7 @@ Of course, all databases need to be created first, then create database schema:
 
 # Run example
 
-    dart run test/main_test.dart
+    dart test
 
 # explore sample code 
 
