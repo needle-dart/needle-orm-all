@@ -18,9 +18,9 @@ Of course, all databases need to be created first, then create database schema:
 
 # Run example
 
-    dart run bin/main.dart
+    dart run test/main_test.dart
 
 # explore sample code 
 
 - lib/common.dart : how to create connections to MariaDB / PostgreSQL
-- bin/main.dart : how to use Needle ORM
+- test/main_test.dart : how to use Needle ORM

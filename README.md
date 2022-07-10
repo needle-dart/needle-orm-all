@@ -301,4 +301,4 @@ void main() async {
 Example
 --------
 
-Example project can be found here:  [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/bin/main.dart) .
+Example project can be found here:  [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/test/main_test.dart) .
