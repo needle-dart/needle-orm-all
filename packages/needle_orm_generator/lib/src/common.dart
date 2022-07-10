@@ -310,6 +310,47 @@ abstract class _BaseModelQuery<T extends __Model, D>
     m.__markLoaded(true);
     // lock.release();
   }
+
+  @override
+  Future<T?> findById(D id,
+      {T? existModel, bool includeSoftDeleted = false}) async {
+    var model = await super.findById(id,
+        existModel: existModel, includeSoftDeleted: includeSoftDeleted);
+    model?.__postLoad();
+    return model;
+  }
+
+  /// find models by [idList]
+  @override
+  Future<List<T>> findByIds(List idList,
+      {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
+    var list = await super.findByIds(idList, existModeList: existModeList);
+    for (var model in list) {
+      model.__postLoad();
+    }
+    return list;
+  }
+
+  @override
+  Future<List<T>> findBy(Map<String, dynamic> params,
+      {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
+    var list = await super.findBy(params,
+        existModeList: existModeList, includeSoftDeleted: includeSoftDeleted);
+    for (var model in list) {
+      model.__postLoad();
+    }
+    return list;
+  }
+
+  /// find list
+  @override
+  Future<List<T>> findList({bool includeSoftDeleted = false}) async {
+    var list = await super.findList();
+    for (var model in list) {
+      model.__postLoad();
+    }
+    return list;
+  }
   
 }
 ''';

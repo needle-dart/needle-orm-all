@@ -26,13 +26,17 @@ abstract class AbstractModelQuery<M, ID> {
 
   /// find single model by [id]
   /// if [existModel] is given, [existModel] will be filled and returned, otherwise a new model will be returned.
-  Future<M?> findById(ID id, {M? existModel});
+  Future<M?> findById(ID id, {M? existModel, bool includeSoftDeleted = false});
 
   /// find models by [idList]
-  Future<List<M>> findByIds(List idList, {List<Model>? existModeList});
+  Future<List<M>> findByIds(List idList,
+      {List<Model>? existModeList, bool includeSoftDeleted = false});
+
+  Future<List<M>> findBy(Map<String, dynamic> params,
+      {List<Model>? existModeList, bool includeSoftDeleted = false});
 
   /// find list
-  Future<List<M>> findList();
+  Future<List<M>> findList({bool includeSoftDeleted = false});
 
   /// return how many rows affected!
   Future<int> delete();

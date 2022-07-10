@@ -105,6 +105,8 @@ Future<void> testFindByIds() async {
 Future<void> testFindBy() async {
   var log = Logger('$logPrefix testFindBy');
 
+  await testInsert();
+
   var books =
       await Book.query().findBy({"author": 5100}); // can use model.id as value
   log.info('books list: $books');
@@ -114,6 +116,9 @@ Future<void> testFindBy() async {
   }
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
+
+  var users = await User.query().findList();
+  log.info('users: $users');
 }
 
 Future<void> testFindListBySql() async {
