@@ -24,10 +24,14 @@ enum ActionType { Insert, Update, Delete, Select }
 abstract class AbstractModelQuery<M, ID> {
   AbstractModelQuery();
 
+  /// find single model by [id]
+  /// if [existModel] is given, [existModel] will be filled and returned, otherwise a new model will be returned.
   Future<M?> findById(ID id, {M? existModel});
 
+  /// find models by [idList]
   Future<List<M>> findByIds(List idList, {List<Model>? existModeList});
 
+  /// find list
   Future<List<M>> findList();
 
   /// return how many rows affected!
@@ -36,7 +40,13 @@ abstract class AbstractModelQuery<M, ID> {
   /// return how many rows affected!
   Future<int> deletePermanent();
 
+  /// return count of this query.
   Future<int> count();
+
+  /// select with raw sql.
+  /// example: findListBySql(' select distinct(t.*) from table t, another_table t2 where t.column_name=t2.id and t.column_name2=@param1 and t2.column_name3=@param2 order by t.id, limit 10 offset 10 ', {'param1':100,'param2':'hello'})
+  Future<List<M>> findListBySql(String rawSql,
+      [Map<String, dynamic> params = const {}]);
 }
 
 abstract class OrmClassAnnotation {}

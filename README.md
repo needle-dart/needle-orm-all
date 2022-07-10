@@ -24,6 +24,13 @@ Annotations supported
 - [ ] @Index
 - [ ] @OrderBy
 - [x] @Version
+- [x] @PreInsert
+- [x] @PreUpdate
+- [x] @PreRemove
+- [x] @PostInsert
+- [x] @PostUpdate
+- [x] @PostRemove
+- [x] @PostLoad
 
 some other useful annotations , just like [Ebean ORM for Java/Kotlin](https://ebean.io), are supported as well :
 - [x] @SoftDelete
@@ -31,15 +38,13 @@ some other useful annotations , just like [Ebean ORM for Java/Kotlin](https://eb
 - [x] @WhenModified
 - [ ] @WhoCreated
 - [ ] @WhoModified
-- [x] @PreInsert
-- [x] @PreUpdate
-- [x] @PreRemove
 - [x] @PreRemovePermanent
-- [x] @PostInsert
-- [x] @PostUpdate
-- [x] @PostRemove
 - [x] @PostRemovePermanent
-- [x] @PostLoad
+
+Validations:
+- [ ] @ValidNumber : min & max number 
+- [ ] @ValidSize : size of String & collections(List/Array, Set, Map)
+- [ ] @ValidPattern , some built-in patterns: email, ip, digits
 
 ## Define Model
 
@@ -122,8 +127,6 @@ extension Biz_User on User {
 
   // @override
   void beforeInsert() {
-    _version = 1;
-    _deleted = false;
     print('before insert user ....');
   }
 
@@ -206,6 +209,20 @@ void main() async {
       ..offset = 10
       ..maxRows = 20  // limit
       ..findList();
+  }
+
+
+  // Find by raw sql:
+  {
+    var log = Logger('$logPrefix testFindBy');
+    var books = await Book.query()
+        .findListBySql('select distinct(t.*) from books t limit 3');
+    log.info('books list: $books');
+    for (var book in books) {
+      await book.author?.load();
+    }
+    log.info(
+        'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
   }
 
   // Soft Delete:

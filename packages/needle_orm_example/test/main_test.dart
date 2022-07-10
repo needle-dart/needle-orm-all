@@ -29,6 +29,7 @@ void main() async {
   test('testVersion', testVersion);
   test('testFindByIds', testFindByIds);
   test('testFindBy', testFindBy);
+  test('testFindListBySql', testFindListBySql);
   test('testInsertBatch', testInsertBatch);
   test('testLoadNestedFields', testLoadNestedFields);
   test('testPaging', testPaging);
@@ -108,6 +109,20 @@ Future<void> testFindBy() async {
       await Book.query().findBy({"author": 5100}); // can use model.id as value
   log.info('books list: $books');
   // load properties before calling toMap(author(...))
+  for (var book in books) {
+    await book.author?.load();
+  }
+  log.info(
+      'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
+}
+
+Future<void> testFindListBySql() async {
+  var log = Logger('$logPrefix testFindBy');
+
+  await testInsert();
+  var books = await Book.query()
+      .findListBySql('select distinct(t.*) from books t limit 3');
+  log.info('books list: $books');
   for (var book in books) {
     await book.author?.load();
   }

@@ -831,6 +831,31 @@ abstract class BaseModelQuery<M extends Model, D>
   }
 
   @override
+  Future<List<M>> findListBySql(String rawSql,
+      [Map<String, dynamic> params = const {}]) async {
+    var clz = modelInspector.meta(className)!;
+    var tableName = clz.tableName;
+
+    var allFields = clz.allFields(searchParents: true)
+      ..removeWhere((f) => f.notExistsInDb);
+
+    var rows = await db.query(rawSql, params, tableName: tableName);
+
+    _logger.fine('\t sql: $rawSql');
+    _logger.fine('\t rows: ${rows.length}');
+
+    var fields = rows.columnDescriptions
+        .map((c) => allFields.firstWhere((f) => f.columnName == c.columnName))
+        .toList();
+
+    var result = rows.map((row) {
+      return toModel<M>(row, fields, className);
+    });
+
+    return result.toList();
+  }
+
+  @override
   Future<int> count({bool includeSoftDeleted = false}) async {
     // init all table aliases.
     _beforeQuery();
