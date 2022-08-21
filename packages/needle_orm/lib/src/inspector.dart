@@ -4,7 +4,6 @@ import 'sql.dart';
 
 /// an Inspector to spy and operate on model objects
 abstract class ModelInspector<M> {
-
   /// return the class name of [model]
   String getClassName(M model);
 
@@ -44,7 +43,7 @@ abstract class ModelInspector<M> {
     return meta(type) != null;
   }
 
-  /// return id fields of [className] 
+  /// return id fields of [className]
   List<OrmMetaField>? idFields(String className) {
     return meta(className)?.idFields;
   }
