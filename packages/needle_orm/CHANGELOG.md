@@ -16,15 +16,15 @@
  - **FEAT**: replace _globalDb with Database.defaultDb.
  - **FEAT**: implement @Pre/PostPersist/Update...
 
-# 0.0.3
+## 0.0.3
 
   * change Query() => query()
   * fix lints issues
   
-# 0.0.2
+## 0.0.2
 
   * remove dart:cli dependency to make it runnable on almost everywhere (also make pub.dev happy :) ).
 
-# 0.0.1
+## 0.0.1
 
   * implement basic functions : insert/update/delete/findList/transaction ...
