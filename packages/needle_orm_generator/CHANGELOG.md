@@ -1,3 +1,7 @@
+## 0.0.4+1
+
+ - **FIX**: homepage & repository url in pubspec.yaml.
+
 ## 0.0.4
 
  - **FIX**: repository link in README.md.

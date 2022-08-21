@@ -1,6 +1,6 @@
 name: needle_orm_postgres
 description: postgres support for needle_orm
-version: 0.0.4
+version: 0.0.4+1
 homepage: https://github.com/needle-dart/needle-orm-all
 repository: https://github.com/needle-dart/needle-orm-all.git
 
@@ -13,7 +13,7 @@ dependencies:
   postgres_pool: ^2.1.3
   logging: ^1.0.2
   #   path: ^1.8.0
-  needle_orm: ^0.0.4
+  needle_orm: ^0.0.4+1
 dev_dependencies:
   lints: ^2.0.0
   test: ^1.16.0
