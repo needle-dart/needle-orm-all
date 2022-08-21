@@ -1,3 +1,13 @@
+## 0.0.4
+
+ - **FIX**: repository link in README.md.
+ - **FIX**: document/yaml.
+ - **FEAT**: implement @PostLoad.
+ - **FEAT**: only update when fields are truely modified.
+ - **FEAT**: clean dirty mark after insert/update.
+ - **FEAT**: replace _globalDb with Database.defaultDb.
+ - **FEAT**: implement @Pre/PostPersist/Update...
+
 # 0.0.3
 
 * change Query() => query()

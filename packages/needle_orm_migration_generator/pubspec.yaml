@@ -1,6 +1,6 @@
 name: needle_orm_migration_generator
 description: Generate all orm migration helper classes for needle orm.
-version: 0.0.1
+version: 0.0.2
 homepage: https://github.com/needle-dart/needle_orm_all.dart
 repository: https://github.com/needle-dart/needle_orm_all.dart
 
@@ -13,7 +13,7 @@ dependencies:
   build_config: ^1.0.0
   code_builder: ^4.0.0
   source_gen: ^1.0.0
-  needle_orm: ^0.0.1
+  needle_orm: ^0.0.4
   scope: ^2.2.1
   angel3_migration: ^6.0.0
   angel3_orm: ^6.0.1

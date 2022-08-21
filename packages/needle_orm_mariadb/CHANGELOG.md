@@ -1,3 +1,8 @@
+## 0.0.4
+
+ - **FIX**: document/yaml.
+ - **FEAT**: implement @Pre/PostPersist/Update...
+
 ## 0.0.3
 
 - fix lints issues .
