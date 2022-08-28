@@ -11,6 +11,7 @@ import 'sql.dart';
 import 'sql_query.dart';
 import 'common.dart';
 
+/// ColumnQuery defines operations for column
 class ColumnQuery<T, R> {
   final List<ColumnCondition> conditions = [];
   final String name;
@@ -101,8 +102,10 @@ class ColumnQuery<T, R> {
   OrderField desc() => OrderField(this, Order.desc);
 }
 
+/// Order
 enum Order { asc, desc }
 
+/// fields used in Order
 class OrderField {
   ColumnQuery column;
   Order order;
@@ -114,11 +117,13 @@ class OrderField {
   }
 }
 
+/// server side expression
 class ServerSideExpr {
   final String expr;
   ServerSideExpr(this.expr);
 }
 
+/// support IN , notIn for columns
 mixin RangeCondition<T, R> on ColumnQuery<T, R> {
   // ignore: non_constant_identifier_names
   R IN(List<T> value) => _addCondition(ColumnConditionOper.IN, value);
@@ -126,12 +131,14 @@ mixin RangeCondition<T, R> on ColumnQuery<T, R> {
   R notIn(List<T> value) => _addCondition(ColumnConditionOper.NOT_IN, value);
 }
 
+/// support isNull, isNotNull for columns
 mixin NullCondition<T, R> on ColumnQuery<T, R> {
   R isNull() => _addCondition(ColumnConditionOper.IS_NULL, null);
 
   R isNotNull() => _addCondition(ColumnConditionOper.IS_NOT_NULL, null);
 }
 
+/// support > < = >= <= between for columns
 mixin ComparableCondition<T, R> on ColumnQuery<T, R> {
   R gt(T value) => _addCondition(ColumnConditionOper.GT, value);
 
@@ -155,6 +162,7 @@ mixin ComparableCondition<T, R> on ColumnQuery<T, R> {
  */
 }
 
+/// ColumnCondition
 class ColumnCondition {
   final String name;
   final ColumnConditionOper oper;
@@ -166,19 +174,23 @@ class ColumnCondition {
   String toString() => '($name : ${oper.name} : $value)';
 }
 
+/// number column
 class NumberColumn<T, R> extends ColumnQuery<T, R>
     with ComparableCondition<T, R>, RangeCondition<T, R> {
   NumberColumn(String name) : super(name);
 }
 
+/// int column
 class IntColumn extends NumberColumn<int, IntColumn> {
   IntColumn(String name) : super(name);
 }
 
+/// double column
 class DoubleColumn extends NumberColumn<double, DoubleColumn> {
   DoubleColumn(String name) : super(name);
 }
 
+/// string column
 class StringColumn extends ColumnQuery<String, StringColumn>
     with
         ComparableCondition<String, StringColumn>,
@@ -199,6 +211,7 @@ class StringColumn extends ColumnQuery<String, StringColumn>
       _addCondition(ColumnConditionOper.LIKE, '%$subString%');
 }
 
+/// bool column
 class BoolColumn extends ColumnQuery<bool, BoolColumn> {
   BoolColumn(String name) : super(name);
 
@@ -207,6 +220,7 @@ class BoolColumn extends ColumnQuery<bool, BoolColumn> {
   BoolColumn isFalse() => _addCondition(ColumnConditionOper.EQ, false);
 }
 
+/// DateTime column
 class DateTimeColumn extends ColumnQuery<DateTime, DateTimeColumn>
     with
         ComparableCondition<DateTime, DateTimeColumn>,
@@ -248,6 +262,7 @@ String toSql(ColumnConditionOper oper) {
   return _sql[oper.index];
 }
 
+/// basic implement for AbstractModelQuery
 abstract class BaseModelQuery<M extends Model, D>
     extends AbstractModelQuery<M, D> {
   static final Logger _logger = Logger('ORM');
@@ -697,6 +712,7 @@ abstract class BaseModelQuery<M extends Model, D>
     return [];
   }
 
+  @override
   Future<List<M>> findBy(Map<String, dynamic> params,
       {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
     var clz = modelInspector.meta(className)!;
@@ -948,6 +964,7 @@ abstract class BaseModelQuery<M extends Model, D>
   }
 }
 
+/// lazy list
 class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
   static final Logger _logger = Logger('ORM');
 
@@ -999,6 +1016,7 @@ class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
     }
   }
 
+  /// load list from db.
   Future<void> load() async {
     if (_loaded) return;
     var query = clz.modelInspector.newQuery(db, clz.name);

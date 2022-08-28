@@ -3,6 +3,7 @@ import 'dart:async';
 // ignore: constant_identifier_names
 enum DatabaseType { MariaDB, PostgreSQL }
 
+/// abstract class for all kinds of Database.
 abstract class Database {
   final DatabaseType databaseType;
   final String databaseVersion;

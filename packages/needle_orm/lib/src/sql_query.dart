@@ -1,5 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
+/// sql: query
 class SqlQuery {
   bool distinct;
   List<String> columns = [];
@@ -110,6 +111,7 @@ class SqlQuery {
   Map<String, dynamic> get params => {...conditions.params, ...joins.params};
 }
 
+/// sql: join
 class SqlJoin {
   final String tableName;
   final String alias;
@@ -184,6 +186,7 @@ class SqlCondition {
   }
 }
 
+/// sql: join group
 class SqlConditionGroup extends SqlCondition {
   final SqlConditionOper oper;
 
@@ -229,16 +232,19 @@ class SqlConditionGroup extends SqlCondition {
   }
 }
 
+/// sql: and
 class SqlAnd extends SqlConditionGroup {
   SqlAnd([List<SqlCondition>? conditions])
       : super(SqlConditionOper.AND, conditions: conditions);
 }
 
+/// sql: or
 class SqlOr extends SqlConditionGroup {
   SqlOr([List<SqlCondition>? conditions])
       : super(SqlConditionOper.OR, conditions: conditions);
 }
 
+/// sql: not
 class SqlNot extends SqlConditionGroup {
   SqlNot([SqlCondition? condition]) : super(SqlConditionOper.NOT) {
     if (condition != null) {

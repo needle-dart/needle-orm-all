@@ -5,6 +5,7 @@ import 'package:inflection3/inflection3.dart';
 
 import 'inspector.dart';
 
+/// Orm meta class, used by generator
 class OrmMetaClass {
   final String name;
   final String? superClassName;
@@ -88,6 +89,7 @@ class OrmMetaClass {
   }
 }
 
+/// orm meta field , used by generator
 class OrmMetaField {
   final String name;
   final String type;
@@ -126,6 +128,7 @@ class OrmMetaField {
   }
 }
 
+/// orm meta method , used by generator
 class OrmMetaMethod {
   final String name;
   final List<OrmAnnotation> ormAnnotations;

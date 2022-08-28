@@ -12,12 +12,18 @@ abstract class Model {
   Future<void> load({int batchSize = 1});
 }
 
+/// Orm Base Annotation
 abstract class OrmAnnotation {
   const OrmAnnotation();
+
+  /// whether it's executed at the database side.
   bool isServerSide(ActionType actionType) => false;
+
+  /// expression which will be executed at the database side.
   String serverSideExpr(ActionType actionType) => '';
 }
 
+/// ActionType: Insert, Update, Delete, Select
 enum ActionType { Insert, Update, Delete, Select }
 
 /// Query for a Model
@@ -32,6 +38,7 @@ abstract class AbstractModelQuery<M, ID> {
   Future<List<M>> findByIds(List idList,
       {List<Model>? existModeList, bool includeSoftDeleted = false});
 
+  /// find models by params
   Future<List<M>> findBy(Map<String, dynamic> params,
       {List<Model>? existModeList, bool includeSoftDeleted = false});
 
@@ -55,7 +62,7 @@ abstract class AbstractModelQuery<M, ID> {
 
 abstract class OrmClassAnnotation {}
 
-/// [Entity] annotation marks a class as a Model.
+/// @Entity annotation marks a class as a Model.
 class Entity extends OrmAnnotation {
   // final String? name;
   final String? db; // Database name
@@ -63,7 +70,7 @@ class Entity extends OrmAnnotation {
   const Entity({this.db = Database.defaultDbName});
 }
 
-/// [Table] annotation can be used to specify an alternative table name rather than the default one.
+/// @Table annotation can be used to specify an alternative table name rather than the default one.
 class Table extends OrmAnnotation {
   final String? name;
   final String? catalog;
@@ -75,12 +82,12 @@ class Table extends OrmAnnotation {
   const Table({this.name, this.catalog, this.schema, this.indexes = const []});
 }
 
-/// [ID] annotation marks a `single` property as Primary Key.
+/// @ID annotation marks a `single` property as Primary Key.
 class ID extends OrmAnnotation {
   const ID();
 }
 
-/// [Column] annotation used to customize the column defination.
+/// @Column annotation used to customize the column defination.
 class Column extends OrmAnnotation {
   final String? name;
   final int length;
@@ -106,14 +113,17 @@ class Column extends OrmAnnotation {
       this.table});
 }
 
+/// @Lob , NOT implemented yet!
 class Lob extends OrmAnnotation {
   const Lob();
 }
 
+/// @Version
 class Version extends OrmAnnotation {
   const Version();
 }
 
+/// @Index , NOT implemented yet!
 class Index extends OrmAnnotation {
   final String? name;
   final String? columnList;
@@ -121,6 +131,7 @@ class Index extends OrmAnnotation {
   const Index({this.name, this.columnList, this.unique = false});
 }
 
+/// @ManyToOne
 class ManyToOne extends OrmAnnotation {
   // cascade
   // fetch
@@ -128,6 +139,7 @@ class ManyToOne extends OrmAnnotation {
   const ManyToOne();
 }
 
+/// @OneToMany
 class OneToMany extends OrmAnnotation {
   // cascade
   // fetch
@@ -137,6 +149,7 @@ class OneToMany extends OrmAnnotation {
   const OneToMany({this.mappedBy});
 }
 
+/// @OneToOne
 class OneToOne extends OrmAnnotation {
   // cascade
   // fetch
@@ -147,10 +160,12 @@ class OneToOne extends OrmAnnotation {
   const OneToOne({this.mappedBy});
 }
 
+/// @ManyToMany , NOT implemented yet!
 class ManyToMany extends OrmAnnotation {
   const ManyToMany();
 }
 
+/// @OrderBy , NOT implemented yet!
 class OrderBy extends OrmAnnotation {
   final String value;
   // fetch
@@ -160,57 +175,71 @@ class OrderBy extends OrmAnnotation {
   const OrderBy(this.value);
 }
 
+/// @PrePersist
 class PrePersist extends OrmAnnotation {
   const PrePersist();
 }
 
+//// @PreUpdate
 class PreUpdate extends OrmAnnotation {
   const PreUpdate();
 }
 
+/// @PreRemove , executed before logic remove.
 class PreRemove extends OrmAnnotation {
   const PreRemove();
 }
 
+/// @PreRemovePermanent , executed before permanent remove.
 class PreRemovePermanent extends OrmAnnotation {
   const PreRemovePermanent();
 }
 
+/// @PostPersist
 class PostPersist extends OrmAnnotation {
   const PostPersist();
 }
 
+/// @PostUpdate
 class PostUpdate extends OrmAnnotation {
   const PostUpdate();
 }
 
+/// @PostRemove
 class PostRemove extends OrmAnnotation {
   const PostRemove();
 }
 
+/// @PostRemovePermanent
 class PostRemovePermanent extends OrmAnnotation {
   const PostRemovePermanent();
 }
 
+/// @PostLoad
 class PostLoad extends OrmAnnotation {
   const PostLoad();
 }
 
+/// @Transient
 class Transient extends OrmAnnotation {
   const Transient();
 }
 
+/// @DbComment , NOT implemented yet!
 // io.ebean extension
-
 class DbComment extends OrmAnnotation {
   final String comment;
   const DbComment(this.comment);
 }
 
+/// @SoftDelete
+// io.ebean extension
 class SoftDelete extends OrmAnnotation {
   const SoftDelete();
 }
 
+/// @WhenCreated
+// io.ebean extension
 class WhenCreated extends OrmAnnotation {
   const WhenCreated();
 
@@ -222,6 +251,8 @@ class WhenCreated extends OrmAnnotation {
       actionType == ActionType.Insert ? 'now()' : '';
 }
 
+/// @WhenModified
+// io.ebean extension
 class WhenModified extends OrmAnnotation {
   const WhenModified();
   @override
@@ -236,10 +267,14 @@ class WhenModified extends OrmAnnotation {
           : '';
 }
 
+/// @WhoCreated , NOT implemented yet!
+// io.ebean extension
 class WhoCreated extends OrmAnnotation {
   const WhoCreated();
 }
 
+/// @WhoModified , NOT implemented yet!
+// io.ebean extension
 class WhoModified extends OrmAnnotation {
   const WhoModified();
 }
