@@ -749,9 +749,22 @@ abstract class BaseModelQuery<M extends Model, D>
   N toModel<N extends M>(
       List<dynamic> dbRow, List<OrmMetaField> selectedFields, String className,
       {N? existModel}) {
-    N model = existModel ??
-        modelInspector.newInstance(className,
+    N? model = existModel;
+
+    if (existModel == null) {
+      var idField = modelInspector.idFields(className)?.first;
+      if (idField != null) {
+        int j = selectedFields.indexOf(idField);
+        if (j >= 0) {
+          model = modelInspector.newInstance(className,
+              attachDb: true, id: dbRow[j], topQuery: topQuery) as N;
+        }
+      } else {
+        model = modelInspector.newInstance(className,
             attachDb: true, topQuery: topQuery) as N;
+      }
+    }
+
     modelInspector.markLoaded(model);
     for (int i = 0; i < dbRow.length; i++) {
       var f = selectedFields[i];
@@ -760,15 +773,14 @@ abstract class BaseModelQuery<M extends Model, D>
       if (f.isModelType) {
         if (value != null) {
           var obj = modelInspector.newInstance(f.elementType,
-              attachDb: true, topQuery: topQuery);
-          modelInspector.setFieldValue(obj, 'id', value);
+              id: value, attachDb: true, topQuery: topQuery);
           modelInspector.setFieldValue(model, name, obj);
         }
       } else {
         modelInspector.setFieldValue(model, name, value);
       }
     }
-    return model;
+    return model!;
   }
 
   @override

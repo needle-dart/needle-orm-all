@@ -148,6 +148,9 @@ class ColumnGenerator {
       case ColumnType.float:
         methodName = 'float';
         break;
+      case ColumnType.double:
+        methodName = 'float';
+        break;
       case ColumnType.decimal:
         methodName = 'float';
         break;

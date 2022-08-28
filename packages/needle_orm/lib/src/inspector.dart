@@ -8,8 +8,9 @@ abstract class ModelInspector<M> {
   String getClassName(M model);
 
   /// create a new instance of specified [className]
+  /// newInstance() might return an instance cached in top query.
   M newInstance(String className,
-      {bool attachDb = false, required BaseModelQuery topQuery});
+      {bool attachDb = false, dynamic id, required BaseModelQuery topQuery});
 
   BaseModelQuery newQuery(Database db, String className);
 

@@ -161,7 +161,7 @@ packages:
       name: mysql1
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.19.2"
+    version: "0.20.0"
   needle_orm:
     dependency: "direct main"
     description:

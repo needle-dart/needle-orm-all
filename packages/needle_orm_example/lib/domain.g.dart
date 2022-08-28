@@ -134,13 +134,13 @@ abstract class __Model extends Model {
 }
 
 /// cache bound with a top query
-class QueryModelCache {
+class _QueryModelCache {
   final ModelInspector modelInspector;
 
   // ignore: library_private_types_in_public_api
   Map<String, List<__Model>> cacheMap = {};
 
-  QueryModelCache(this.modelInspector);
+  _QueryModelCache(this.modelInspector);
 
   // ignore: library_private_types_in_public_api
   void add(__Model m) {
@@ -157,10 +157,21 @@ class QueryModelCache {
     cacheMap[className] ??= [];
     return cacheMap[className]!.where((e) => !e.__dbLoaded);
   }
+
+  __Model? find(String className, dynamic id) {
+    var idName = modelInspector.idFields(className)!.first.name;
+    var r = cacheMap[className]
+        ?.where((m) => modelInspector.getFieldValue(m, idName) == id);
+    if (r?.isEmpty ?? true) {
+      return null;
+    } else {
+      return r!.first;
+    }
+  }
 }
 
 /// support toMap(fields:'*'), toMap(fields:'name,price,author(*),editor(name,email)')
-class FieldFilter {
+class _FieldFilter {
   final String fields;
   final String? idField;
 
@@ -168,7 +179,7 @@ class FieldFilter {
 
   List<String> get fieldList => List.of(_fieldList);
 
-  FieldFilter(this.fields, this.idField) {
+  _FieldFilter(this.fields, this.idField) {
     _fieldList = _parseFields();
   }
 
@@ -241,13 +252,13 @@ class FieldFilter {
 
 abstract class _BaseModelQuery<T extends __Model, D>
     extends BaseModelQuery<T, D> {
-  late QueryModelCache _modelCache;
+  late _QueryModelCache _modelCache;
   final logger = Logger('_BaseModelQuery');
 
   _BaseModelQuery({BaseModelQuery? topQuery, String? propName, Database? db})
       : super(_modelInspector, db ?? Database.defaultDb,
             topQuery: topQuery, propName: propName) {
-    _modelCache = QueryModelCache(modelInspector);
+    _modelCache = _QueryModelCache(modelInspector);
   }
 
   void cache(__Model m) {
@@ -392,17 +403,34 @@ class _ModelInspector extends ModelInspector<__Model> {
 
   @override
   __Model newInstance(String className,
-      {bool attachDb = false, required BaseModelQuery topQuery}) {
+      {bool attachDb = false, dynamic id, required BaseModelQuery topQuery}) {
+    if (id != null) {
+      var cacheModel =
+          (topQuery as _BaseModelQuery)._modelCache.find(className, id);
+      if (cacheModel != null) {
+        return cacheModel;
+      }
+    }
+    __Model model;
     switch (className) {
       case 'Book':
-        return Book()..__markAttached(true, topQuery as _BaseModelQuery);
+        model = Book()..__markAttached(true, topQuery as _BaseModelQuery);
+        break;
       case 'User':
-        return User()..__markAttached(true, topQuery as _BaseModelQuery);
+        model = User()..__markAttached(true, topQuery as _BaseModelQuery);
+        break;
       case 'Job':
-        return Job()..__markAttached(true, topQuery as _BaseModelQuery);
+        model = Job()..__markAttached(true, topQuery as _BaseModelQuery);
+        break;
       default:
         throw 'unknown class : $className';
     }
+    if (id != null) {
+      setFieldValue(model, idFields(className)!.first.name, id);
+    }
+
+    topQuery._modelCache.add(model);
+    return model;
   }
 
   @override
@@ -767,7 +795,7 @@ abstract class BaseModel extends __Model {
 
   @override
   Map<String, dynamic> toMap({String fields = '*', bool ignoreNull = true}) {
-    var filter = FieldFilter(fields, __idFieldName);
+    var filter = _FieldFilter(fields, __idFieldName);
     if (ignoreNull) {
       var m = <String, dynamic>{};
       id != null && filter.contains("id") ? m["id"] = id : "";
@@ -917,7 +945,7 @@ class Book extends BaseModel {
 
   @override
   Map<String, dynamic> toMap({String fields = '*', bool ignoreNull = true}) {
-    var filter = FieldFilter(fields, __idFieldName);
+    var filter = _FieldFilter(fields, __idFieldName);
     if (ignoreNull) {
       var m = <String, dynamic>{};
       title != null && filter.contains("title") ? m["title"] = title : "";
@@ -1088,7 +1116,7 @@ class User extends BaseModel {
 
   @override
   Map<String, dynamic> toMap({String fields = '*', bool ignoreNull = true}) {
-    var filter = FieldFilter(fields, __idFieldName);
+    var filter = _FieldFilter(fields, __idFieldName);
     if (ignoreNull) {
       var m = <String, dynamic>{};
       name != null && filter.contains("name") ? m["name"] = name : "";
@@ -1234,7 +1262,7 @@ class Job extends BaseModel {
 
   @override
   Map<String, dynamic> toMap({String fields = '*', bool ignoreNull = true}) {
-    var filter = FieldFilter(fields, __idFieldName);
+    var filter = _FieldFilter(fields, __idFieldName);
     if (ignoreNull) {
       var m = <String, dynamic>{};
       name != null && filter.contains("name") ? m["name"] = name : "";

@@ -437,7 +437,7 @@ class ClassInspector {
     return '''
       @override
         Map<String, dynamic> toMap({String fields = '*', bool ignoreNull = true}) {
-          var filter = FieldFilter(fields, __idFieldName);
+          var filter = _FieldFilter(fields, __idFieldName);
           if (ignoreNull) {
             var m = <String, dynamic>{};
             ${clazz.fields.map(_toNonNullMap).join('\n')} 

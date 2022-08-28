@@ -30,6 +30,7 @@ void main() async {
   test('testFindByIds', testFindByIds);
   test('testFindBy', testFindBy);
   test('testFindListBySql', testFindListBySql);
+  test('testCache', testCache);
   test('testInsertBatch', testInsertBatch);
   test('testLoadNestedFields', testLoadNestedFields);
   test('testPaging', testPaging);
@@ -38,6 +39,8 @@ void main() async {
   test('testMultipleDatabases', testMultipleDatabases);
   test('testOneToMany', testOneToMany);
 
+  // test('testTransactionMariaDb', testTransactionMariaDb,
+  //     timeout: Timeout.factor(2));
   test('testTransactionMariaDbRaw', testTransactionMariaDbRaw);
   test('testTransactionPg', testTransactionPg);
   test('testTransactionPgRaw', testTransactionPgRaw);
@@ -420,6 +423,26 @@ Future<void> testOneToMany() async {
   }
 }
 
+Future<void> testCache() async {
+  var log = Logger('$logPrefix testCache');
+  var user = User()..name = 'cach_name';
+  await user.save();
+
+  var book1 = Book()
+    ..author = user
+    ..title = 'book title1';
+  var book2 = Book()
+    ..author = user
+    ..title = 'book title2';
+  await book1.save();
+  await book2.save();
+
+  var q = Book.query()..id.IN([book1.id!, book2.id!]);
+  var books = await q.findList();
+  // books[0].author should equals books[1].author
+  log.info('used cache? ${books[0].author == books[1].author}');
+}
+
 // Failed for now!
 Future<void> testMariaDbTransaction() async {
   var log = Logger('$logPrefix testMariaDbTransaction');
@@ -432,7 +455,7 @@ Future<void> testMariaDbTransaction() async {
     for (int i = 1; i < n; i++) {
       var user = User()
         ..name = 'tx_name_$i'
-        ..address = 'China Shanghai street_$i ' * (i + 2)
+        ..address = 'China Shanghai street_$i ' * (i * 2 + 2)
         ..age = n;
       try {
         // log.info('using global db? ${globalDb == db}, using db2? ${db2 == db}');

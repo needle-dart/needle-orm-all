@@ -255,6 +255,26 @@ void main() async {
     print('ids: $idList');
   }
 
+  // model cache in the same Query.
+  {
+    var user = User()..name = 'cach_name';
+    await user.save();
+
+    var book1 = Book()
+      ..author = user
+      ..title = 'book title1';
+    var book2 = Book()
+      ..author = user
+      ..title = 'book title2';
+    await book1.save();
+    await book2.save();
+
+    var q = Book.query()..id.IN([book1.id!, book2.id!]);
+    var books = await q.findList();
+    // books[0].author should be as same as books[1].author
+    print('used cache? ${books[0].author == books[1].author}');
+  }
+
   // Transaction : only works on PostgreSQL, there're still some problems on MariaDB
   {
     var q = User.query();
