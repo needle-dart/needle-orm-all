@@ -1,22 +1,20 @@
 Needle ORM for dart.
 
-Databases supported
-------
+## Databases supported
 
 - [x] PostgreSQL
 - [x] MariaDB (except that transaction is still not working )
 
 Try to be a familar ORM framework to java programmers, so it will obey javax.persistence spec.
 
-Annotations supported
-------
+## Annotations supported
 
 - [x] @Entity
 - [x] @Column
 - [x] @Transient
 - [x] @Table
 - [x] @ID
-- [ ] @Lob
+- [x] @Lob => Uint8List
 - [x] @OneToOne
 - [x] @OneToMany
 - [x] @ManyToOne
@@ -26,6 +24,7 @@ Annotations supported
 - [x] @Version
 
 some other useful annotations , just like [Ebean ORM for Java/Kotlin](https://ebean.io), are supported as well :
+
 - [x] @SoftDelete
 - [x] @WhenCreated
 - [x] @WhenModified
@@ -74,7 +73,7 @@ abstract class _BaseModel {
 }
 
 @Table(name: 'tbl_user')
-@Entity(prePersist: 'beforeInsert', postPersist: 'afterInsert')
+@Entity()
 class _User extends _BaseModel {
   @Column()
   String? _name;
@@ -106,6 +105,12 @@ class _Book extends _BaseModel {
 
   @ManyToOne()
   _User? _author;
+
+  // BLOB
+  // mysql: ALTER TABLE books ADD image BLOB NULL;
+  // postgresql: ALTER TABLE books ADD image bytea NULL;
+  @Column()
+  Uint8List? _image;
 
   _Book();
 }
@@ -300,8 +305,6 @@ void main() async {
 
 ```
 
+## Example
 
-Example
---------
-
-Example project can be found here:  [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/test/main_test.dart) .
+Example project can be found here: [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/test/main_test.dart) .

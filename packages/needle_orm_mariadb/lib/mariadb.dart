@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:needle_orm/needle_orm.dart';
@@ -28,7 +29,8 @@ class MariaDbDatabase extends Database {
     var params = _sortedValues(sql, substitutionValues);
 
     for (var name in substitutionValues.keys) {
-      if (substitutionValues[name] is List) {
+      if (substitutionValues[name] is List &&
+          substitutionValues[name] is! Uint8List) {
         // expand List, for example : id IN @idList => id IN (?,?,?)
         var list = substitutionValues[name] as List;
         var q = List.filled(list.length, '?', growable: false).join(',');
@@ -41,8 +43,12 @@ class MariaDbDatabase extends Database {
     var params2 = <Object>[];
     for (var p in params) {
       if (p is List) {
-        // expand params for List
-        params2.addAll([...p]);
+        if (p is Uint8List) {
+          params2.add(Blob.fromBytes(p));
+        } else {
+          // expand params for List
+          params2.addAll([...p]);
+        }
       } else {
         params2.add(p);
       }
@@ -126,7 +132,18 @@ class MariaDbQueryResult extends DbQueryResult with ListMixin<List> {
   final Results _result;
   final List<ResultRow> rows;
 
-  MariaDbQueryResult(this._result) : rows = _result.toList();
+  MariaDbQueryResult(this._result) : rows = _result.toList() {
+    for (var row in rows) {
+      var values = row.values;
+      if (values != null) {
+        for (int i = 0; i < values.length; i++) {
+          if (values[i] is Blob) {
+            values[i] = Uint8List.fromList((values[i] as Blob).toBytes());
+          }
+        }
+      }
+    }
+  }
 
   @override
   int get length => _result.length;

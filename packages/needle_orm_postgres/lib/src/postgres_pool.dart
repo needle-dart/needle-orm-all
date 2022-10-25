@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 import 'package:needle_orm/needle_orm.dart';
@@ -42,7 +43,10 @@ class PostgreSqlPoolDatabase extends Database {
     // expand List first
     var param = <String, dynamic>{};
     substitutionValues.forEach((key, value) {
-      if (value is List) {
+      if (value is Uint8List) {
+        sql = sql.replaceAll('@$key', '@$key:bytea ');
+        param[key] = value;
+      } else if (value is List) {
         var newKeys = [];
         for (var i = 0; i < value.length; i++) {
           var key2 = '${key}_$i';
@@ -57,6 +61,8 @@ class PostgreSqlPoolDatabase extends Database {
         param[key] = value;
       }
     });
+
+    logger.config('final query: $sql ; params: $param');
 
     return PgQueryResult(await _pool.run<PostgreSQLResult>((pgContext) async {
       return await pgContext.query(sql, substitutionValues: param);

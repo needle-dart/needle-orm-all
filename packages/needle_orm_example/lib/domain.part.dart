@@ -8,8 +8,6 @@ extension BizUser on User {
     return name!.startsWith('admin');
   }
 
-  // specified in @Entity(prePersist: 'beforeInsert', postPersist: 'afterInsert') because override is not possible now, see: https://github.com/dart-lang/language/issues/177
-  // @override
   void beforeInsert() {
     logger.info('');
     _logger.info('beforeInsert ....');

@@ -133,6 +133,7 @@ class FieldInspector {
     'double',
     'bool',
     'String',
+    'Uint8List',
     'DateTime'
   ];
 
@@ -142,7 +143,7 @@ class FieldInspector {
       fieldElement.type.toString().replaceAll(RegExp('_'), '');
 
   String get _queryCleanType =>
-      fieldElement.type.toString().replaceAll(RegExp('(List)|[<>_?]+'), '');
+      fieldElement.type.toString().replaceAll(RegExp('(^List)|[<>_?]+'), '');
 }
 
 class ClassInspector {

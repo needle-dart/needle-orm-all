@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:pool/pool.dart';
 import 'package:postgres/postgres.dart';
@@ -46,7 +47,10 @@ class PostgreSqlDatabase extends Database {
     // expand List first
     var param = <String, dynamic>{};
     substitutionValues.forEach((key, value) {
-      if (value is List) {
+      if (value is Uint8List) {
+        sql = sql.replaceAll('@$key', '@$key:bytea ');
+        param[key] = value;
+      } else if (value is List) {
         var newKeys = [];
         for (var i = 0; i < value.length; i++) {
           var key2 = '${key}_$i';
