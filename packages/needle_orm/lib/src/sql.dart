@@ -39,7 +39,7 @@ abstract class Database {
   /// Executes a single query.
   Future<DbQueryResult> query(
       String sql, Map<String, dynamic> substitutionValues,
-      {List<String> returningFields = const [], String? tableName});
+      {List<String> returningFields = const [], String? tableName, Map<String, QueryHint> hints = const {} });
 
   /// Enters a database transaction, performing the actions within,
   /// and returning the results of [f].
@@ -52,6 +52,10 @@ abstract class Database {
   Future<T> transaction<T>(FutureOr<T> Function(Database) f);
 
   Future<void> close();
+}
+
+enum QueryHint {
+  lob,
 }
 
 abstract class DbQueryResult implements List<List> {

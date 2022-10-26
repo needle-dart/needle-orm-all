@@ -133,17 +133,22 @@ class FieldInspector {
     'double',
     'bool',
     'String',
-    'Uint8List',
+    'List<int>',
     'DateTime'
   ];
 
-  bool get _isSimpleType => simpleTypes.indexOf(_queryCleanType) >= 0;
+  bool get _isSimpleType => simpleTypes.contains(_queryCleanType);
 
   String get _cleanType =>
       fieldElement.type.toString().replaceAll(RegExp('_'), '');
 
-  String get _queryCleanType =>
-      fieldElement.type.toString().replaceAll(RegExp('(^List)|[<>_?]+'), '');
+  String get _queryCleanType {
+      var t = fieldElement.type.toString().replaceAll('?', '');
+      if(simpleTypes.contains(t)){
+        return t;
+      }
+      return t.replaceAll(RegExp('(^List)|[<>_?]+'), '');
+  }
 }
 
 class ClassInspector {

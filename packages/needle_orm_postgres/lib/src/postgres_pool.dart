@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 import 'package:needle_orm/needle_orm.dart';
@@ -31,7 +30,7 @@ class PostgreSqlPoolDatabase extends Database {
   @override
   Future<DbQueryResult> query(
       String sql, Map<String, dynamic> substitutionValues,
-      {List<String> returningFields = const [], String? tableName}) async {
+      {List<String> returningFields = const [], String? tableName, Map<String, QueryHint> hints = const {}}) async {
     if (returningFields.isNotEmpty) {
       var fields = returningFields.join(', ');
       var returning = 'RETURNING $fields';
@@ -43,7 +42,7 @@ class PostgreSqlPoolDatabase extends Database {
     // expand List first
     var param = <String, dynamic>{};
     substitutionValues.forEach((key, value) {
-      if (value is Uint8List) {
+      if (QueryHint.lob==hints[key]) {
         sql = sql.replaceAll('@$key', '@$key:bytea ');
         param[key] = value;
       } else if (value is List) {

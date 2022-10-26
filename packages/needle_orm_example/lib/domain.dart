@@ -1,7 +1,5 @@
 // ignore_for_file: unused_field, unused_element
 
-import 'dart:typed_data';
-
 import 'package:angel3_migration/angel3_migration.dart' hide Table;
 import 'package:logging/logging.dart';
 import 'package:needle_orm/needle_orm.dart';
@@ -56,8 +54,8 @@ class _Book extends _BaseModel {
 
   // mysql: ALTER TABLE books ADD image BLOB NULL;
   // postgresql: ALTER TABLE books ADD image bytea NULL;
-  @Column()
-  Uint8List? _image;
+  @Lob()
+  List<int>? _image;
 
   _Book();
 }

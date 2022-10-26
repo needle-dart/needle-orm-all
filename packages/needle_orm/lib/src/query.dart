@@ -370,8 +370,9 @@ abstract class BaseModelQuery<M extends Model, D>
             modelInspector.getFieldValue(value, clz!.idFields.first.name);
       }
     });
+    
     var id = await db.query(sql, dirtyMap,
-        returningFields: [idField.columnName], tableName: tableName);
+        returningFields: [idField.columnName], tableName: tableName, hints:_hints(clz, dirtyMap));
     _logger.fine(' >>> query returned: $id');
     if (id.isNotEmpty) {
       if (id[0].isNotEmpty) {
@@ -380,6 +381,19 @@ abstract class BaseModelQuery<M extends Model, D>
       }
     }
     return 0;
+  }
+
+  Map<String,QueryHint> _hints(OrmMetaClass metaClass, Map<String,dynamic> params){
+    var hints = <String,QueryHint>{};
+    params.forEach((key, value) {
+      var f = metaClass.findField(key);
+      if(f!=null){
+        if(f.ormAnnotations.whereType<Lob>().isNotEmpty){
+          hints[key] = QueryHint.lob;
+        }
+      }
+    });
+    return hints;
   }
 
   Future<void> insertBatch(List<M> modelList, {int batchSize = 100}) async {
@@ -450,7 +464,7 @@ abstract class BaseModelQuery<M extends Model, D>
       }
     });
     var rows = await db.query(sql, dirtyMap,
-        returningFields: [idColumnName], tableName: tableName);
+        returningFields: [idColumnName], tableName: tableName, hints:_hints(clz, dirtyMap));
     _logger.fine(' >>> query returned: $rows');
     if (rows.isNotEmpty) {
       for (int i = 0; i < rows.length; i++) {
@@ -513,7 +527,7 @@ abstract class BaseModelQuery<M extends Model, D>
       }
     });
 
-    var queryResult = await db.query(sql, dirtyMap, tableName: tableName);
+    var queryResult = await db.query(sql, dirtyMap, tableName: tableName, hints:_hints(clz, dirtyMap));
     if (versionField != null && queryResult.affectedRowCount != 1) {
       throw 'update failed, expected 1 row affected, but ${queryResult.affectedRowCount} rows affected actually!';
     }

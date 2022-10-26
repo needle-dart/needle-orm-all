@@ -14,7 +14,7 @@ Try to be a familar ORM framework to java programmers, so it will obey javax.per
 - [x] @Transient
 - [x] @Table
 - [x] @ID
-- [x] @Lob => Uint8List
+- [x] @Lob => List<int>
 - [x] @OneToOne
 - [x] @OneToMany
 - [x] @ManyToOne
@@ -109,8 +109,8 @@ class _Book extends _BaseModel {
   // BLOB
   // mysql: ALTER TABLE books ADD image BLOB NULL;
   // postgresql: ALTER TABLE books ADD image bytea NULL;
-  @Column()
-  Uint8List? _image;
+  @Lob()
+  List<int>? _image;
 
   _Book();
 }

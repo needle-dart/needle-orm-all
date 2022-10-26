@@ -487,9 +487,6 @@ class OrmMetaInfoBaseModel extends OrmMetaClass {
               OrmMetaField('remark', 'String?', ormAnnotations: [
                 Column(),
               ]),
-              OrmMetaField('image', 'Uint8List?', ormAnnotations: [
-                Column(),
-              ]),
             ],
             methods: []);
 }
@@ -512,6 +509,9 @@ class OrmMetaInfoBook extends OrmMetaClass {
               ]),
               OrmMetaField('author', 'User?', ormAnnotations: [
                 ManyToOne(),
+              ]),
+              OrmMetaField('image', 'List<int>?', ormAnnotations: [
+                Lob(),
               ]),
             ],
             methods: []);
@@ -620,7 +620,6 @@ class BaseModelModelQuery<T extends BaseModel> extends _BaseModelQuery<T, int> {
   StringColumn createdBy = StringColumn("createdBy");
   StringColumn lastUpdatedBy = StringColumn("lastUpdatedBy");
   StringColumn remark = StringColumn("remark");
-  ColumnQuery image = ColumnQuery("image");
 
   @override
   List<ColumnQuery> get columns => [
@@ -631,8 +630,7 @@ class BaseModelModelQuery<T extends BaseModel> extends _BaseModelQuery<T, int> {
         updatedAt,
         createdBy,
         lastUpdatedBy,
-        remark,
-        image
+        remark
       ];
 
   @override
@@ -727,17 +725,6 @@ abstract class BaseModel extends __Model {
     _remark = v;
   }
 
-  Uint8List? _image;
-  Uint8List? get image {
-    __ensureLoaded();
-    return _image;
-  }
-
-  set image(Uint8List? v) {
-    __markDirty(_image, v, 'image');
-    _image = v;
-  }
-
   BaseModel();
 
   @override
@@ -765,8 +752,6 @@ abstract class BaseModel extends __Model {
         return _lastUpdatedBy;
       case "remark":
         return _remark;
-      case "image":
-        return _image;
       default:
         if (errorOnNonExistField) {
           throw 'class _BaseModel has now such field: $fieldName';
@@ -804,9 +789,6 @@ abstract class BaseModel extends __Model {
       case "remark":
         remark = value;
         break;
-      case "image":
-        image = value;
-        break;
       default:
         if (errorOnNonExistField) {
           throw 'class _BaseModel has now such field: $fieldName';
@@ -839,7 +821,6 @@ abstract class BaseModel extends __Model {
           ? m["lastUpdatedBy"] = lastUpdatedBy
           : "";
       remark != null && filter.contains("remark") ? m["remark"] = remark : "";
-      image != null && filter.contains("image") ? m["image"] = image : "";
 
       return m;
     }
@@ -854,7 +835,6 @@ abstract class BaseModel extends __Model {
       if (filter.contains('createdBy')) "createdBy": createdBy,
       if (filter.contains('lastUpdatedBy')) "lastUpdatedBy": lastUpdatedBy,
       if (filter.contains('remark')) "remark": remark,
-      if (filter.contains('image')) "image": image,
     };
   }
 
@@ -883,9 +863,10 @@ class BookModelQuery extends BaseModelModelQuery<Book> {
   StringColumn title = StringColumn("title");
   DoubleColumn price = DoubleColumn("price");
   UserModelQuery get author => topQuery.findQuery(db, "User", "author");
+  ColumnQuery image = ColumnQuery("image");
 
   @override
-  List<ColumnQuery> get columns => [title, price];
+  List<ColumnQuery> get columns => [title, price, image];
 
   @override
   List<BaseModelQuery> get joins => [author];
@@ -925,6 +906,17 @@ class Book extends BaseModel {
     _author = v;
   }
 
+  List<int>? _image;
+  List<int>? get image {
+    __ensureLoaded();
+    return _image;
+  }
+
+  set image(List<int>? v) {
+    __markDirty(_image, v, 'image');
+    _image = v;
+  }
+
   Book();
 
   @override
@@ -941,6 +933,8 @@ class Book extends BaseModel {
         return _price;
       case "author":
         return _author;
+      case "image":
+        return _image;
       default:
         return super
             .__getField(fieldName, errorOnNonExistField: errorOnNonExistField);
@@ -960,6 +954,9 @@ class Book extends BaseModel {
       case "author":
         author = value;
         break;
+      case "image":
+        image = value;
+        break;
       default:
         super.__setField(fieldName, value,
             errorOnNonExistField: errorOnNonExistField);
@@ -977,6 +974,7 @@ class Book extends BaseModel {
           ? m["author"] = author?.toMap(
               fields: filter.subFilter("author"), ignoreNull: ignoreNull)
           : "";
+      image != null && filter.contains("image") ? m["image"] = image : "";
       m.addAll(super.toMap(fields: fields, ignoreNull: true));
       return m;
     }
@@ -986,6 +984,7 @@ class Book extends BaseModel {
       if (filter.contains('author'))
         "author": author?.toMap(
             fields: filter.subFilter("author"), ignoreNull: ignoreNull),
+      if (filter.contains('image')) "image": image,
       ...super.toMap(fields: fields, ignoreNull: ignoreNull),
     };
   }
@@ -1323,6 +1322,9 @@ class BookMigration extends Migration {
 
       table.integer('author_id');
 
+      // WRONG code generated here. angel3_migration needs to support more types for Table.
+      table.varChar('image');
+
       table.serial('id');
 
       table.integer('version');
@@ -1338,8 +1340,6 @@ class BookMigration extends Migration {
       table.varChar('last_updated_by');
 
       table.varChar('remark');
-
-      table.varChar('image');
     });
   }
 
@@ -1376,8 +1376,6 @@ class UserMigration extends Migration {
       table.varChar('last_updated_by');
 
       table.varChar('remark');
-
-      table.varChar('image');
     });
   }
 
@@ -1408,8 +1406,6 @@ class JobMigration extends Migration {
       table.varChar('last_updated_by');
 
       table.varChar('remark');
-
-      table.varChar('image');
     });
   }
 

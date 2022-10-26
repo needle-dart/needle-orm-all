@@ -1,22 +1,20 @@
 Needle ORM for dart.
 
-Databases supported
-------
+## Databases supported
 
 - [x] PostgreSQL
 - [x] MariaDB (except that transaction is still not working )
 
 Try to be a familar ORM framework to java programmers, so it will obey javax.persistence spec.
 
-Annotations supported
-------
+## Annotations supported
 
 - [x] @Entity
 - [x] @Column
 - [x] @Transient
 - [x] @Table
 - [x] @ID
-- [ ] @Lob
+- [x] @Lob => List<int>
 - [x] @OneToOne
 - [x] @OneToMany
 - [x] @ManyToOne
@@ -24,27 +22,23 @@ Annotations supported
 - [ ] @Index
 - [ ] @OrderBy
 - [x] @Version
-- [x] @PreInsert
-- [x] @PreUpdate
-- [x] @PreRemove
-- [x] @PostInsert
-- [x] @PostUpdate
-- [x] @PostRemove
-- [x] @PostLoad
 
 some other useful annotations , just like [Ebean ORM for Java/Kotlin](https://ebean.io), are supported as well :
+
 - [x] @SoftDelete
 - [x] @WhenCreated
 - [x] @WhenModified
 - [ ] @WhoCreated
 - [ ] @WhoModified
+- [x] @PreInsert
+- [x] @PreUpdate
+- [x] @PreRemove
 - [x] @PreRemovePermanent
+- [x] @PostInsert
+- [x] @PostUpdate
+- [x] @PostRemove
 - [x] @PostRemovePermanent
-
-Validations:
-- [ ] @ValidNumber : min & max number 
-- [ ] @ValidSize : size of String & collections(List/Array, Set, Map)
-- [ ] @ValidPattern , some built-in patterns: email, ip, digits
+- [x] @PostLoad
 
 ## Define Model
 
@@ -112,6 +106,12 @@ class _Book extends _BaseModel {
   @ManyToOne()
   _User? _author;
 
+  // BLOB
+  // mysql: ALTER TABLE books ADD image BLOB NULL;
+  // postgresql: ALTER TABLE books ADD image bytea NULL;
+  @Lob()
+  List<int>? _image;
+
   _Book();
 }
 
@@ -125,7 +125,6 @@ extension Biz_User on User {
     return name!.startsWith('admin');
   }
 
-  // @override
   void beforeInsert() {
     print('before insert user ....');
   }
@@ -209,20 +208,6 @@ void main() async {
       ..offset = 10
       ..maxRows = 20  // limit
       ..findList();
-  }
-
-
-  // Find by raw sql:
-  {
-    var log = Logger('$logPrefix testFindBy');
-    var books = await Book.query()
-        .findListBySql('select distinct(t.*) from books t limit 3');
-    log.info('books list: $books');
-    for (var book in books) {
-      await book.author?.load();
-    }
-    log.info(
-        'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
   }
 
   // Soft Delete:
@@ -317,8 +302,6 @@ void main() async {
 
 ```
 
+## Example
 
-Example
---------
-
-Example project can be found here:  [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/test/main_test.dart) .
+Example project can be found here: [needle_orm_example](https://github.com/needle-dart/needle-orm-all/blob/main/packages/needle_orm_example/test/main_test.dart) .
