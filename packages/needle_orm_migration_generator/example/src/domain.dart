@@ -1,7 +1,7 @@
 // ignore_for_file: unused_field, unused_element
 
-import 'package:angel3_migration/angel3_migration.dart';
 import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm_migration/needle_orm_migration.dart';
 
 part 'domain.g.dart'; // auto generated code
 
@@ -47,6 +47,12 @@ class _Book extends _BaseModel {
 
   @ManyToOne()
   _User? _author;
+
+  @Lob()
+  List<int>? _image;
+
+  @Column()
+  List<int>? _jsonb;
 
   _Book();
 }

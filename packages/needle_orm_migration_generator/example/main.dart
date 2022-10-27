@@ -1,7 +1,7 @@
-import 'package:angel3_migration_runner/angel3_migration_runner.dart';
-import 'package:angel3_migration_runner/mariadb.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
+import 'package:needle_orm_migration_runner/mariadb.dart';
+import 'package:needle_orm_migration_runner/needle_orm_migration_runner.dart';
 
 import 'src/domain.dart';
 

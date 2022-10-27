@@ -15,55 +15,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.6.0"
-  angel3_migration:
-    dependency: "direct main"
-    description:
-      name: angel3_migration
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.1.0"
-  angel3_migration_runner:
-    dependency: "direct main"
-    description:
-      name: angel3_migration_runner
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.1.0"
-  angel3_model:
-    dependency: transitive
-    description:
-      name: angel3_model
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.0.0"
-  angel3_orm:
-    dependency: transitive
-    description:
-      name: angel3_orm
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.1.0"
-  angel3_orm_generator:
-    dependency: transitive
-    description:
-      name: angel3_orm_generator
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.2.0"
-  angel3_serialize:
-    dependency: transitive
-    description:
-      name: angel3_serialize
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.0.0"
-  angel3_serialize_generator:
-    dependency: transitive
-    description:
-      name: angel3_serialize_generator
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.1.1"
   args:
     dependency: transitive
     description:
@@ -78,13 +29,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.9.0"
-  belatuk_code_buffer:
-    dependency: transitive
-    description:
-      name: belatuk_code_buffer
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "3.0.2"
   boolean_selector:
     dependency: transitive
     description:
@@ -169,13 +113,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.1"
-  clock:
-    dependency: transitive
-    description:
-      name: clock
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "1.1.1"
   code_builder:
     dependency: transitive
     description:
@@ -281,13 +218,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.5.3+2"
-  intl:
-    dependency: transitive
-    description:
-      name: intl
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.17.0"
   io:
     dependency: transitive
     description:
@@ -379,13 +309,27 @@ packages:
       relative: true
     source: path
     version: "0.0.4+1"
+  needle_orm_migration:
+    dependency: "direct main"
+    description:
+      path: "../needle_orm_migration"
+      relative: true
+    source: path
+    version: "0.0.4+1"
   needle_orm_migration_generator:
     dependency: "direct main"
     description:
       path: "../needle_orm_migration_generator"
       relative: true
     source: path
-    version: "0.0.2+1"
+    version: "0.0.4+1"
+  needle_orm_migration_runner:
+    dependency: "direct main"
+    description:
+      path: "../needle_orm_migration_runner"
+      relative: true
+    source: path
+    version: "0.0.4+1"
   needle_orm_postgres:
     dependency: "direct main"
     description:
@@ -400,13 +344,6 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.1"
-  optional:
-    dependency: transitive
-    description:
-      name: optional
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "6.1.0+1"
   package_config:
     dependency: transitive
     description:

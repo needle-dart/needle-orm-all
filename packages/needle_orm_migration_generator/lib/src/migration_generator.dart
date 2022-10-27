@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:angel3_orm/angel3_orm.dart' hide ManyToMany;
 import 'package:build/src/builder/build_step.dart';
 import 'package:inflection3/inflection3.dart';
 import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm_migration/needle_orm_migration.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:angel3_orm_generator/angel3_orm_generator.dart';
 import 'helper.dart';
 
 class NeedleOrmMigrationGenerator extends Generator {
@@ -105,7 +104,7 @@ class ColumnGenerator {
     if (shouldIgnore(field)) {
       return '';
     }
-    var columnType = inferColumnType(field.type);
+    var columnType = inferColumnType(field);
     var columnName = getColumnName(name);
     if (isModel(field)) {
       columnName += '_id';
@@ -168,6 +167,9 @@ class ColumnGenerator {
         break;
       case ColumnType.timeStamp:
         methodName = 'timeStamp';
+        break;
+      case ColumnType.binary:
+        methodName = 'binary';
         break;
       default:
         methodName = 'varChar';

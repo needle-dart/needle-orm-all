@@ -1,10 +1,10 @@
-import 'package:angel3_migration_runner/angel3_migration_runner.dart';
-import 'package:angel3_migration_runner/mariadb.dart';
-import 'package:angel3_migration_runner/postgres.dart';
 import 'package:logging/logging.dart';
 import 'package:needle_orm_example/common.dart';
 
 import 'package:needle_orm_example/domain.dart';
+import 'package:needle_orm_migration_runner/mariadb.dart';
+import 'package:needle_orm_migration_runner/needle_orm_migration_runner.dart';
+import 'package:needle_orm_migration_runner/postgres.dart';
 
 void main(List<String> args) async {
   Logger.root.level = Level.ALL; // defaults to Level.INFO

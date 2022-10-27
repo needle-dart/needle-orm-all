@@ -1,8 +1,8 @@
 // ignore_for_file: unused_field, unused_element
 
-import 'package:angel3_migration/angel3_migration.dart' hide Table;
 import 'package:logging/logging.dart';
 import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm_migration/needle_orm_migration.dart' hide Table;
 import '../common.dart';
 
 part 'domain.g.dart'; // auto generated code

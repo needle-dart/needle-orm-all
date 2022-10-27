@@ -1322,7 +1322,6 @@ class BookMigration extends Migration {
 
       table.integer('author_id');
 
-      // WRONG code generated here. angel3_migration needs to support more types for Table.
       table.varChar('image');
 
       table.serial('id');
