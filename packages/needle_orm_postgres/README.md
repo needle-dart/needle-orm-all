@@ -1,6 +1,6 @@
 # needle_orm_postgres.dart
 
-postgres support for needle
+postgres support for needle.
 
 # IMPORTANT
 
