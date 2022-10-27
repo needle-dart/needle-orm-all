@@ -1,3 +1,8 @@
+## 0.0.6
+
+ - **FEAT**: readme: blob & clob support.
+ - **FEAT**: support blob (List<int>) & clob (String).
+
 ## 0.0.5
 
  - **FIX**: small changelog format.

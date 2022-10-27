@@ -1,6 +1,6 @@
 name: needle_orm_migration
 description: ORM migration for Needle ORM, and ORM framework inspired by Ebean.io (an excellent ORM from Java/Kotlin world).
-version: 0.0.5
+version: 0.0.6
 homepage: https://github.com/needle-dart/needle-orm-all
 repository: https://github.com/needle-dart/needle-orm-all.git
 
@@ -11,7 +11,7 @@ dependencies:
   inflection3: ^0.5.3+2
   recase: ^4.0.0
   logging: ^1.0.2
-  needle_orm: ^0.0.5
+  needle_orm: ^0.0.6
   analyzer: ^4.0.0
   source_gen: ^1.0.0
 

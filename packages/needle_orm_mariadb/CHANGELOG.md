@@ -1,3 +1,7 @@
+## 0.0.6
+
+ - **FEAT**: support blob (List<int>) & clob (String).
+
 ## 0.0.5
 
  - **FIX**: remove overrides.yaml.
