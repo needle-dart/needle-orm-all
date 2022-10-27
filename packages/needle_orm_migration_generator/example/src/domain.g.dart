@@ -16,9 +16,9 @@ class BookMigration extends Migration {
 
       table.integer('author_id');
 
-      table.binary('image');
+      table.blob('image');
 
-      table.varChar('jsonb');
+      table.clob('content');
 
       table.serial('id');
 

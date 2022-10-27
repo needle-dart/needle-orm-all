@@ -174,6 +174,9 @@ class ColumnGenerator {
       case ColumnType.blob:
         methodName = 'blob';
         break;
+      case ColumnType.clob:
+        methodName = 'clob';
+        break;
       default:
         methodName = 'varChar';
         break;

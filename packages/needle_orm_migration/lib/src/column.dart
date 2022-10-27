@@ -256,12 +256,18 @@ class ColumnType {
 
   // Blob
   static const ColumnType blob = ColumnType('blob');
+  static const ColumnType clob = ColumnType('clob');
 }
 
 /// Detect and return the correct column type
 ColumnType inferColumnType(FieldElement field) {
   DartType type = field.type;
   if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
+    if (field.metadata
+        .where((annot) => annot.toSource() == '@Lob()')
+        .isNotEmpty) {
+      return ColumnType.clob;
+    }
     return ColumnType.varChar;
   }
   if (const TypeChecker.fromRuntime(int).isAssignableFromType(type)) {
@@ -290,7 +296,7 @@ ColumnType inferColumnType(FieldElement field) {
     if (field.metadata
         .where((annot) => annot.toSource() == '@Lob()')
         .isNotEmpty) {
-      return ColumnType.binary;
+      return ColumnType.blob;
     }
     return ColumnType.jsonb;
   }

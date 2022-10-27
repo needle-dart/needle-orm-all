@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
@@ -25,7 +26,9 @@ class MariaDbDatabase extends Database {
   @override
   Future<DbQueryResult> query(
       String sql, Map<String, dynamic> substitutionValues,
-      {List<String> returningFields = const [], String? tableName, Map<String, QueryHint> hints = const {} }) async {
+      {List<String> returningFields = const [],
+      String? tableName,
+      Map<String, QueryHint> hints = const {}}) async {
     var params = _sortedValues(sql, substitutionValues, hints);
 
     for (var name in substitutionValues.keys) {
@@ -43,7 +46,7 @@ class MariaDbDatabase extends Database {
     var params2 = <Object>[];
     for (var p in params) {
       if (p.value is List) {
-        if (QueryHint.lob==p.hint) {
+        if (QueryHint.lob == p.hint) {
           params2.add(Blob.fromBytes(p.value));
         } else {
           // expand params for List
@@ -72,15 +75,16 @@ class MariaDbDatabase extends Database {
     // return results.map((r) => r.toList()).toList();
   }
 
-  static List<_PositionValue> _sortedValues(
-      String query, Map<String, dynamic> substitutionValues, Map<String, QueryHint> hints) {
+  static List<_PositionValue> _sortedValues(String query,
+      Map<String, dynamic> substitutionValues, Map<String, QueryHint> hints) {
     List<_PositionValue> positions = [];
     for (var name in substitutionValues.keys) {
       for (var start = 0;
           start < query.length &&
               (start = query.indexOf('@$name', start)) != -1;
           start++) {
-        positions.add(_PositionValue(name, start, substitutionValues[name], hints[name]));
+        positions.add(
+            _PositionValue(name, start, substitutionValues[name], hints[name]));
       }
     }
     positions.sort((a, b) => a.position.compareTo(b.position));
@@ -140,7 +144,12 @@ class MariaDbQueryResult extends DbQueryResult with ListMixin<List> {
       if (values != null) {
         for (int i = 0; i < values.length; i++) {
           if (values[i] is Blob) {
-            values[i] = (values[i] as Blob).toBytes();
+            // @see: /include/mysql_com.h
+            if ((_result.fields[i].flags! & 0x80) != 0) {
+              values[i] = (values[i] as Blob).toBytes();
+            } else {
+              values[i] = String.fromCharCodes((values[i] as Blob).toBytes());
+            }
           }
         }
       }

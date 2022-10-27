@@ -5,6 +5,14 @@ import 'package:charcode/ascii.dart';
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
+    switch (str) {
+      case 'blob':
+        str = 'bytea';
+        break;
+      case 'clob':
+        str = 'text';
+        break;
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {

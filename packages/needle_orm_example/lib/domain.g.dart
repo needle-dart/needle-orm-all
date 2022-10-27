@@ -513,6 +513,9 @@ class OrmMetaInfoBook extends OrmMetaClass {
               OrmMetaField('image', 'List<int>?', ormAnnotations: [
                 Lob(),
               ]),
+              OrmMetaField('content', 'String?', ormAnnotations: [
+                Lob(),
+              ]),
             ],
             methods: []);
 }
@@ -864,9 +867,10 @@ class BookModelQuery extends BaseModelModelQuery<Book> {
   DoubleColumn price = DoubleColumn("price");
   UserModelQuery get author => topQuery.findQuery(db, "User", "author");
   ColumnQuery image = ColumnQuery("image");
+  StringColumn content = StringColumn("content");
 
   @override
-  List<ColumnQuery> get columns => [title, price, image];
+  List<ColumnQuery> get columns => [title, price, image, content];
 
   @override
   List<BaseModelQuery> get joins => [author];
@@ -917,6 +921,17 @@ class Book extends BaseModel {
     _image = v;
   }
 
+  String? _content;
+  String? get content {
+    __ensureLoaded();
+    return _content;
+  }
+
+  set content(String? v) {
+    __markDirty(_content, v, 'content');
+    _content = v;
+  }
+
   Book();
 
   @override
@@ -935,6 +950,8 @@ class Book extends BaseModel {
         return _author;
       case "image":
         return _image;
+      case "content":
+        return _content;
       default:
         return super
             .__getField(fieldName, errorOnNonExistField: errorOnNonExistField);
@@ -957,6 +974,9 @@ class Book extends BaseModel {
       case "image":
         image = value;
         break;
+      case "content":
+        content = value;
+        break;
       default:
         super.__setField(fieldName, value,
             errorOnNonExistField: errorOnNonExistField);
@@ -975,6 +995,9 @@ class Book extends BaseModel {
               fields: filter.subFilter("author"), ignoreNull: ignoreNull)
           : "";
       image != null && filter.contains("image") ? m["image"] = image : "";
+      content != null && filter.contains("content")
+          ? m["content"] = content
+          : "";
       m.addAll(super.toMap(fields: fields, ignoreNull: true));
       return m;
     }
@@ -985,6 +1008,7 @@ class Book extends BaseModel {
         "author": author?.toMap(
             fields: filter.subFilter("author"), ignoreNull: ignoreNull),
       if (filter.contains('image')) "image": image,
+      if (filter.contains('content')) "content": content,
       ...super.toMap(fields: fields, ignoreNull: ignoreNull),
     };
   }
@@ -1322,7 +1346,9 @@ class BookMigration extends Migration {
 
       table.integer('author_id');
 
-      table.varChar('image');
+      table.blob('image');
+
+      table.clob('content');
 
       table.serial('id');
 

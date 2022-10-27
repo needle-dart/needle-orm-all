@@ -9,6 +9,11 @@ abstract class MySqlGenerator {
     if (column.type == ColumnType.timeStamp) {
       str = ColumnType.dateTime.name;
     }
+    switch (str) {
+      case 'clob':
+        str = 'text';
+        break;
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {

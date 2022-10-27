@@ -51,8 +51,8 @@ class _Book extends _BaseModel {
   @Lob()
   List<int>? _image;
 
-  @Column()
-  String? _jsonb;
+  @Lob()
+  String? _content;
 
   _Book();
 }

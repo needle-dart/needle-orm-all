@@ -34,6 +34,7 @@ Future<void> testLob() async {
   var book = Book()
     ..price = 0.3
     ..title = 'Dart'
+    ..content = 'Long Long Text here'
     ..image = Uint8List.fromList([1, 2, 3]);
   await book.insert();
 
@@ -42,6 +43,6 @@ Future<void> testLob() async {
   var books = await Book.query().findList();
   log.info('books list: $books');
   for (var book in books) {
-    log.info('book image : ${book.image}');
+    log.info('book image : ${book.image}, content: ${book.content}');
   }
 }

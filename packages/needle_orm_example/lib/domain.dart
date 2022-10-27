@@ -54,8 +54,12 @@ class _Book extends _BaseModel {
 
   // mysql: ALTER TABLE books ADD image BLOB NULL;
   // postgresql: ALTER TABLE books ADD image bytea NULL;
+  // blob
   @Lob()
   List<int>? _image;
+
+  @Lob()
+  String? _content;
 
   _Book();
 }
