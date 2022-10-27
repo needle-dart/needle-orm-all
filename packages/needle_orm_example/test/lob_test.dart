@@ -29,6 +29,14 @@ void main() async {
 }
 
 Future<void> testLob() async {
+  for (var db in Database.all().values) {
+    await _testLob(db);
+  }
+  // await _testLob(Database.lookup(dbMariadb)!);
+  // await _testLob(Database.lookup(dbPostgres)!);
+}
+
+Future<void> _testLob(Database db) async {
   var log = Logger('$logPrefix testLob');
 
   var book = Book()
@@ -36,13 +44,18 @@ Future<void> testLob() async {
     ..title = 'Dart'
     ..content = 'Long Long Text here' * 1000
     ..image = Uint8List.fromList(List.filled(300, 5));
-  await book.insert();
+  await book.insert(db: db);
 
   log.info('\t book saved with id: ${book.id}');
 
-  var books = await Book.query().findList();
+  var books = await Book.query(db: db).findList();
   log.info('books list: $books');
   for (var book in books) {
     log.info('book image : ${book.image}, content: ${book.content}');
   }
+
+  books[0]
+    ..image = Uint8List.fromList(List.filled(300, 7))
+    ..content = 'Long2 Long \n' * 1000;
+  await books[0].save(db: db);
 }

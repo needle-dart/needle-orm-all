@@ -175,6 +175,7 @@ const strModel = '''
 
     void __markLoaded(bool loaded) {
       __dbLoaded = loaded;
+      __cleanDirty();
     }
 
     @override

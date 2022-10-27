@@ -65,6 +65,7 @@ abstract class __Model extends Model {
 
   void __markLoaded(bool loaded) {
     __dbLoaded = loaded;
+    __cleanDirty();
   }
 
   @override

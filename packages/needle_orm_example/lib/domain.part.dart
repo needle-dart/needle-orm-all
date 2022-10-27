@@ -9,7 +9,6 @@ extension BizUser on User {
   }
 
   void beforeInsert() {
-    logger.info('');
     _logger.info('beforeInsert ....');
   }
 

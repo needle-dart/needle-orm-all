@@ -802,7 +802,6 @@ abstract class BaseModelQuery<M extends Model, D>
       }
     }
 
-    modelInspector.markLoaded(model);
     for (int i = 0; i < dbRow.length; i++) {
       var f = selectedFields[i];
       var name = f.name;
@@ -817,6 +816,7 @@ abstract class BaseModelQuery<M extends Model, D>
         modelInspector.setFieldValue(model, name, value);
       }
     }
+    modelInspector.markLoaded(model);
     return model!;
   }
 

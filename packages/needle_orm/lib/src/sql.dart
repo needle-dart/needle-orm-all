@@ -30,6 +30,11 @@ abstract class Database {
     return _map[dbName];
   }
 
+  /// return all databases registered!
+  static Map<String, Database> all() {
+    return Map.unmodifiable(_map);
+  }
+
   static Future<void> closeAll() async {
     for (var db in _map.values) {
       await db.close();
