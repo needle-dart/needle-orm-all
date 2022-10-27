@@ -49,7 +49,7 @@ extension OrmAnnotationConverter on ElementAnnotation {
   bool? boolValue(String name) => value.getField(name)?.toBoolValue();
 
   OrmAnnotation ormAnnotation() {
-    print('************ ${this.toSource()} ');
+    // print('************ ${this.toSource()} ');
     switch (name) {
       case 'DbComment':
         return toDbComment();

@@ -16,6 +16,8 @@ abstract class Table {
 
   MigrationColumn binary(String name) => declare(name, ColumnType.binary);
 
+  MigrationColumn blob(String name) => declare(name, ColumnType.blob);
+
   MigrationColumn numeric(String name, {int precision = 17, int scale = 3}) {
     return declare(name, ColumnType.numeric);
   }

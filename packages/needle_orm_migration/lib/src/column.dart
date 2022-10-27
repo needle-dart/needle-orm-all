@@ -253,6 +253,9 @@ class ColumnType {
   static const ColumnType xml = ColumnType('xml');
   static const ColumnType cursor = ColumnType('cursor');
   static const ColumnType table = ColumnType('table');
+
+  // Blob
+  static const ColumnType blob = ColumnType('blob');
 }
 
 /// Detect and return the correct column type
@@ -280,10 +283,10 @@ ColumnType inferColumnType(FieldElement field) {
     return ColumnType.jsonb;
   }
   if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
-    print('${field.name} : ${field.type} : ${field.metadata}');
+    /* print('${field.name} : ${field.type} : ${field.metadata}');
     for (var annot in field.metadata) {
       print('\t annot toSource: ${annot.toSource()}');
-    }
+    } */
     if (field.metadata
         .where((annot) => annot.toSource() == '@Lob()')
         .isNotEmpty) {

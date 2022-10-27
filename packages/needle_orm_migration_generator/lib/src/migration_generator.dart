@@ -171,6 +171,9 @@ class ColumnGenerator {
       case ColumnType.binary:
         methodName = 'binary';
         break;
+      case ColumnType.blob:
+        methodName = 'blob';
+        break;
       default:
         methodName = 'varChar';
         break;
