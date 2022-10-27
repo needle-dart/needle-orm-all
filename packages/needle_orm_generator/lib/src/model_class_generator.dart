@@ -143,11 +143,11 @@ class FieldInspector {
       fieldElement.type.toString().replaceAll(RegExp('_'), '');
 
   String get _queryCleanType {
-      var t = fieldElement.type.toString().replaceAll('?', '');
-      if(simpleTypes.contains(t)){
-        return t;
-      }
-      return t.replaceAll(RegExp('(^List)|[<>_?]+'), '');
+    var t = fieldElement.type.toString().replaceAll('?', '');
+    if (simpleTypes.contains(t)) {
+      return t;
+    }
+    return t.replaceAll(RegExp('(^List)|[<>_?]+'), '');
   }
 }
 

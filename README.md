@@ -14,7 +14,7 @@ Try to be a familar ORM framework to java programmers, so it will obey javax.per
 - [x] @Transient
 - [x] @Table
 - [x] @ID
-- [x] @Lob => List<int>
+- [x] @Lob
 - [x] @OneToOne
 - [x] @OneToMany
 - [x] @ManyToOne
