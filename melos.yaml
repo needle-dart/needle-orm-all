@@ -10,6 +10,10 @@ command:
     usePubspecOverrides: true
     
 scripts:
+  get:
+    exec: dart pub get .
+  test:
+    exec: dart test .
   analyze:
     exec: dart analyze .
   format:

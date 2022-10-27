@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:pool/pool.dart';
 import 'package:postgres/postgres.dart';
@@ -35,7 +34,9 @@ class PostgreSqlDatabase extends Database {
   @override
   Future<DbQueryResult> query(
       String sql, Map<String, dynamic> substitutionValues,
-      {List<String> returningFields = const [], String? tableName, Map<String, QueryHint> hints = const {}}) async {
+      {List<String> returningFields = const [],
+      String? tableName,
+      Map<String, QueryHint> hints = const {}}) async {
     if (returningFields.isNotEmpty) {
       var fields = returningFields.join(', ');
       var returning = 'RETURNING $fields';
@@ -47,7 +48,7 @@ class PostgreSqlDatabase extends Database {
     // expand List first
     var param = <String, dynamic>{};
     substitutionValues.forEach((key, value) {
-      if (QueryHint.lob==hints[key]) {
+      if (QueryHint.lob == hints[key]) {
         sql = sql.replaceAll('@$key', '@$key:bytea ');
         param[key] = value;
       } else if (value is List) {
@@ -170,7 +171,9 @@ class PostgreSqlDatabasePool extends Database {
   @override
   Future<DbQueryResult> query(
       String sql, Map<String, dynamic> substitutionValues,
-      {List<String> returningFields = const [], String? tableName, Map<String, QueryHint> hints = const {}}) {
+      {List<String> returningFields = const [],
+      String? tableName,
+      Map<String, QueryHint> hints = const {}}) {
     return _pool.withResource(() async {
       var executor = await _next();
       return executor.query(sql, substitutionValues,

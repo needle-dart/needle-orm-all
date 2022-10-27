@@ -113,7 +113,7 @@ class Column extends OrmAnnotation {
       this.table});
 }
 
-/// @Lob , NOT implemented yet!
+/// @Lob
 class Lob extends OrmAnnotation {
   const Lob();
 }
