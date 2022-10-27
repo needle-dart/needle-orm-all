@@ -1,3 +1,7 @@
+## 0.0.5
+
+ - **FEAT**: add migration runner package.
+
 # Change Log
 
 ## 7.0.0

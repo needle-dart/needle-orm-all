@@ -1,3 +1,12 @@
+## 0.0.5
+
+ - **FIX**: deprecated properties of analyzer.
+ - **FIX**: small changelog format.
+ - **FIX**: remove overrides.yaml.
+ - **FEAT**: support @Lob (for type List<int>).
+ - **FEAT**: support blob column (Uint8List).
+ - **FEAT**: Query reuses instance with the same id.
+
 ## 0.0.4+1
 
  - **FIX**: homepage & repository url in pubspec.yaml.

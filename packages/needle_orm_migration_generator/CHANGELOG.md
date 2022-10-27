@@ -1,3 +1,10 @@
+## 0.0.5
+
+ - **FIX**: deprecated properties of analyzer.
+ - **FIX**: remove overrides.yaml.
+ - **FEAT**: replace angel3_migration with needle_migration.
+ - **FEAT**: Query reuses instance with the same id.
+
 ## 0.0.2+1
 
  - **FIX**: homepage & repository url in pubspec.yaml.

@@ -1,6 +1,6 @@
 name: needle_orm_mariadb
 description: ORM for dart. This package supports MariaDB/MySQL (using mysql1).
-version: 0.0.4+1
+version: 0.0.5
 homepage: https://github.com/needle-dart/needle-orm-all
 repository: https://github.com/needle-dart/needle-orm-all.git
 
@@ -10,7 +10,7 @@ environment:
 dependencies:
   mysql1: ^0.20.0
   logging: ^1.0.2
-  needle_orm: ^0.0.4+1
+  needle_orm: ^0.0.5
 dev_dependencies:
   lints: ^2.0.0
   test: ^1.16.0

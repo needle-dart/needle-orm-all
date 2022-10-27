@@ -1,3 +1,11 @@
+## 0.0.5
+
+ - **FIX**: remove overrides.yaml.
+ - **FEAT**: replace angel3_migration with needle_migration.
+ - **FEAT**: support @Lob (for type List<int>).
+ - **FEAT**: support blob column (Uint8List).
+ - **FEAT**: Query reuses instance with the same id.
+
 ## 0.0.4+1
 
  - **FIX**: homepage & repository url in pubspec.yaml.
