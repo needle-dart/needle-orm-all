@@ -168,8 +168,8 @@ class ClassInspector {
   ClassInspector(this.classElement, ConstantReader annotation)
       : name = classElement.name.removePrefix() {
     if (classElement.supertype != null &&
-        classElement.supertype!.element2.name != 'Object') {
-      superClassElement = classElement.supertype!.element2 as ClassElement;
+        classElement.supertype!.element.name != 'Object') {
+      superClassElement = classElement.supertype!.element as ClassElement;
       superClassName = superClassElement!.name.removePrefix();
       isTopClass = false;
     }

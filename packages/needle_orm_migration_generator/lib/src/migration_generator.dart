@@ -49,7 +49,7 @@ TypeChecker get idTypeChecker => TypeChecker.fromRuntime(ID);
 extension IDChecker on FieldElement {
   bool isID() {
     return this.metadata.any((annot) =>
-        idTypeChecker.isAssignableFrom(annot.element!.enclosingElement3!));
+        idTypeChecker.isAssignableFrom(annot.element!.enclosingElement!));
   }
 }
 
@@ -62,7 +62,7 @@ class ClassMigrationGenerator {
       : name = clazz.name.removePrefix();
 
   List<FieldElement> getAllFields(ClassElement clz) {
-    var superClass = clz.supertype?.element2 as ClassElement?;
+    var superClass = clz.supertype?.element as ClassElement?;
     if (superClass != null && allClasses.contains(superClass)) {
       return [...clz.fields, ...getAllFields(superClass)];
     } else {

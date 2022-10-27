@@ -300,7 +300,7 @@ ColumnType inferColumnType(FieldElement field) {
     }
     return ColumnType.jsonb;
   }
-  if (type is InterfaceType && type.element2 is EnumElement) {
+  if (type is InterfaceType && type.element is EnumElement) {
     return ColumnType.int;
   }
 

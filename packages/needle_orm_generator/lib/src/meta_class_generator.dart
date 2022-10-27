@@ -56,7 +56,7 @@ class ClassMetaInfoGenerator {
   ClassMetaInfoGenerator(this.clazz)
       : name = clazz.name.removePrefix(),
         isAbstract = clazz.isAbstract,
-        superClassName = clazz.supertype?.element2.name.removePrefix() ?? '';
+        superClassName = clazz.supertype?.element.name.removePrefix() ?? '';
 
   String generate() {
     var fields = clazz.fields

@@ -12,7 +12,7 @@ dependencies:
   recase: ^4.0.0
   logging: ^1.0.2
   needle_orm: ^0.0.6
-  analyzer: ^4.0.0
+  analyzer: ^5.2.0
   source_gen: ^1.0.0
 
 dev_dependencies:

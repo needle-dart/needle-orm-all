@@ -24,7 +24,7 @@ TypeChecker get typeChecker => TypeChecker.fromRuntime(OrmAnnotation);
 extension OrmFilter on List<ElementAnnotation> {
   Iterable<OrmAnnotation> ormAnnotations() sync* {
     for (ElementAnnotation elmAnnot in this) {
-      if (typeChecker.isSuperOf(elmAnnot.element!.enclosingElement3!)) {
+      if (typeChecker.isSuperOf(elmAnnot.element!.enclosingElement!)) {
         yield elmAnnot.ormAnnotation();
       }
     }
@@ -32,7 +32,7 @@ extension OrmFilter on List<ElementAnnotation> {
 
   Iterable<ElementAnnotation> ormTypes() sync* {
     for (ElementAnnotation elmAnnot in this) {
-      if (typeChecker.isSuperOf(elmAnnot.element!.enclosingElement3!)) {
+      if (typeChecker.isSuperOf(elmAnnot.element!.enclosingElement!)) {
         yield elmAnnot;
       }
     }
@@ -40,7 +40,7 @@ extension OrmFilter on List<ElementAnnotation> {
 }
 
 extension OrmAnnotationConverter on ElementAnnotation {
-  String get name => element!.enclosingElement3!.name!;
+  String get name => element!.enclosingElement!.name!;
   DartObject get value => computeConstantValue()!;
 
   String? stringValue(String name) => value.getField(name)?.toStringValue();

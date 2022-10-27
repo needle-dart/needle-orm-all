@@ -16,8 +16,8 @@ void main() async {
     initLogger();
 
     // the first db will be the default one as well
-    Database.register(dbPostgres, await initPostgreSQL());
     Database.register(dbMariadb, await initMariaDb());
+    Database.register(dbPostgres, await initPostgreSQL());
   });
 
   tearDown(() async {
@@ -34,8 +34,8 @@ Future<void> testLob() async {
   var book = Book()
     ..price = 0.3
     ..title = 'Dart'
-    ..content = 'Long Long Text here'
-    ..image = Uint8List.fromList([1, 2, 3]);
+    ..content = 'Long Long Text here' * 1000
+    ..image = Uint8List.fromList(List.filled(300, 5));
   await book.insert();
 
   log.info('\t book saved with id: ${book.id}');
