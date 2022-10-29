@@ -12,28 +12,30 @@ const logPrefix = 'NeedleOrmExample';
 final logger = Logger(logPrefix);
 late Database globalDb;
 
-Future<MySqlConnection> initMariaConnection() async {
+Future<MySqlConnection> initMariaConnection(Map<String, dynamic> params) async {
   var settings = ConnectionSettings(
-      host: 'localhost',
-      port: 3306,
-      user: 'needle',
-      password: 'needle',
-      db: 'needle');
+    host: params['host'],
+    port: params['port'],
+    db: params['database'],
+    user: params['username'],
+    password: params['password'],
+  );
   return await MySqlConnection.connect(settings);
 }
 
-Future<Database> initMariaDb() async {
-  return MariaDbDatabase(await initMariaConnection()); // used in domain.dart
+Future<Database> initMariaDb(Map<String, dynamic> params) async {
+  return MariaDbDatabase(
+      await initMariaConnection(params)); // used in domain.dart
 }
 
-Future<PgPool> initPgPool() async {
+Future<PgPool> initPgPool(Map<String, dynamic> params) async {
   return PgPool(
     PgEndpoint(
-      host: 'localhost',
-      port: 5432,
-      database: 'needle',
-      username: 'postgres',
-      password: 'postgres',
+      host: params['host'],
+      port: params['port'],
+      database: params['database'],
+      username: params['username'],
+      password: params['password'],
     ),
     settings: PgPoolSettings()
       ..maxConnectionAge = Duration(hours: 1)
@@ -41,18 +43,19 @@ Future<PgPool> initPgPool() async {
   );
 }
 
-Future<PostgreSQLConnection> initPostgreSQLConnection() async {
+Future<PostgreSQLConnection> initPostgreSQLConnection(
+    Map<String, dynamic> params) async {
   return PostgreSQLConnection(
-    'localhost',
-    5432,
-    'needle',
-    username: 'postgres',
-    password: 'postgres',
+    params['host'],
+    params['port'],
+    params['database'],
+    username: params['username'],
+    password: params['password'],
   );
 }
 
-Future<Database> initPostgreSQL() async {
-  return PostgreSqlPoolDatabase(await initPgPool());
+Future<Database> initPostgreSQL(Map<String, dynamic> params) async {
+  return PostgreSqlPoolDatabase(await initPgPool(params));
 }
 
 void initLogger() {

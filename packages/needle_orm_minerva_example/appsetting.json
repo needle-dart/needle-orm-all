@@ -1,1 +1,26 @@
-{"debug":{"compile-type":"JIT","host":"127.0.0.1","port":5000},"release":{"compile-type":"AOT","host":"0.0.0.0","port":8080},"assets":["/assets"]}
+{
+  "debug": { "compile-type": "JIT", "host": "127.0.0.1", "port": 5000 },
+  "release": { "compile-type": "AOT", "host": "0.0.0.0", "port": 8080 },
+  "values": {
+    "data-sources": {
+      "default": "postgresql",
+      "postgresql": {
+        "type": "postgresql",
+        "host": "localhost",
+        "port": 5432,
+        "database": "needle",
+        "username": "postgres",
+        "password": "postgres"
+      },
+      "mariadb": {
+        "type": "mariadb",
+        "host": "localhost",
+        "port": 3306,
+        "username": "needle",
+        "password": "needle",
+        "database": "needle"
+      }
+    }
+  },
+  "assets": ["/assets"]
+}

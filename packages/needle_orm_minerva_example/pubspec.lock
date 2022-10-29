@@ -268,7 +268,7 @@ packages:
     source: hosted
     version: "2.0.1"
   logging:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: logging
       url: "https://pub.flutter-io.cn"
@@ -303,7 +303,7 @@ packages:
     source: hosted
     version: "0.2.7"
   mysql1:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: mysql1
       url: "https://pub.flutter-io.cn"
@@ -380,7 +380,7 @@ packages:
     source: hosted
     version: "2.5.2"
   postgres_pool:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: postgres_pool
       url: "https://pub.flutter-io.cn"
@@ -485,7 +485,7 @@ packages:
     source: hosted
     version: "1.9.1"
   stack_trace:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: stack_trace
       url: "https://pub.flutter-io.cn"

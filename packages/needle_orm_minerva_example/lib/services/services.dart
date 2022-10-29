@@ -9,21 +9,28 @@ import 'dart:async';
 
 import 'package:needle_orm/needle_orm.dart';
 
-const dbMariadb = "mariadb";
-const dbPostgres = "postgres";
-
 var _inited = false;
 final random = Random();
 
 Future<void> initService(ServerContext context) async {
   if (_inited) return;
-  context.logPipeline.info('do service init ');
+  context.logPipeline.info('init services ...');
   _inited = true;
+
+  var configuration = ConfigurationManager();
+
+  await configuration.load();
+  Map<String, dynamic> dataSources = configuration['data-sources'];
   // initLogger();
 
-  // the first db will be the default one as well
-  Database.register(dbPostgres, await initPostgreSQL());
-  // Database.register(dbMariadb, await initMariaDb());
+  var dsName = dataSources['default'];
+  var dsCfg = dataSources[dsName]!;
+
+  if (dsCfg['type'] == 'postgresql') {
+    Database.register(dsName, await initPostgreSQL(dsCfg));
+  } else if (dsCfg['type'] == 'mariadb') {
+    Database.register(dsName, await initMariaDb(dsCfg));
+  }
 }
 
 Future<Book?> findOneBook(ServerContext context, MinervaRequest request) async {
