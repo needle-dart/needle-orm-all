@@ -18,6 +18,8 @@ scripts:
     exec: dart analyze .
   format:
     exec: dart format .
+  generate:
+    exec: dart run build_runner build
   doc:
     exec: dart doc
   doc-clean:

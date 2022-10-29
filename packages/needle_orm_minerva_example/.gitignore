@@ -1,0 +1,3 @@
+/build
+/.dart_tool
+test/test_app_setting.g.dart
