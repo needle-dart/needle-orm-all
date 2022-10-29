@@ -96,7 +96,7 @@ class FieldInspector {
       var oneToMany = ormAnnotations.whereType<OneToMany>().first;
       var fieldName = oneToMany.mappedBy!;
       lazyOneToManyList = '''
-        if (__dbAttached && _books==null) {
+        if (__dbAttached && _$name == null) {
           var meta = _modelInspector.meta('$_queryCleanType')!;
           var field = meta.fields.firstWhere((f) => f.name=='${fieldName.removePrefix()}');
           _$name = LazyOneToManyList(db: __topQuery!.db, clz: meta, refField:field, refFieldValue: id);
