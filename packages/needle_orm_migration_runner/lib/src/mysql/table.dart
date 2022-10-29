@@ -67,7 +67,7 @@ abstract class MySqlGenerator {
   }
 }
 
-class MysqlTable extends Table {
+class MysqlTable extends MigrationTable {
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -96,7 +96,7 @@ class MysqlTable extends Table {
   }
 }
 
-class MysqlAlterTable extends Table implements MutableTable {
+class MysqlAlterTable extends MigrationTable implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
   final Queue<String> _stack = Queue<String>();

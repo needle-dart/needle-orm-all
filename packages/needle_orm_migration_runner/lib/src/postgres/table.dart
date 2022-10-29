@@ -66,7 +66,7 @@ abstract class PostgresGenerator {
   }
 }
 
-class PostgresTable extends Table {
+class PostgresTable extends MigrationTable {
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -95,7 +95,7 @@ class PostgresTable extends Table {
   }
 }
 
-class PostgresAlterTable extends Table implements MutableTable {
+class PostgresAlterTable extends MigrationTable implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
   final Queue<String> _stack = Queue<String>();

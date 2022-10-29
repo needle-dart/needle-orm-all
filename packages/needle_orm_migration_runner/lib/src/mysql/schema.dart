@@ -56,8 +56,8 @@ class MySqlSchema extends Schema {
     _buf.write(';');
   }
 
-  void _create(
-      String tableName, void Function(Table table) callback, bool ifNotExists) {
+  void _create(String tableName, void Function(MigrationTable table) callback,
+      bool ifNotExists) {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = MysqlTable();
     callback(tbl);
@@ -68,11 +68,11 @@ class MySqlSchema extends Schema {
   }
 
   @override
-  void create(String tableName, void Function(Table table) callback) =>
+  void create(String tableName, void Function(MigrationTable table) callback) =>
       _create(tableName, callback, false);
 
   @override
   void createIfNotExists(
-          String tableName, void Function(Table table) callback) =>
+          String tableName, void Function(MigrationTable table) callback) =>
       _create(tableName, callback, true);
 }

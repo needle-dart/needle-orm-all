@@ -1,6 +1,6 @@
 import 'column.dart';
 
-abstract class Table {
+abstract class MigrationTable {
   MigrationColumn declareColumn(String name, TableColumn column);
 
   MigrationColumn declare(String name, ColumnType type) =>
@@ -49,7 +49,7 @@ abstract class Table {
   }
 }
 
-abstract class MutableTable extends Table {
+abstract class MutableTable extends MigrationTable {
   void rename(String newName);
   void dropColumn(String name);
   void renameColumn(String name, String newName);

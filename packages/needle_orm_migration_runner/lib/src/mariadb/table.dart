@@ -68,7 +68,7 @@ abstract class MariaDbGenerator {
   }
 }
 
-class MariaDbTable extends Table {
+class MariaDbTable extends MigrationTable {
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -97,7 +97,7 @@ class MariaDbTable extends Table {
   }
 }
 
-class MariaDbAlterTable extends Table implements MutableTable {
+class MariaDbAlterTable extends MigrationTable implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
   final Queue<String> _stack = Queue<String>();
