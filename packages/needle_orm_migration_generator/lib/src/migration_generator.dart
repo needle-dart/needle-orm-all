@@ -119,9 +119,11 @@ class ColumnGenerator {
       columnType = ColumnType.bigInt;
     }
     var columnMethodName = field.isID() ? 'serial' : methodName(columnType);
-
+    var lengthParam = columnMethodName == 'varChar' && columnLength() > 0
+        ? ', length: ${columnLength()}'
+        : '';
     return '''
-      table.$columnMethodName('$columnName');
+      table.$columnMethodName('$columnName'$lengthParam);
       ''';
   }
 
@@ -134,6 +136,14 @@ class ColumnGenerator {
     return field.metadata.ormAnnotations().whereType<ManyToMany>().isNotEmpty ||
         field.metadata.ormAnnotations().whereType<OneToMany>().isNotEmpty ||
         field.metadata.ormAnnotations().whereType<Transient>().isNotEmpty;
+  }
+
+  int columnLength() {
+    var columns = field.metadata.ormAnnotations().whereType<Column>().toList();
+    if (columns.isEmpty) {
+      return 0;
+    }
+    return columns[0].length;
   }
 
   String methodName(ColumnType type) {
