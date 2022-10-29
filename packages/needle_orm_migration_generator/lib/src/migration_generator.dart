@@ -15,7 +15,7 @@ class NeedleOrmMigrationGenerator extends Generator {
 
   @override
   FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
-    final values = <String>{};
+    final values = <String>[];
 
     var elements = library.annotatedWith(typeChecker);
     if (elements.isEmpty) {
@@ -23,13 +23,19 @@ class NeedleOrmMigrationGenerator extends Generator {
     }
 
     var classes = elements.map((e) => e.element).whereType<ClassElement>();
-
+    final allMigrations = <String>[];
     for (var clz in classes) {
       if (clz.isAbstract) {
         continue;
       }
       var classGen = ClassMigrationGenerator(clz, classes);
       values.add(classGen.generate());
+      allMigrations.add(classGen.migrationInstance);
+    }
+
+    if (allMigrations.isNotEmpty) {
+      values.add(
+          'final allMigrations = <Migration>[${allMigrations.join(',')}];');
     }
 
     return values.join('\n\n');
@@ -69,6 +75,8 @@ class ClassMigrationGenerator {
       return clz.fields;
     }
   }
+
+  String get migrationInstance => '${name}Migration()';
 
   String generate() {
     var tableName = getTableName(name);
