@@ -1,6 +1,6 @@
 import 'package:minerva/minerva.dart';
 
-import '../services/service_middleware.dart';
+import '../services/services.dart';
 
 class MiddlewaresBuilder extends MinervaMiddlewaresBuilder {
   @override
@@ -9,6 +9,8 @@ class MiddlewaresBuilder extends MinervaMiddlewaresBuilder {
 
     // Adds middleware for handling errors in middleware pipeline
     middlewares.add(ErrorMiddleware());
+
+    // middlewares.add(TimingMiddleware());
 
     middlewares.add(ServiceMiddleware());
 

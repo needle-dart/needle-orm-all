@@ -10,7 +10,8 @@
         "port": 5432,
         "database": "needle",
         "username": "postgres",
-        "password": "postgres"
+        "password": "postgres",
+        "pool-size": 5
       },
       "mariadb": {
         "type": "mariadb",
@@ -18,7 +19,8 @@
         "port": 3306,
         "username": "needle",
         "password": "needle",
-        "database": "needle"
+        "database": "needle",
+        "pool-size": 5
       }
     }
   },

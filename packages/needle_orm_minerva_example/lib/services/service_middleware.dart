@@ -21,10 +21,7 @@ class ServiceMiddleware extends Middleware {
       return NotFoundResult();
     }
 
-    var timeStart = DateTime.now();
     var result = await next.handle(context);
-    serverContext.logPipeline.info(
-        'time used [${DateTime.now().difference(timeStart).inMilliseconds} ms] , uri: ${context.request.uri} ');
     if (result is Model) {
       return JsonResult(result.toMap());
     } else if (result is List) {
@@ -35,6 +32,29 @@ class ServiceMiddleware extends Middleware {
         return OkResult(body: jsonEncode(body), headers: jsonHeader);
       }
     }
+    return result;
+  }
+}
+
+class TimingMiddleware extends Middleware {
+  late ServerContext serverContext;
+
+  @override
+  void initialize(ServerContext context) {
+    serverContext = context;
+  }
+
+  @override
+  Future<dynamic> handle(
+      MiddlewareContext context, MiddlewarePipelineNode? next) async {
+    if (next == null) {
+      return NotFoundResult();
+    }
+
+    var timeStart = DateTime.now();
+    var result = await next.handle(context);
+    serverContext.logPipeline.info(
+        'time used [${DateTime.now().difference(timeStart).inMilliseconds} ms] , uri: ${context.request.uri} ');
     return result;
   }
 }

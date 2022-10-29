@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:logging/logging.dart';
+import 'package:minerva/minerva.dart' hide Logger;
 import 'package:mysql1/mysql1.dart';
 import 'package:needle_orm/needle_orm.dart';
 import 'package:needle_orm_mariadb/needle_orm_mariadb.dart';
@@ -39,7 +40,7 @@ Future<PgPool> initPgPool(Map<String, dynamic> params) async {
     ),
     settings: PgPoolSettings()
       ..maxConnectionAge = Duration(hours: 1)
-      ..concurrency = 5,
+      ..concurrency = params['pool-size'] ?? 5,
   );
 }
 
@@ -75,4 +76,23 @@ void initLogger() {
           '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName} $frameInfo: ${record.message}: ${record.error ?? ''}');
     }
   });
+}
+
+Future<void> initService(ServerContext context) async {
+  context.logPipeline.info('init services ...');
+
+  var configuration = ConfigurationManager();
+
+  await configuration.load();
+  Map<String, dynamic> dataSources = configuration['data-sources'];
+  // initLogger();
+
+  var dsName = dataSources['default'];
+  var dsCfg = dataSources[dsName]!;
+
+  if (dsCfg['type'] == 'postgresql') {
+    Database.register(dsName, await initPostgreSQL(dsCfg));
+  } else if (dsCfg['type'] == 'mariadb') {
+    Database.register(dsName, await initMariaDb(dsCfg));
+  }
 }
