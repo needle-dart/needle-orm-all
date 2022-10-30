@@ -1341,7 +1341,7 @@ class BookMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('books', (table) {
-      table.varChar('title');
+      table.varChar('title', length: 255);
 
       table.float('price');
 
@@ -1365,7 +1365,7 @@ class BookMigration extends Migration {
 
       table.varChar('last_updated_by');
 
-      table.varChar('remark');
+      table.varChar('remark', length: 255);
     });
   }
 
@@ -1379,11 +1379,11 @@ class UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('users', (table) {
-      table.varChar('name');
+      table.varChar('name', length: 255);
 
-      table.varChar('login_name');
+      table.varChar('login_name', length: 255);
 
-      table.varChar('address');
+      table.varChar('address', length: 255);
 
       table.integer('age');
 
@@ -1401,7 +1401,7 @@ class UserMigration extends Migration {
 
       table.varChar('last_updated_by');
 
-      table.varChar('remark');
+      table.varChar('remark', length: 255);
     });
   }
 
@@ -1415,7 +1415,7 @@ class JobMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('jobs', (table) {
-      table.varChar('name');
+      table.varChar('name', length: 255);
 
       table.serial('id');
 
@@ -1431,7 +1431,7 @@ class JobMigration extends Migration {
 
       table.varChar('last_updated_by');
 
-      table.varChar('remark');
+      table.varChar('remark', length: 255);
     });
   }
 
@@ -1440,3 +1440,9 @@ class JobMigration extends Migration {
     schema.drop('jobs');
   }
 }
+
+final allMigrations = <Migration>[
+  BookMigration(),
+  UserMigration(),
+  JobMigration()
+];

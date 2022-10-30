@@ -13,6 +13,8 @@ dependencies:
   needle_orm: ^0.0.6
   needle_orm_mariadb: ^0.0.6
   needle_orm_postgres: ^0.0.6
+  needle_orm_migration: ^0.0.6
+  needle_orm_migration_runner: ^0.0.6
   postgres_pool: ^2.1.4
   stack_trace: ^1.11.0
 
@@ -22,3 +24,4 @@ dev_dependencies:
   dio: ^4.0.6
   build_runner: ^2.0.0
   needle_orm_generator: ^0.0.6
+  needle_orm_migration_generator: ^0.0.6

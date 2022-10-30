@@ -16,20 +16,15 @@ void main(List<String> args) async {
   args = ['refresh'];
 
   {
-    var migrationRunner =
-        MariaDbMigrationRunner(await initMariaConnection(), migrations: [
-      BookMigration(),
-      UserMigration(),
-    ]);
+    var migrationRunner = MariaDbMigrationRunner(await initMariaConnection(),
+        migrations: allMigrations);
     await runMigrations(migrationRunner, args);
   }
 
   {
-    var migrationRunner =
-        PostgresMigrationRunner(await initPostgreSQLConnection(), migrations: [
-      BookMigration(),
-      UserMigration(),
-    ]);
+    var migrationRunner = PostgresMigrationRunner(
+        await initPostgreSQLConnection(),
+        migrations: allMigrations);
     await runMigrations(migrationRunner, args);
   }
 }
