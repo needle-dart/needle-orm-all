@@ -1,3 +1,10 @@
+## 0.1.1
+
+ - **FEAT**: bump version: 0.1.0.
+ - **FEAT**: support @Transient.
+ - **FEAT**: support varchar length.
+ - **FEAT**: generates all Migration list for convenience.
+
 ## 0.0.6
 
  - **FIX**: define blob column.

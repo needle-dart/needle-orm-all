@@ -1,3 +1,10 @@
+## 0.1.1
+
+ - **FIX**: hard coded 'books'.
+ - **FIX**: clear dirty mark after properties loaded from db.
+ - **FEAT**: bump version: 0.1.0.
+ - **FEAT**: support @Transient.
+
 ## 0.0.6
 
  - **FIX**: define blob column.

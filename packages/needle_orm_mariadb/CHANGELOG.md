@@ -1,3 +1,7 @@
+## 0.1.1
+
+ - **FEAT**: bump version: 0.1.0.
+
 ## 0.0.6
 
  - **FEAT**: support blob (List<int>) & clob (String).

@@ -1,3 +1,9 @@
+## 0.1.1
+
+ - **FIX**: clear dirty mark after properties loaded from db.
+ - **FEAT**: bump version: 0.1.0.
+ - **FEAT**: rename migration Table to MigrationTable.
+
 ## 0.0.6
 
  - **FEAT**: readme: blob & clob support.
