@@ -2,12 +2,9 @@ import 'dart:math';
 
 import 'package:minerva/minerva.dart';
 
-import './common.dart';
 import './domain.dart';
 
 import 'dart:async';
-
-import 'package:needle_orm/needle_orm.dart';
 
 final random = Random();
 
@@ -27,7 +24,10 @@ Future<List<Book>> findSomeBooks(
   var q = Book.query();
   q.maxRows = 5;
 
-  return await q.findList();
+  return await q.findList()
+    ..forEach((book) {
+      book.extra = {"bbq": "bbqbbq"};
+    });
 }
 
 Future<Book?> createOneBook(

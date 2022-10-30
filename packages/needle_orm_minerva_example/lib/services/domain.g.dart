@@ -488,6 +488,9 @@ class OrmMetaInfoBaseModel extends OrmMetaClass {
               OrmMetaField('remark', 'String?', ormAnnotations: [
                 Column(),
               ]),
+              OrmMetaField('extra', 'Map<String, dynamic>?', ormAnnotations: [
+                Transient(),
+              ]),
             ],
             methods: []);
 }
@@ -729,6 +732,15 @@ abstract class BaseModel extends __Model {
     _remark = v;
   }
 
+  Map<String, dynamic>? _extra;
+  Map<String, dynamic>? get extra {
+    return _extra;
+  }
+
+  set extra(Map<String, dynamic>? v) {
+    _extra = v;
+  }
+
   BaseModel();
 
   @override
@@ -756,6 +768,8 @@ abstract class BaseModel extends __Model {
         return _lastUpdatedBy;
       case "remark":
         return _remark;
+      case "extra":
+        return _extra;
       default:
         if (errorOnNonExistField) {
           throw 'class _BaseModel has now such field: $fieldName';
@@ -793,6 +807,9 @@ abstract class BaseModel extends __Model {
       case "remark":
         remark = value;
         break;
+      case "extra":
+        extra = value;
+        break;
       default:
         if (errorOnNonExistField) {
           throw 'class _BaseModel has now such field: $fieldName';
@@ -825,6 +842,7 @@ abstract class BaseModel extends __Model {
           ? m["lastUpdatedBy"] = lastUpdatedBy
           : "";
       remark != null && filter.contains("remark") ? m["remark"] = remark : "";
+      extra != null && filter.contains("extra") ? m["extra"] = extra : "";
 
       return m;
     }
@@ -839,6 +857,7 @@ abstract class BaseModel extends __Model {
       if (filter.contains('createdBy')) "createdBy": createdBy,
       if (filter.contains('lastUpdatedBy')) "lastUpdatedBy": lastUpdatedBy,
       if (filter.contains('remark')) "remark": remark,
+      if (filter.contains('extra')) "extra": extra,
     };
   }
 

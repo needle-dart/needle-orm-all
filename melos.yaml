@@ -20,6 +20,9 @@ scripts:
     exec: dart format .
   generate:
     exec: dart run build_runner build
+    select-package:
+      depends-on: build_runner
+
   doc:
     exec: dart doc
   doc-clean:

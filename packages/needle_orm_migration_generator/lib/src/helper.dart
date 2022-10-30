@@ -83,6 +83,8 @@ extension OrmAnnotationConverter on ElementAnnotation {
         return ManyToOne();
       case 'ManyToMany':
         return ManyToMany();
+      case 'Transient':
+        return Transient();
       default:
         throw 'Unsupported OrmAnnotation: $name';
     }

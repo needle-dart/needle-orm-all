@@ -36,6 +36,9 @@ abstract class _BaseModel {
   @Column()
   String? _remark;
 
+  @Transient()
+  Map<String, dynamic>? _extra;
+
   _BaseModel();
 }
 

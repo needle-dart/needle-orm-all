@@ -35,6 +35,8 @@ class FieldInspector {
       ormAnnotations.whereType<OneToMany>().isNotEmpty ||
       ormAnnotations.whereType<Transient>().isNotEmpty;
 
+  bool get isTransient => ormAnnotations.whereType<Transient>().isNotEmpty;
+
   bool get isOneToMany => ormAnnotations.whereType<OneToMany>().isNotEmpty;
 
   void handleAnnotations(FieldElement ce) {
@@ -106,7 +108,7 @@ class FieldInspector {
     return '''
       $_cleanType _$name ;
       $_cleanType get $name {
-        ${isId ? '' : (isOneToMany ? lazyOneToManyList : '__ensureLoaded();')}
+        ${isId ? '' : (isOneToMany ? lazyOneToManyList : notExistsInDb ? '' : '__ensureLoaded();')}
         return _$name;
       }
       set $name($_cleanType v) {
@@ -258,15 +260,22 @@ class ClassInspector {
     var _fields = classElement.fields.map((f) => FieldInspector(f));
 
     var fields = _fields
-        .map(
-            (f) => f._isSimpleType ? f.generateColumnQuery() : f.generateJoin())
+        .map((f) => f.isTransient
+            ? ''
+            : f._isSimpleType
+                ? f.generateColumnQuery()
+                : f.generateJoin())
         .join('\n');
 
-    var columns =
-        _fields.where((f) => f._isSimpleType).map((e) => e.name).join(',');
+    var columns = _fields
+        .where((f) => !f.isTransient && f._isSimpleType)
+        .map((e) => e.name)
+        .join(',');
 
-    var joins =
-        _fields.where((f) => !f._isSimpleType).map((e) => e.name).join(',');
+    var joins = _fields
+        .where((f) => !f.isTransient && !f._isSimpleType)
+        .map((e) => e.name)
+        .join(',');
 
     var queryClassName = name == 'BaseModel'
         ? 'BaseModelModelQuery<T extends BaseModel>'

@@ -94,6 +94,8 @@ extension OrmAnnotationConverter on ElementAnnotation {
         return PostRemovePermanent();
       case 'PostLoad':
         return PostLoad();
+      case 'Transient':
+        return Transient();
       default:
         throw 'Unsupported OrmAnnotation: $name';
     }
