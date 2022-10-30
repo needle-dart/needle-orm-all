@@ -1,6 +1,6 @@
 name: needle_orm
 description: ORM for dart, inspired by Ebean.io (an excellent ORM from Java/Kotlin world).
-version: 0.0.6
+version: 0.1.0
 homepage: https://github.com/needle-dart/needle-orm-all
 repository: https://github.com/needle-dart/needle-orm-all.git
 
