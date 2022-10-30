@@ -733,6 +733,7 @@ abstract class BaseModel extends __Model {
   }
 
   Map<String, dynamic>? _extra;
+  // ignore: unnecessary_getters_setters
   Map<String, dynamic>? get extra {
     return _extra;
   }

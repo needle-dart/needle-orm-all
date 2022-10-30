@@ -107,8 +107,8 @@ class FieldInspector {
     }
     return '''
       $_cleanType _$name ;
-      $_cleanType get $name {
-        ${isId ? '' : (isOneToMany ? lazyOneToManyList : notExistsInDb ? '' : '__ensureLoaded();')}
+      ${isTransient ? '// ignore: unnecessary_getters_setters\n' : ''}$_cleanType get $name {
+        ${isId ? '' : (isOneToMany ? lazyOneToManyList : isTransient ? '' : '__ensureLoaded();')}
         return _$name;
       }
       set $name($_cleanType v) {
