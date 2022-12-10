@@ -9,6 +9,8 @@ import 'package:needle_orm_postgres/needle_orm_postgres.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 import 'package:stack_trace/stack_trace.dart';
 
+import 'domain.dart';
+
 const logPrefix = 'NeedleOrmExample';
 final logger = Logger(logPrefix);
 late Database globalDb;
@@ -95,4 +97,6 @@ Future<void> initService(ServerContext context) async {
   } else if (dsCfg['type'] == 'mariadb') {
     Database.register(dsName, await initMariaDb(dsCfg));
   }
+
+  initOrm();
 }

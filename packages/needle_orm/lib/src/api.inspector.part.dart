@@ -203,6 +203,22 @@ abstract class ModelInspector<M extends Model> {
         .forEach((field) {
       var name = field.name;
       var value = getFieldValue(model, name);
+
+      if (value is DateTime) {
+        value = value.toIso8601String();
+      } else if (value is Model) {
+        value =
+            value.toMap(fields: filter.subFilter(name), ignoreNull: ignoreNull);
+      } else if (value is List) {
+        value = value.map((e) {
+          if (e is Model) {
+            return e.toMap(
+                fields: filter.subFilter(name), ignoreNull: ignoreNull);
+          } else {
+            return e;
+          }
+        }).toList();
+      }
       if (ignoreNull) {
         value != null ? map2[name] = value : "";
       } else {

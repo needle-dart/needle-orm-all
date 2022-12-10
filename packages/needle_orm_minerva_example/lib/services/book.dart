@@ -9,7 +9,7 @@ import 'dart:async';
 final random = Random();
 
 Future<Book?> findOneBook(ServerContext context, MinervaRequest request) async {
-  var q = Book.query();
+  var q = BookQuery();
   q.maxRows = 1;
 
   var books = await q.findList();
@@ -21,7 +21,7 @@ Future<Book?> findOneBook(ServerContext context, MinervaRequest request) async {
 
 Future<List<Book>> findSomeBooks(
     ServerContext context, MinervaRequest request) async {
-  var q = Book.query();
+  var q = BookQuery();
   q.maxRows = 5;
 
   return await q.findList()

@@ -122,8 +122,13 @@ Future<void> testFindBy() async {
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
 
+  log.info(
+      'books all: ${(await BookQuery().findList()).map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
+
   var users = await UserQuery().findList();
   log.info('users: $users');
+
+  log.info('user.toMap() : ${users[0].toMap(fields: '*,books(id,title)')}');
 }
 
 Future<void> testFindListBySql() async {

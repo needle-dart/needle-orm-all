@@ -250,10 +250,16 @@ class ClassInspector {
         $fields
 
         @override
-        List<ColumnQuery> get columns => [$columns ${isTopModel ? '' : ', ... super.columns'}];
+        List<ColumnQuery> get columns => [${[
+      if (columns.isNotEmpty) columns,
+      if (!isTopModel) '... super.columns',
+    ].join(',')}];
 
         @override
-        List<BaseModelQuery> get joins => [$joins ${isTopModel ? '' : ', ... super.joins'}];
+        List<BaseModelQuery> get joins => [${[
+      if (joins.isNotEmpty) joins,
+      if (!isTopModel) '... super.joins',
+    ].join(',')}];
 
       }
       ''';
