@@ -76,7 +76,7 @@ class ClassMigrationGenerator {
     }
   }
 
-  String get migrationInstance => '${name}Migration()';
+  String get migrationInstance => '_${name}Migration()';
 
   String generate() {
     var tableName = getTableName(name);
@@ -86,7 +86,7 @@ class ClassMigrationGenerator {
     var fields = allFields.map((e) => ColumnGenerator(e).generate()).join('\n');
 
     return '''
-      class ${name}Migration extends Migration {
+      class _${name}Migration extends Migration {
         @override
         void up(Schema schema) {
           schema.create('$tableName', (table) {

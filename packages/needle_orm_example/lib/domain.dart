@@ -5,13 +5,13 @@ import 'package:needle_orm/needle_orm.dart';
 import 'package:needle_orm_migration/needle_orm_migration.dart';
 
 part 'domain.g.dart'; // auto generated code
-part 'domain.part.dart'; // business logic code
+part 'domain.biz.dart';
 
-// all Class names and Field names must start with '_'
+// all Field names must start with '_'
 // all business logic must be defined in file : 'domain.part.dart'
 
 @Entity()
-abstract class _BaseModel {
+abstract class Basic extends Model {
   @ID()
   int? _id;
 
@@ -36,12 +36,12 @@ abstract class _BaseModel {
   @Column()
   String? _remark;
 
-  _BaseModel();
+  Basic();
 }
 
 @Table()
-@Entity(db: "mysql_example_db")
-class _Book extends _BaseModel {
+@Entity()
+class Book extends Basic {
   @Column()
   String? _title;
 
@@ -49,7 +49,7 @@ class _Book extends _BaseModel {
   double? _price;
 
   @ManyToOne()
-  _User? _author;
+  User? _author;
 
   // blob
   @Lob()
@@ -59,12 +59,12 @@ class _Book extends _BaseModel {
   @Lob()
   String? _content;
 
-  _Book();
+  Book();
 }
 
 @Table(name: 'users')
-@Entity(db: Database.defaultDbName)
-class _User extends _BaseModel {
+@Entity()
+class User extends Basic {
   @Column()
   String? _name;
 
@@ -78,16 +78,19 @@ class _User extends _BaseModel {
   int? _age;
 
   @OneToMany(mappedBy: "_author")
-  List<_Book>? books;
+  List<Book>? _books;
 
-  _User();
+  User();
 
-  // need to implement beforeInsert() for User in domain.part.dart
   @PrePersist()
-  void beforeInsert() {}
+  void beforeInsert() {
+    print('going to create user !!!');
+  }
 
   @PostPersist()
-  void afterInsert() {}
+  void afterInsert() {
+    print('user created!!!');
+  }
 
   @PreRemove()
   void beforeRemove() {}
@@ -99,7 +102,9 @@ class _User extends _BaseModel {
   void beforeUpdate() {}
 
   @PostLoad()
-  void afterLoad() {}
+  void afterLoad() {
+    print('user loaded!!!');
+  }
 
   @PostUpdate()
   void afterUpdate() {}
@@ -111,10 +116,21 @@ class _User extends _BaseModel {
   void afterRemovePermanent() {}
 }
 
+@Table()
 @Entity()
-class _Job extends _BaseModel {
+class Device extends Model {
+  @ID()
+  int? _id;
+
   @Column()
   String? _name;
 
-  _Job();
+  @Column()
+  String? _address;
+
+  @PrePersist()
+  void beforeInsert() {}
+
+  @PostPersist()
+  void afterInsert() {}
 }

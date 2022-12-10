@@ -25,13 +25,9 @@ class NeedleOrmMetaInfoGenerator extends Generator {
     var classes =
         elements.map((e) => e.element).whereType<ClassElement>().toList();
 
-    values.add(strModel);
     values.add(strModelCache);
     values.add(strFieldFilter);
     values.add(strBaseQuery);
-    values.add(strModelInspector(classes
-        .where((element) => !element.isAbstract)
-        .map((e) => e.name.removePrefix())));
 
     for (var clz in classes) {
       var classGen = ClassMetaInfoGenerator(clz);
@@ -39,7 +35,7 @@ class NeedleOrmMetaInfoGenerator extends Generator {
       all.add('${classGen.metaClassName}()');
     }
 
-    values.add('final _allOrmClasses = [${all.join(',')}];');
+    values.add('final _allModelMetaClasses = [${all.join(',')}];');
 
     return values.join('\n\n');
   }
@@ -49,7 +45,7 @@ class NeedleOrmMetaInfoGenerator extends Generator {
 class ClassMetaInfoGenerator {
   final ClassElement clazz;
   String name;
-  String get metaClassName => 'OrmMetaInfo$name';
+  String get metaClassName => '_OrmMetaInfo$name';
   bool isAbstract;
   String superClassName;
 
@@ -72,7 +68,7 @@ class ClassMetaInfoGenerator {
     return '''
       class $metaClassName extends OrmMetaClass {
         $metaClassName()
-            : super('$name', _modelInspector,
+            : super('$name', 
                   isAbstract: $isAbstract,
                   superClassName: '$superClassName',
                   ormAnnotations: [

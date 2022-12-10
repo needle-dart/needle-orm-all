@@ -124,7 +124,7 @@ class FieldInspector {
   }
 
   String generateJoin() {
-    var queryClassName = '${_queryCleanType}ModelQuery';
+    var queryClassName = '${_queryCleanType}Query';
     //@TODO late : prevent cycle dependency, should be removed in later release
     // UserModelQuery get author => topQuery.findQuery('User');
     return '$queryClassName get $name => topQuery.findQuery(db, "$_queryCleanType","$name");';
@@ -209,54 +209,6 @@ class ClassInspector {
   }
 
   String generate() {
-    var fields =
-        classElement.fields.map((f) => FieldInspector(f).generate()).join('\n');
-
-    var _superClassName = isTopClass ? "__Model" : superClassName;
-
-    var _abstract = classElement.isAbstract ? "abstract" : "";
-    return '''
-    ${genModelQuery()}
-
-    $_abstract class $name extends $_superClassName { 
-
-      $fields
-
-      $name(); 
-
-      @override String get __className => '$name';
-
-      static ${name}ModelQuery query({Database? db}) => ${name}ModelQuery(db: db);
-
-      ${overrideGetField(classElement)}
-      ${overrideSetField(classElement)}
-
-      ${overrideToMap(classElement)}
-
-      // @override
-      // String get __tableName {
-      //   return "$tableName";
-      // }
-
-      @override
-      String? get __idFieldName{
-        return "id";
-      }
-
-      ${overrideprePersist()}
-      ${overridepreUpdate()}
-      ${overridepreRemove()}
-      ${overridepreRemovePermanent()}
-      ${overridepostPersist()}
-      ${overridepostUpdate()}
-      ${overridepostRemove()}
-      ${overridepostRemovePermanent()}
-      ${overridepostLoad()}
-
-    }''';
-  }
-
-  String genModelQuery() {
     var _fields = classElement.fields.map((f) => FieldInspector(f));
 
     var fields = _fields
@@ -277,30 +229,31 @@ class ClassInspector {
         .map((e) => e.name)
         .join(',');
 
-    var queryClassName = name == 'BaseModel'
-        ? 'BaseModelModelQuery<T extends BaseModel>'
-        : '${name}ModelQuery';
-    var queryExtendsClass = name == 'BaseModel'
-        ? '_BaseModelQuery<T, int>'
-        : 'BaseModelModelQuery<$name>';
+    var isAbstract = classElement.isAbstract;
+    var strAbstract = isAbstract ? "abstract" : "";
+    var superClassElementName = superClassElement?.name ?? "";
+
+    var isTopModel = superClassElementName == 'Model';
+    var queryClassName =
+        isAbstract ? '${name}Query<T extends ${name}>' : '${name}Query';
+    var queryExtendsClass = isTopModel
+        ? (isAbstract ? '_BaseModelQuery<T>' : '_BaseModelQuery<${name}>')
+        : '${superClassElementName}Query<$name>';
 
     return '''
-      class $queryClassName extends $queryExtendsClass {
+      $strAbstract class $queryClassName extends $queryExtendsClass {
         @override
         String get className => '$name';
 
-        ${name}ModelQuery(
-          // ignore: library_private_types_in_public_api
-          {_BaseModelQuery? topQuery, String? propName, Database? db})
-          : super(topQuery: topQuery, propName: propName, db:db);
+        ${name}Query({super.db, super.topQuery, super.propName});
 
         $fields
 
         @override
-        List<ColumnQuery> get columns => [$columns];
+        List<ColumnQuery> get columns => [$columns ${isTopModel ? '' : ', ... super.columns'}];
 
         @override
-        List<BaseModelQuery> get joins => [$joins];
+        List<BaseModelQuery> get joins => [$joins ${isTopModel ? '' : ', ... super.joins'}];
 
       }
       ''';

@@ -294,49 +294,49 @@ packages:
       path: "../needle_orm"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   needle_orm_generator:
     dependency: "direct dev"
     description:
       path: "../needle_orm_generator"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   needle_orm_mariadb:
     dependency: "direct main"
     description:
       path: "../needle_orm_mariadb"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   needle_orm_migration:
     dependency: "direct main"
     description:
       path: "../needle_orm_migration"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   needle_orm_migration_generator:
     dependency: "direct main"
     description:
       path: "../needle_orm_migration_generator"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   needle_orm_migration_runner:
     dependency: "direct main"
     description:
       path: "../needle_orm_migration_runner"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   needle_orm_postgres:
     dependency: "direct main"
     description:
       path: "../needle_orm_postgres"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   node_preamble:
     dependency: transitive
     description:

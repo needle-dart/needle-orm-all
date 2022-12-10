@@ -4,8 +4,7 @@ import 'dart:math';
 
 import 'package:logging/logging.dart';
 
-import 'core.dart';
-import 'inspector.dart';
+import 'api.dart';
 import 'meta.dart';
 import 'sql.dart';
 import 'sql_query.dart';
@@ -263,17 +262,16 @@ String toSql(ColumnConditionOper oper) {
 }
 
 /// basic implement for AbstractModelQuery
-abstract class BaseModelQuery<M extends Model, D>
-    extends AbstractModelQuery<M, D> {
+abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
   static final Logger _logger = Logger('ORM');
   final Database db;
-  final ModelInspector modelInspector;
+  // final ModelInspector modelInspector;
 
   late BaseModelQuery _topQuery;
 
   final Map<String, BaseModelQuery> queryMap = {};
 
-  String get className;
+  // String get className;
 
   String _alias = '';
 
@@ -291,8 +289,7 @@ abstract class BaseModelQuery<M extends Model, D>
   BaseModelQuery? relatedQuery;
   String? propName;
 
-  BaseModelQuery(this.modelInspector, this.db,
-      {BaseModelQuery? topQuery, this.propName}) {
+  BaseModelQuery(this.db, {BaseModelQuery? topQuery, this.propName}) {
     _topQuery = topQuery ?? this;
   }
 
@@ -313,7 +310,7 @@ abstract class BaseModelQuery<M extends Model, D>
   BaseModelQuery get topQuery => _topQuery;
 
   SqlJoin _toSqlJoin() {
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
 
     var joinStmt = '${relatedQuery!._alias}.${propName}_id = $_alias.id';
@@ -326,10 +323,12 @@ abstract class BaseModelQuery<M extends Model, D>
     });
   }
 
+  @override
   Future<int> insert(M model) async {
-    var action = ActionType.Insert;
-    var className = modelInspector.getClassName(model);
-    var clz = modelInspector.meta(className)!;
+    var action = ActionType.insert;
+    var className = ModelInspector.getClassName(model);
+    var modelInspector = ModelInspector.lookup(className);
+    var clz = ModelInspector.meta(className)!;
     var idField = clz.idFields.first;
     var tableName = clz.tableName;
 
@@ -365,9 +364,11 @@ abstract class BaseModelQuery<M extends Model, D>
 
     dirtyMap.forEach((key, value) {
       if (value is Model) {
-        var clz = modelInspector.meta(modelInspector.getClassName(value));
+        var clsName = ModelInspector.getClassName(value);
+        var inspector = ModelInspector.lookup(clsName);
+        var clz = ModelInspector.meta(clsName);
         dirtyMap[key] =
-            modelInspector.getFieldValue(value, clz!.idFields.first.name);
+            inspector.getFieldValue(value, clz!.idFields.first.name);
       }
     });
 
@@ -414,8 +415,9 @@ abstract class BaseModelQuery<M extends Model, D>
     if (modelList.isEmpty) return;
     var count = modelList.length;
     // var action = ActionType.Insert;
-    var className = modelInspector.getClassName(modelList[0]);
-    var clz = modelInspector.meta(className)!;
+    var className = ModelInspector.getClassName(modelList[0]);
+    var modelInspector = ModelInspector.lookup(className);
+    var clz = ModelInspector.meta(className)!;
     var idField = clz.idFields.first;
     var idColumnName = idField.columnName;
     var tableName = clz.tableName;
@@ -462,7 +464,7 @@ abstract class BaseModelQuery<M extends Model, D>
     }
     dirtyMap.forEach((key, value) {
       if (value is Model) {
-        var clz = modelInspector.meta(modelInspector.getClassName(value));
+        var clz = ModelInspector.meta(ModelInspector.getClassName(value));
         dirtyMap[key] =
             modelInspector.getFieldValue(value, clz!.idFields.first.name);
       }
@@ -480,10 +482,12 @@ abstract class BaseModelQuery<M extends Model, D>
     }
   }
 
+  @override
   Future<void> update(M model) async {
-    var action = ActionType.Update;
-    var className = modelInspector.getClassName(model);
-    var clz = modelInspector.meta(className)!;
+    var action = ActionType.update;
+    var className = ModelInspector.getClassName(model);
+    var modelInspector = ModelInspector.lookup(className);
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
     var dirtyMap = modelInspector.getDirtyFields(model);
 
@@ -527,7 +531,7 @@ abstract class BaseModelQuery<M extends Model, D>
 
     dirtyMap.forEach((key, value) {
       if (value is Model) {
-        var clz = modelInspector.meta(modelInspector.getClassName(value));
+        var clz = ModelInspector.meta(ModelInspector.getClassName(value));
         dirtyMap[key] =
             modelInspector.getFieldValue(value, clz!.idFields.first.name);
       }
@@ -540,12 +544,14 @@ abstract class BaseModelQuery<M extends Model, D>
     }
   }
 
-  Future<void> deleteOne(M model) async {
-    var className = modelInspector.getClassName(model);
-    var clz = modelInspector.meta(className)!;
+  @override
+  Future<void> delete(M model) async {
+    var className = ModelInspector.getClassName(model);
+    var modelInspector = ModelInspector.lookup(className);
+    var clz = ModelInspector.meta(className)!;
     var softDeleteField = clz.softDeleteField;
     if (softDeleteField == null) {
-      return deleteOnePermanent(model);
+      return deletePermanent(model);
     }
     var idField = clz.idFields.first;
     var idValue = modelInspector.getFieldValue(model, idField.name);
@@ -561,9 +567,11 @@ abstract class BaseModelQuery<M extends Model, D>
     await db.query(sql, {"id": idValue}, tableName: tableName);
   }
 
-  Future<void> deleteOnePermanent(M model) async {
-    var className = modelInspector.getClassName(model);
-    var clz = modelInspector.meta(className)!;
+  @override
+  Future<void> deletePermanent(M model) async {
+    var className = ModelInspector.getClassName(model);
+    var modelInspector = ModelInspector.lookup(className);
+    var clz = ModelInspector.meta(className)!;
     var idField = clz.idFields.first;
     var idValue = modelInspector.getFieldValue(model, idField.name);
     var tableName = clz.tableName;
@@ -573,17 +581,17 @@ abstract class BaseModelQuery<M extends Model, D>
   }
 
   @override
-  Future<int> delete() async {
+  Future<int> deleteAll() async {
     // init all table aliases.
     _beforeQuery();
 
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
     var idField = clz.idFields.first;
     var softDeleteField = clz.softDeleteField;
 
     if (softDeleteField == null) {
-      return deletePermanent();
+      return deleteAllPermanent();
     }
 
     SqlQuery q = SqlQuery(tableName, _alias);
@@ -609,11 +617,11 @@ abstract class BaseModelQuery<M extends Model, D>
   }
 
   @override
-  Future<int> deletePermanent() async {
+  Future<int> deleteAllPermanent() async {
     // init all table aliases.
     _beforeQuery();
 
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
     var idField = clz.idFields.first;
 
@@ -637,9 +645,9 @@ abstract class BaseModelQuery<M extends Model, D>
   }
 
   @override
-  Future<M?> findById(D id,
+  Future<M?> findById(dynamic id,
       {M? existModel, bool includeSoftDeleted = false}) async {
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
 
     var idFields = clz.idFields;
     var idFieldName = idFields.first.name;
@@ -672,7 +680,7 @@ abstract class BaseModelQuery<M extends Model, D>
   @override
   Future<List<M>> findByIds(List idList,
       {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
 
     var idFields = clz.idFields;
     var idFieldName = idFields.first.name;
@@ -701,6 +709,8 @@ abstract class BaseModelQuery<M extends Model, D>
 
   List<M> _toModel(DbQueryResult rows, List<OrmMetaField> allFields,
       String idFieldName, List<Model>? existModeList) {
+    var modelInspector = ModelInspector.lookup(className);
+
     if (rows.isNotEmpty) {
       var idIndex = 0;
       if (existModeList != null) {
@@ -736,7 +746,8 @@ abstract class BaseModelQuery<M extends Model, D>
   @override
   Future<List<M>> findBy(Map<String, dynamic> params,
       {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
+    var modelInspector = ModelInspector.lookup(className);
 
     var idFields = clz.idFields;
     var idFieldName = idFields.first.name;
@@ -755,11 +766,11 @@ abstract class BaseModelQuery<M extends Model, D>
       if (f.isModelType) {
         // replace model with it's id.
         var m = params[key];
-        if (modelInspector.isModelType(m.runtimeType.toString())) {
-          var idFieldName = modelInspector
-              .idFields(modelInspector.getClassName(m))!
-              .first
-              .name;
+        if (ModelInspector.isModelType(m.runtimeType.toString())) {
+          var idFieldName =
+              ModelInspector.idFields(ModelInspector.getClassName(m))!
+                  .first
+                  .name;
           params[key] = modelInspector.getFieldValue(m, idFieldName);
         }
         return '${f.columnName}=@$key';
@@ -783,21 +794,21 @@ abstract class BaseModelQuery<M extends Model, D>
     offset = pageNumber * pageSize;
   }
 
-  N toModel<N extends M>(
+  N toModel<N extends Model>(
       List<dynamic> dbRow, List<OrmMetaField> selectedFields, String className,
       {N? existModel}) {
     N? model = existModel;
-
+    var modelInspector = ModelInspector.lookup(className);
     if (existModel == null) {
-      var idField = modelInspector.idFields(className)?.first;
+      var idField = ModelInspector.idFields(className)?.first;
       if (idField != null) {
         int j = selectedFields.indexOf(idField);
         if (j >= 0) {
-          model = modelInspector.newInstance(className,
+          model = ModelInspector.newModel(className,
               attachDb: true, id: dbRow[j], topQuery: topQuery) as N;
         }
       } else {
-        model = modelInspector.newInstance(className,
+        model = ModelInspector.newModel(className,
             attachDb: true, topQuery: topQuery) as N;
       }
     }
@@ -808,16 +819,16 @@ abstract class BaseModelQuery<M extends Model, D>
       var value = dbRow[i];
       if (f.isModelType) {
         if (value != null) {
-          var obj = modelInspector.newInstance(f.elementType,
+          var obj = ModelInspector.newModel(f.elementType,
               id: value, attachDb: true, topQuery: topQuery);
-          modelInspector.setFieldValue(model, name, obj);
+          modelInspector.setFieldValue(model!, name, obj);
         }
       } else {
-        modelInspector.setFieldValue(model, name, value);
+        modelInspector.setFieldValue(model!, name, value);
       }
     }
-    modelInspector.markLoaded(model);
-    return model!;
+    modelInspector.markLoaded(model!);
+    return model;
   }
 
   @override
@@ -825,7 +836,7 @@ abstract class BaseModelQuery<M extends Model, D>
     // init all table aliases.
     _beforeQuery();
 
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
     var softDeleteField = clz.softDeleteField;
 
@@ -882,7 +893,7 @@ abstract class BaseModelQuery<M extends Model, D>
   @override
   Future<List<M>> findListBySql(String rawSql,
       [Map<String, dynamic> params = const {}]) async {
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
 
     var allFields = clz.allFields(searchParents: true)
@@ -909,7 +920,7 @@ abstract class BaseModelQuery<M extends Model, D>
     // init all table aliases.
     _beforeQuery();
 
-    var clz = modelInspector.meta(className)!;
+    var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
     var softDeleteField = clz.softDeleteField;
 
@@ -947,9 +958,11 @@ abstract class BaseModelQuery<M extends Model, D>
 
   T findQuery<T extends BaseModelQuery>(
       Database db, String modelName, String propName) {
+    var modelInspector = ModelInspector.lookup(className);
     var q = topQuery.queryMap[modelName];
     if (q == null) {
-      q = modelInspector.newQuery(db, modelName)
+      q = ModelInspector.lookup(modelName).newQuery(db, modelName)
+          as BaseModelQuery
         .._topQuery = this
         ..propName = propName
         ..relatedQuery = this;
@@ -1040,7 +1053,8 @@ class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
   /// load list from db.
   Future<void> load() async {
     if (_loaded) return;
-    var query = clz.modelInspector.newQuery(db, clz.name);
+    var modelInspector = ModelInspector.lookup(clz.name);
+    var query = modelInspector.newQuery(db, clz.name) as ModelQuery<T>;
     _list = await query.findBy({refField.name: refFieldValue});
     _loaded = true;
   }

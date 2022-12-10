@@ -12,12 +12,13 @@ import 'package:test/test.dart';
 const dbMariadb = "mariadb";
 const dbPostgres = "postgres";
 void main() async {
+  initOrm();
   setUp(() async {
     initLogger();
 
     // the first db will be the default one as well
-    Database.register(dbMariadb, await initMariaDb());
     Database.register(dbPostgres, await initPostgreSQL());
+    Database.register(dbMariadb, await initMariaDb());
   });
 
   tearDown(() async {
@@ -48,7 +49,7 @@ Future<void> _testLob(Database db) async {
 
   log.info('\t book saved with id: ${book.id}');
 
-  var books = await Book.query(db: db).findList();
+  var books = await BookQuery(db: db).findList();
   log.info('books list: $books');
   for (var book in books) {
     log.info('book image : ${book.image}, content: ${book.content}');

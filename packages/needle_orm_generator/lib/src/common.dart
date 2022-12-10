@@ -1,264 +1,28 @@
-String strModelInspector(Iterable<String> classes) {
-  var newInstanceCaseStmt = classes
-      .map((name) =>
-          "case '$name': model =  $name()..__markAttached(true, topQuery as _BaseModelQuery); break; ")
-      .join('\n');
-
-  var caseQueryStmt = classes
-      .map((name) => "case '$name': return ${name}ModelQuery(db:db);")
-      .join("\n");
-
-  return '''
-  class _ModelInspector extends ModelInspector<__Model> {
-
-
-    @override
-    String getClassName(__Model obj) {
-      return obj.__className;
+const toBool = r'''
+  bool? toBool(value) {
+    if (value == null) return null;
+    if (value is bool) {
+      return value;
+    } else if (value is int) {
+      return value != 0;
+    } else if (value is String) {
+      return value != 'true';
     }
-
-    @override
-    get allOrmMetaClasses => _allOrmClasses;
-    
-    @override
-    OrmMetaClass? meta(String className) {
-      var list = _allOrmClasses
-          .where((element) => element.name == className)
-          .toList();
-      if (list.isNotEmpty) {
-        return list.first;
-      }
-      return null;
-    }
-
-
-    @override
-    dynamic getFieldValue(__Model obj, String fieldName) {
-      return obj.__getField(fieldName);
-    }
-
-    @override
-    void setFieldValue(__Model obj, String fieldName, dynamic value) {
-      obj.__setField(fieldName, value);
-    }
-    
-    @override
-    void markDeleted(__Model obj, bool deleted) {
-      var clz = meta(getClassName(obj))!;
-      var softDeleteField = clz.softDeleteField;
-      if (softDeleteField == null) {
-        return;
-      }
-      setFieldValue(obj, softDeleteField.name, deleted);
-      obj.__markDirty(false, true, softDeleteField.name);
-    }
-    
-    @override
-    Map<String, dynamic> getDirtyFields(__Model model) {
-      var map = <String, dynamic>{};
-      for (var name in model.__dirtyFields) {
-        map[name] = model.__getField(name);
-      }
-      return map;
-    }
-
-    @override
-    void loadModel(__Model model, Map<String, dynamic> m,
-        {errorOnNonExistField = false}) {
-      model.loadMap(m, errorOnNonExistField: false);
-      model.__dbAttached = true;
-      model.__dbLoaded = true;
-      model.__cleanDirty();
-    }
-
-    @override
-    __Model newInstance(String className,
-        {bool attachDb = false, dynamic id, required BaseModelQuery topQuery}) {
-      if (id != null) {
-        var cacheModel =
-            (topQuery as _BaseModelQuery)._modelCache.find(className, id);
-        if (cacheModel != null) {
-          return cacheModel;
-        }
-      }
-      __Model model;
-      switch (className) {
-        $newInstanceCaseStmt
-        default:
-          throw 'unknown class : \$className';
-      }
-      if (id != null) {
-        setFieldValue(model, idFields(className)!.first.name, id);
-      }
-
-      topQuery._modelCache.add(model);
-      return model;
-    }
-
-    @override
-    BaseModelQuery newQuery(Database db, String name) {
-      switch (name) {
-        $caseQueryStmt
-      }
-      throw 'Unknow Query Name: \$name';
-    }
-
-    @override
-    void markLoaded(__Model model) {
-      model.__markLoaded(true);
-    }
+    throw '${value.runtimeType}($value) can not be converted to bool';
   }
-
-  final _ModelInspector _modelInspector = _ModelInspector();
-
-  ''';
-}
-
-const strModel = '''
-  abstract class __Model extends Model {
-    // abstract begin
-
-    // String get __tableName;
-    String get __className;
-    String? get __idFieldName;
-
-    // ignore: unused_element
-    dynamic __getField(String fieldName,
-      {errorOnNonExistField = true});
-    void __setField(String fieldName, dynamic value,
-      {errorOnNonExistField = true});
-
-    // abstract end
-
-    // mark whether this instance is loaded from db.
-    bool __dbLoaded = false; // if fields has been loaded from db.
-    bool __dbAttached = false; // if this instance is created by Query
-    _BaseModelQuery? __topQuery;
-
-    // mark all modified fields after loaded
-    final __dirtyFields = <String>{};
-
-    void loadMap(Map<String, dynamic> m, {errorOnNonExistField = false}) {
-      m.forEach((key, value) {
-        __setField(key, value, errorOnNonExistField: errorOnNonExistField);
-      });
-    }
-
-    void __markDirty(Object? oldValue, Object? newValue, String fieldName) {
-      if (oldValue == null && newValue == null) {
-        // both are null: not dirty.
-        return;
-      } else if (oldValue == null || newValue == null) {
-        // only one is null: dirty
-        __dirtyFields.add(fieldName);
-        return;
-      }
-      // both are non-null:
-      if (oldValue != newValue) {
-        __dirtyFields.add(fieldName);
-      }
-    }
-
-    void __cleanDirty() {
-      __dirtyFields.clear();
-    }
-
-    // String __dirtyValues() {
-    //   return __dirtyFields.map((e) => "\${e.toLowerCase()} : \${__getField(e)}").join(", ");
-    // }
-
-    void __markAttached(bool attached, _BaseModelQuery topQuery) {
-      __dbAttached = attached;
-      __topQuery = topQuery;
-      topQuery.cache(this);
-    }
-
-    void __markLoaded(bool loaded) {
-      __dbLoaded = loaded;
-      __cleanDirty();
-    }
-
-    @override
-    Future<void> load({int batchSize = 1}) async {
-      if (__dbAttached && !__dbLoaded) {
-        await __topQuery?.ensureLoaded(this, batchSize: batchSize);
-      }
-    }
-
-    void __ensureLoaded() {
-      if (__dbAttached && !__dbLoaded) {
-        throw 'should call load() before accessing properties!';
-        // __topQuery?.ensureLoaded(this);
-      }
-    }
-      
-    BaseModelQuery __query(Database? db) =>
-        _modelInspector.newQuery(db ?? Database.defaultDb, __className);
-
-
-    Future<void> insert({Database? db}) async {
-      __prePersist();
-      await __query(db).insert(this);
-      __cleanDirty();
-      __postPersist();
-    }
-
-    Future<void> update({Database? db}) async {
-      __preUpdate();
-      if (__dirtyFields.isNotEmpty) {
-        await __query(db).update(this);
-        __cleanDirty();
-      }
-      __postUpdate();
-    }
-
-    Future<void> save({Database? db}) async {
-      if (__idFieldName == null) throw 'no @ID field';
-
-      if (__getField(__idFieldName!) != null) {
-        await update(db: db);
-      } else {
-        await insert(db: db);
-      }
-    }
-
-    Future<void> delete({Database? db}) async {
-      __preRemove();
-      await __query(db).deleteOne(this);
-      __postRemove();
-    }
-
-    Future<void> deletePermanent({Database? db}) async {
-      __preRemovePermanent();
-      await __query(db).deleteOnePermanent(this);
-      __postRemovePermanent();
-    }
-
-    void __prePersist() {}
-    void __preUpdate() {}
-    void __preRemove() {}
-    void __preRemovePermanent() {}
-    void __postPersist() {}
-    void __postUpdate() {}
-    void __postRemove() {}
-    void __postRemovePermanent() {}
-    void __postLoad() {}
-  }
-  ''';
+''';
 
 const strModelCache = r'''
 /// cache bound with a top query
 class _QueryModelCache {
-  final ModelInspector modelInspector;
+  // ignore: library_private_types_in_public_api
+  Map<String, List<Model>> cacheMap = {};
+
+  _QueryModelCache();
 
   // ignore: library_private_types_in_public_api
-  Map<String, List<__Model>> cacheMap = {};
-
-  _QueryModelCache(this.modelInspector);
-
-  // ignore: library_private_types_in_public_api
-  void add(__Model m) {
-    var className = modelInspector.getClassName(m);
+  void add(Model m) {
+    var className = ModelInspector.getClassName(m);
     var list = cacheMap[className] ?? [];
     if (!list.contains(m)) {
       list.add(m);
@@ -267,15 +31,15 @@ class _QueryModelCache {
   }
 
   // ignore: library_private_types_in_public_api
-  Iterable<__Model> findUnloadedList(String className) {
+  Iterable<Model> findUnloadedList(String className) {
     cacheMap[className] ??= [];
-    return cacheMap[className]!.where((e) => !e.__dbLoaded);
+    return cacheMap[className]!.where((e) => !ModelInspector.storeLoaded(e));
   }
 
-  __Model? find(String className, dynamic id) {
-    var idName = modelInspector.idFields(className)!.first.name;
-    var r = cacheMap[className]
-        ?.where((m) => modelInspector.getFieldValue(m, idName) == id);
+  Model? find(String className, dynamic id) {
+    var idName = ModelInspector.idFields(className)!.first.name;
+    var r = cacheMap[className]?.where(
+        (m) => ModelInspector.lookup(className).getFieldValue(m, idName) == id);
     if (r?.isEmpty ?? true) {
       return null;
     } else {
@@ -286,25 +50,27 @@ class _QueryModelCache {
 ''';
 
 const strBaseQuery = r'''
-abstract class _BaseModelQuery<T extends __Model, D>
-    extends BaseModelQuery<T, D> {
+abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
   late _QueryModelCache _modelCache;
   final logger = Logger('_BaseModelQuery');
 
   _BaseModelQuery({BaseModelQuery? topQuery, String? propName, Database? db})
-      : super(_modelInspector, db ?? Database.defaultDb,
+      : super(db ?? Database.defaultDb,
             topQuery: topQuery, propName: propName) {
-    _modelCache = _QueryModelCache(modelInspector);
+    _modelCache = _QueryModelCache();
   }
 
-  void cache(__Model m) {
+  void cache(Model m) {
     _modelCache.add(m);
   }
 
+  @override
   Future<void> ensureLoaded(Model m, {int batchSize = 1}) async {
-    if ((m as __Model).__dbLoaded) return;
-    var className = modelInspector.getClassName(m);
-    var idFieldName = m.__idFieldName;
+    var inspector = _inspector(m);
+    if (inspector.isStoreLoaded(m)) return;
+    var className = ModelInspector.getClassName(m);
+    var idFieldName = ModelInspector.idFields(className)![0].name;
+
     List<Model> modelList;
 
     if (batchSize > 1) {
@@ -322,27 +88,31 @@ abstract class _BaseModelQuery<T extends __Model, D>
     } else {
       modelList = [m];
     }
-
+    var modelInspector = ModelInspector.lookup(className);
     List<dynamic> idList = modelList
-        .map((e) => modelInspector.getFieldValue(e, idFieldName!))
+        .map((e) => modelInspector.getFieldValue(e, idFieldName))
         .toSet()
         .toList(growable: false);
     var newQuery = modelInspector.newQuery(db, className);
     var modelListResult =
         await newQuery.findByIds(idList, existModeList: modelList);
     for (Model m in modelListResult) {
-      (m as __Model).__markLoaded(true);
+      _inspector(m).markLoaded(m);
     }
-    m.__markLoaded(true);
+    _inspector(m).markLoaded(m);
     // lock.release();
   }
 
+  ModelInspector _inspector(Model m) => ModelInspector.lookup(className);
+
   @override
-  Future<T?> findById(D id,
+  Future<T?> findById(dynamic id,
       {T? existModel, bool includeSoftDeleted = false}) async {
     var model = await super.findById(id,
         existModel: existModel, includeSoftDeleted: includeSoftDeleted);
-    model?.__postLoad();
+    if (model != null) {
+      _inspector(model).postLoad(model);
+    }
     return model;
   }
 
@@ -352,7 +122,7 @@ abstract class _BaseModelQuery<T extends __Model, D>
       {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
     var list = await super.findByIds(idList, existModeList: existModeList);
     for (var model in list) {
-      model.__postLoad();
+      _inspector(model).postLoad(model);
     }
     return list;
   }
@@ -363,7 +133,7 @@ abstract class _BaseModelQuery<T extends __Model, D>
     var list = await super.findBy(params,
         existModeList: existModeList, includeSoftDeleted: includeSoftDeleted);
     for (var model in list) {
-      model.__postLoad();
+      _inspector(model).postLoad(model);
     }
     return list;
   }
@@ -373,12 +143,12 @@ abstract class _BaseModelQuery<T extends __Model, D>
   Future<List<T>> findList({bool includeSoftDeleted = false}) async {
     var list = await super.findList();
     for (var model in list) {
-      model.__postLoad();
+      _inspector(model).postLoad(model);
     }
     return list;
   }
-  
 }
+
 ''';
 
 const strFieldFilter = r'''

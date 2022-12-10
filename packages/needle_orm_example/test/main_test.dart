@@ -10,6 +10,8 @@ import 'package:test/test.dart';
 const dbMariadb = "mariadb";
 const dbPostgres = "postgres";
 void main() async {
+  initOrm();
+
   setUp(() async {
     initLogger();
 
@@ -83,8 +85,8 @@ Future<void> testTransactionPgRaw() async {
 /// remove all rows from database.
 Future<void> clean() async {
   for (var db in [Database.lookup(dbPostgres), Database.lookup(dbMariadb)]) {
-    await Book.query(db: db).deletePermanent();
-    await User.query(db: db).deletePermanent();
+    await BookQuery(db: db).deleteAllPermanent();
+    await UserQuery(db: db).deleteAllPermanent();
   }
 }
 
@@ -92,7 +94,7 @@ Future<void> testFindByIds() async {
   var log = Logger('$logPrefix testFindByIds');
 
   var existBooks = [Book()..id = 4660];
-  var books = await Book.query()
+  var books = await BookQuery()
       .findByIds([1, 15, 16, 4660, 4674], existModeList: existBooks);
   log.info('books list: $books');
   bool reused = books.any((book1) => existBooks.any((book2) => book1 == book2));
@@ -111,7 +113,7 @@ Future<void> testFindBy() async {
   await testInsert();
 
   var books =
-      await Book.query().findBy({"author": 5100}); // can use model.id as value
+      await BookQuery().findBy({"author": 5100}); // can use model.id as value
   log.info('books list: $books');
   // load properties before calling toMap(author(...))
   for (var book in books) {
@@ -120,7 +122,7 @@ Future<void> testFindBy() async {
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
 
-  var users = await User.query().findList();
+  var users = await UserQuery().findList();
   log.info('users: $users');
 }
 
@@ -128,8 +130,10 @@ Future<void> testFindListBySql() async {
   var log = Logger('$logPrefix testFindBy');
 
   await testInsert();
-  var books = await Book.query()
-      .findListBySql('select distinct(t.*) from books t limit 3');
+  //postgresql supports:  select distinct(t.*) from books t limit 3
+  //mariadb doesn't support!
+  var books = await BookQuery()
+      .findListBySql('select distinct(t.id) from books t limit 3');
   log.info('books list: $books');
   for (var book in books) {
     await book.author?.load();
@@ -140,13 +144,13 @@ Future<void> testFindListBySql() async {
 
 Future<void> testCount() async {
   var log = Logger('$logPrefix testCount');
-  log.info(await Book.query().count());
+  log.info(await BookQuery().count());
 }
 
 Future<void> testInsert() async {
   var log = Logger('$logPrefix testInsert');
 
-  log.info('count before insert : ${await Book.query().count()}');
+  log.info('count before insert : ${await BookQuery().count()}');
   var n = 5;
   for (int i = 0; i < n; i++) {
     var user = User()
@@ -163,7 +167,7 @@ Future<void> testInsert() async {
     await book.insert();
     log.info('\t book saved with id: ${book.id}');
   }
-  log.info('count after insert : ${await Book.query().count()}');
+  log.info('count after insert : ${await BookQuery().count()}');
 }
 
 Future<void> testInsertBatch() async {
@@ -186,7 +190,7 @@ Future<void> testInsertBatch() async {
     books.add(book);
   }
   log.info('users created');
-  await User.query().insertBatch(users, batchSize: 5);
+  await UserQuery().insertBatch(users, batchSize: 5);
   log.info('users saved');
   var idList = users.map((e) => e.id).toList();
   log.info('ids: $idList');
@@ -194,7 +198,7 @@ Future<void> testInsertBatch() async {
 
 Future<void> testPaging() async {
   var log = Logger('$logPrefix paging');
-  var q = Book.query()
+  var q = BookQuery()
     ..title.startsWith('Dart')
     ..price.between(10.0, 20)
     ..author.apply((author) {
@@ -203,7 +207,7 @@ Future<void> testPaging() async {
         ..address.startsWith('China Shanghai');
     });
 
-  q.orders = [Book.query().id.desc()];
+  q.orders = [BookQuery().id.desc()];
 
   {
     q.paging(0, 3);
@@ -290,8 +294,8 @@ Future<void> testVersion() async {
 Future<void> testLoadNestedFields() async {
   var log = Logger('$logPrefix testLoadNestedFields');
 
-  var q = Book.query()
-    ..orders = [Book.query().title.asc()]
+  var q = BookQuery()
+    ..orders = [BookQuery().title.asc()]
     ..maxRows = 20;
   var books = await q.findList();
   var total = await q.count();
@@ -321,14 +325,14 @@ Future<void> testSoftDelete() async {
     log.info('\t book saved with id: ${book.id}');
   }
 
-  var q = Book.query()
+  var q = BookQuery()
     ..price.between(18, 19)
     ..title.endsWith('test');
   var total = await q.count();
   var totalWithDeleted = await q.count(includeSoftDeleted: true);
   log.info('found books , total: $total, totalWithDeleted: $totalWithDeleted');
 
-  int deletedCount = await q.delete();
+  int deletedCount = await q.deleteAll();
   log.info('soft deleted books: $deletedCount');
 
   total = await q.count();
@@ -349,14 +353,14 @@ Future<void> testPermanentDelete() async {
     log.info('\t book saved with id: ${book.id}');
   }
 
-  var q = Book.query()
+  var q = BookQuery()
     ..price.between(38, 39)
     ..title.endsWith('permanent');
   var total = await q.count();
 
   log.info('found permanent books, total: $total');
 
-  int deletedCount = await q.deletePermanent();
+  int deletedCount = await q.deleteAllPermanent();
   log.info('permanent deleted books: $deletedCount');
 }
 
@@ -373,7 +377,7 @@ Future<void> testMultipleDatabases() async {
       log.info('\t book saved with id: ${book.id}');
     }
 
-    var q = Book.query(db: Database.lookup(dbMariadb))
+    var q = BookQuery(db: Database.lookup(dbMariadb))
       ..price.between(18, 19)
       ..title.endsWith('test');
     var total = await q.count();
@@ -392,7 +396,7 @@ Future<void> testMultipleDatabases() async {
       log.info('\t book saved with id: ${book.id}');
     }
 
-    var q = Book.query(db: Database.lookup(dbPostgres))
+    var q = BookQuery(db: Database.lookup(dbPostgres))
       ..price.between(18, 19)
       ..title.endsWith('test');
     var total = await q.count();
@@ -405,7 +409,7 @@ Future<void> testMultipleDatabases() async {
 Future<void> testOneToMany() async {
   var log = Logger('$logPrefix testOneToMany');
 
-  var q = User.query()
+  var q = UserQuery()
     ..id.gt(18)
     ..id.lt(23)
     ..maxRows = 20;
@@ -437,7 +441,7 @@ Future<void> testCache() async {
   await book1.save();
   await book2.save();
 
-  var q = Book.query()..id.IN([book1.id!, book2.id!]);
+  var q = BookQuery()..id.IN([book1.id!, book2.id!]);
   var books = await q.findList();
   // books[0].author should equals books[1].author
   log.info('used cache? ${books[0].author == books[1].author}');
@@ -446,11 +450,11 @@ Future<void> testCache() async {
 // Failed for now!
 Future<void> testMariaDbTransaction() async {
   var log = Logger('$logPrefix testMariaDbTransaction');
-  var q = User.query();
+  var q = UserQuery();
   log.info('count before insert : ${await q.count()}');
   var db2 = await initMariaDb();
   await db2.transaction((db) async {
-    // var query = User.Query(db: db);
+    // var query = UserQuery(db: db);
     var n = 50;
     for (int i = 1; i < n; i++) {
       var user = User()
@@ -504,12 +508,12 @@ Future<void> testMariaDbTransaction2() async {
 
 Future<void> testPgTransaction() async {
   var log = Logger('$logPrefix testPgTransaction');
-  var q = User.query();
+  var q = UserQuery();
   log.info('count before insert : ${await q.count()}');
   var db2 = await initPostgreSQL();
   globalDb = db2;
   await db2.transaction((db) async {
-    // var query = User.Query(db: db);
+    // var query = UserQuery(db: db);
     var n = 50;
     for (int i = 1; i < n; i++) {
       var user = User()

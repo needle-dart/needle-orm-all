@@ -92,7 +92,7 @@ extension OrmAnnotationConverter on ElementAnnotation {
 
   Entity toEntity() {
     assert(name == 'Entity');
-    return Entity(db: stringValue('db')!);
+    return Entity();
   }
 
   Column toColumn() {

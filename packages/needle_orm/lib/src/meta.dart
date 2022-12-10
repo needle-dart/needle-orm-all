@@ -1,9 +1,7 @@
-import 'core.dart';
+import 'api.dart';
 
 import 'package:recase/recase.dart';
 import 'package:inflection3/inflection3.dart';
-
-import 'inspector.dart';
 
 /// Orm meta class, used by generator
 class OrmMetaClass {
@@ -13,11 +11,11 @@ class OrmMetaClass {
   final List<OrmAnnotation> ormAnnotations;
   final List<OrmMetaField> fields;
   final List<OrmMetaMethod> methods;
-  final ModelInspector modelInspector;
+  // final ModelInspector modelInspector;
 
   String? _tableName;
 
-  OrmMetaClass(this.name, this.modelInspector,
+  OrmMetaClass(this.name,
       {this.superClassName,
       this.isAbstract = false,
       this.ormAnnotations = const [],
@@ -40,7 +38,7 @@ class OrmMetaClass {
   }
 
   List<OrmMetaField> allFields({bool searchParents = false}) {
-    var parentClz = modelInspector.meta(superClassName!);
+    var parentClz = ModelInspector.meta(superClassName!);
     return [
       ...fields,
       if (searchParents && parentClz != null)
@@ -53,7 +51,7 @@ class OrmMetaClass {
       return fields.where((element) => element.name == name).first;
     }
     if (superClassName != null) {
-      var parentClz = modelInspector.meta(superClassName!);
+      var parentClz = ModelInspector.meta(superClassName!);
       return parentClz?.findField(name);
     }
     return null;
@@ -78,7 +76,7 @@ class OrmMetaClass {
         .toList();
 
     if (searchParents && superClassName != null) {
-      var superClz = modelInspector.meta(superClassName!);
+      var superClz = ModelInspector.meta(superClassName!);
       if (superClz == null) return fields;
       return [
         ...fields,
@@ -98,7 +96,7 @@ class OrmMetaField {
   late OrmMetaClass clz;
   OrmMetaField(this.name, this.type, {this.ormAnnotations = const []});
 
-  bool get isModelType => clz.modelInspector.isModelType(elementType);
+  bool get isModelType => ModelInspector.isModelType(elementType);
 
   bool get isIdField => ormAnnotations.whereType<ID>().isNotEmpty;
 

@@ -168,7 +168,7 @@ packages:
       path: "../needle_orm"
       relative: true
     source: path
-    version: "0.0.6"
+    version: "0.1.1"
   node_preamble:
     dependency: transitive
     description:

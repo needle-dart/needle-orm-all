@@ -37,7 +37,7 @@ abstract class _BaseModel {
   _BaseModel();
 }
 
-@Entity(db: "mysql_example_db")
+@Entity()
 class _Book extends _BaseModel {
   @Column()
   String? _title;
@@ -57,7 +57,7 @@ class _Book extends _BaseModel {
   _Book();
 }
 
-@Entity(db: Database.defaultDbName)
+@Entity()
 class _User extends _BaseModel {
   @Column()
   String? _name;

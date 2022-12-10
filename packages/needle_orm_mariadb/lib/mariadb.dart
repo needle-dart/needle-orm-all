@@ -42,7 +42,7 @@ class MariaDbDatabase extends Database {
       }
     }
 
-    var params2 = <Object>[];
+    var params2 = <Object?>[];
     for (var p in params) {
       if (p.value is List) {
         if (QueryHint.lob == p.hint) {
