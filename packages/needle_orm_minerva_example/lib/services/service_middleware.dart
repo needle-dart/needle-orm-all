@@ -25,11 +25,13 @@ class ServiceMiddleware extends Middleware {
     if (result is Model) {
       return JsonResult(result.toMap());
     } else if (result is List) {
+      var jsonHeader = MinervaHttpHeaders()..contentType = ContentType.json;
       if (result.isNotEmpty &&
           result.whereType<Model>().length == result.length) {
         var body = result.map((e) => (e as Model).toMap()).toList();
-        var jsonHeader = MinervaHttpHeaders()..contentType = ContentType.json;
         return OkResult(body: jsonEncode(body), headers: jsonHeader);
+      } else if (result is List<Map>) {
+        return OkResult(body: jsonEncode(result), headers: jsonHeader);
       }
     }
     return result;

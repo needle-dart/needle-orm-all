@@ -10,5 +10,7 @@ class BookApi extends Api {
     endpoints.get('/book2', createOneBook);
 
     endpoints.get('/book3', findSomeBooks);
+
+    endpoints.get('/book4', findSomeBooks2);
   }
 }

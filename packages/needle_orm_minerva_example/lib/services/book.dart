@@ -30,6 +30,22 @@ Future<List<Book>> findSomeBooks(
     });
 }
 
+Future<List<Map>> findSomeBooks2(
+    ServerContext context, MinervaRequest request) async {
+  var q = BookQuery();
+  q.maxRows = 5;
+
+  var books = await q.findList();
+
+  for (var book in books) {
+    book.extra = {"bbq": "bbqbbq"};
+    await book.author?.load(batchSize: 1000);
+  }
+  return books
+      .map((e) => e.toMap(fields: "id,title,price,author(id,address)"))
+      .toList();
+}
+
 Future<Book?> createOneBook(
     ServerContext context, MinervaRequest request) async {
   var book = Book();
