@@ -299,6 +299,8 @@ Future<void> testVersion() async {
 Future<void> testLoadNestedFields() async {
   var log = Logger('$logPrefix testLoadNestedFields');
 
+  await testInsert();
+
   var q = BookQuery()
     ..orders = [BookQuery().title.asc()]
     ..maxRows = 20;

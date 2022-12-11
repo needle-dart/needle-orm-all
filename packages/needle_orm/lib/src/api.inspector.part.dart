@@ -177,6 +177,11 @@ abstract class ModelInspector<M extends Model> {
     _helper(model).markLoaded(true);
   }
 
+  /// mark [model] has been attached with DB.
+  void markAttached(M model, {ModelQuery? topQuery}) {
+    _helper(model).markAttached(true, topQuery: topQuery);
+  }
+
   bool isStoreLoaded(M model) => _helper(model).storeLoaded;
 
   /// ensure [model] is loaded

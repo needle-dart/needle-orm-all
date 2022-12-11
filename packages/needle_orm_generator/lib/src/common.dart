@@ -103,7 +103,8 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
     // lock.release();
   }
 
-  ModelInspector _inspector(Model m) => ModelInspector.lookup(className);
+  ModelInspector _inspector(Model m) =>
+    ModelInspector.lookup(ModelInspector.getClassName(m));
 
   @override
   Future<T?> findById(dynamic id,

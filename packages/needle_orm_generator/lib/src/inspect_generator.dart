@@ -79,7 +79,10 @@ class _InspectoroGenerator {
             @override
               $name newInstance(
                   {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
-                return $name(); 
+                var m = $name();
+                m.id = id;
+                m._modelInspector.markAttached(m, topQuery: topQuery);
+                return m;
               }
           """;
 

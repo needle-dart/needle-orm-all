@@ -174,7 +174,8 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
     // lock.release();
   }
 
-  ModelInspector _inspector(Model m) => ModelInspector.lookup(className);
+  ModelInspector _inspector(Model m) =>
+      ModelInspector.lookup(ModelInspector.getClassName(m));
 
   @override
   Future<T?> findById(dynamic id,
@@ -793,7 +794,10 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
   @override
   Book newInstance(
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
-    return Book();
+    var m = Book();
+    m.id = id;
+    m._modelInspector.markAttached(m, topQuery: topQuery);
+    return m;
   }
 
   @override
@@ -852,7 +856,10 @@ class _UserModelInspector extends _BasicModelInspector<User> {
   @override
   User newInstance(
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
-    return User();
+    var m = User();
+    m.id = id;
+    m._modelInspector.markAttached(m, topQuery: topQuery);
+    return m;
   }
 
   @override
@@ -956,7 +963,10 @@ class _DeviceModelInspector extends ModelInspector<Device> {
   @override
   Device newInstance(
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
-    return Device();
+    var m = Device();
+    m.id = id;
+    m._modelInspector.markAttached(m, topQuery: topQuery);
+    return m;
   }
 
   @override

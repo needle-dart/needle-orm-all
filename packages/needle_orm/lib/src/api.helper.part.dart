@@ -63,7 +63,9 @@ class _ModelHelper<M extends Model> {
   /// load model from database.
   /// other models of the same class will be loaded also, in order to reuse database connections. in this case you can set the [batchSize]
   Future<void> load({int batchSize = 1}) async {
+    print('load, batch: $batchSize');
     if (storeAttached && !storeLoaded) {
+      print('load 2, batch: $batchSize, has topQuery? ${topQuery != null}');
       await topQuery?.ensureLoaded(model, batchSize: batchSize);
     }
   }
