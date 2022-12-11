@@ -71,7 +71,14 @@ class MariaDbMigrationRunner implements MigrationRunner {
       var curBatch = 0;
       if (result.isNotEmpty) {
         var firstRow = result.toList();
-        curBatch = int.tryParse(firstRow[0][0] ?? '0') as int;
+        var batch = firstRow[0][0];
+        if (batch == null) {
+          curBatch = 0;
+        } else if (batch is int) {
+          curBatch = batch;
+        } else {
+          curBatch = int.tryParse('${firstRow[0][0]}') as int;
+        }
       }
       var batch = curBatch + 1;
 

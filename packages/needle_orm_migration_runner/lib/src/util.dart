@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:isolate';
-import 'dart:mirrors';
+// import 'dart:isolate';
 
 Future<String> absoluteSourcePath(Type type) async {
-  var mirror = reflectType(type);
+  /* var mirror = reflectType(type);
 
   if (mirror.location == null) {
     throw ArgumentError('Invalid location');
@@ -18,5 +17,6 @@ Future<String> absoluteSourcePath(Type type) async {
     }
   }
 
-  return '${uri.toFilePath()}#${MirrorSystem.getName(mirror.simpleName)}';
+  return '${uri.toFilePath()}#${MirrorSystem.getName(mirror.simpleName)}'; */
+  return type.toString();
 }
