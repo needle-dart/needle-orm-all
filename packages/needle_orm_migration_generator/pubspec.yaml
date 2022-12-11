@@ -16,7 +16,6 @@ dependencies:
   needle_orm: ^0.1.1
   scope: ^2.2.1
   needle_orm_migration: ^0.1.1
-  inflection3: ^0.5.3+2
   recase: ^4.0.0
   logging: ^1.0.2
 

@@ -1,7 +1,7 @@
 import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 
-import 'src/impl_generator copy.dart';
+import 'src/impl_generator.dart';
 import 'src/inspect_generator.dart';
 import 'src/model_class_generator.dart';
 import 'src/meta_class_generator.dart';
