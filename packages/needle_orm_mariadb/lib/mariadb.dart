@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'dart:typed_data';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 
 class MariaDbDatabase extends Database {
   late Logger logger;

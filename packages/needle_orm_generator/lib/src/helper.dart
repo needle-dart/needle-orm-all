@@ -1,12 +1,26 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:source_gen/source_gen.dart';
 
 extension StringUtil on String {
   String removePrefix([String prefix = '_']) {
     if (this.startsWith(prefix)) {
       return this.substring(prefix.length);
+    }
+    return this;
+  }
+
+  String genericListType() {
+    int i = indexOf('<');
+    int j = indexOf('>');
+    if (i >= 0 && j > i) {
+      var t = substring(i + 1, j);
+      if (t.endsWith('?')) {
+        return t.substring(0, t.length - 1);
+      } else {
+        return t;
+      }
     }
     return this;
   }

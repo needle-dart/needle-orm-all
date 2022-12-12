@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:logging/logging.dart';
 import 'package:postgres_pool/postgres_pool.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 
 import 'postgres.dart';
 

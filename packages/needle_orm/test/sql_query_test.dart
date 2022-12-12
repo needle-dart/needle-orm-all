@@ -1,4 +1,4 @@
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:test/test.dart';
 
 typedef C = SqlCondition;

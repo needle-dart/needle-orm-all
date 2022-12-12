@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'package:logging/logging.dart';
 import 'package:pool/pool.dart';
 import 'package:postgres/postgres.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
 class PostgreSqlDatabase extends Database {

@@ -1,4 +1,5 @@
 import 'api.dart';
+import 'inspector.dart';
 
 import 'package:recase/recase.dart';
 import 'package:inflection3/inflection3.dart';
@@ -38,7 +39,8 @@ class OrmMetaClass {
   }
 
   List<OrmMetaField> allFields({bool searchParents = false}) {
-    var parentClz = ModelInspector.meta(superClassName!);
+    var parentClz =
+        superClassName == null ? null : ModelInspector.meta(superClassName!);
     return [
       ...fields,
       if (searchParents && parentClz != null)
@@ -57,9 +59,15 @@ class OrmMetaClass {
     return null;
   }
 
-  List<OrmMetaField> get idFields => allFields(searchParents: true)
+/*   List<OrmMetaField> get idFields => allFields(searchParents: true)
       .where((f) => f.ormAnnotations.any((annot) => annot.runtimeType == ID))
       .toList();
+ */
+  List<OrmMetaField> get idFields => [idField];
+
+  static OrmMetaField idField = OrmMetaField('id', 'int', ormAnnotations: [
+    ID(),
+  ]);
 
   OrmMetaField? get softDeleteField =>
       allFields(searchParents: true).firstWhere((f) =>

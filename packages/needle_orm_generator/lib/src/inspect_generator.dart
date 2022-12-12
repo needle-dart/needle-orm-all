@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/src/builder/build_step.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:needle_orm_generator/src/common.dart';
 import 'package:source_gen/source_gen.dart';
 import 'helper.dart';
@@ -37,9 +37,9 @@ class NeedleOrmInspectorGenerator extends Generator {
         .add('final _allModelInspectors = <ModelInspector>[${all.join(',')}];');
 
     values.add("""
-      initOrm() {
-        ModelInspector.registerAll(_allModelInspectors);
-        ModelInspector.registerAllClass(_allModelMetaClasses);
+      initNeedle() {
+        Needle.registerAll(_allModelInspectors);
+        Needle.registerAllMetaClasses(_allModelMetaClasses);
       }
       """);
     return values.join('\n\n');
@@ -81,10 +81,13 @@ class _InspectoroGenerator {
                   {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
                 var m = $name();
                 m.id = id;
+                initInstance(m, topQuery: topQuery);
                 m._modelInspector.markAttached(m, topQuery: topQuery);
                 return m;
               }
           """;
+
+    var strInitInstance = genInitInstance() ?? "";
 
     var strNewQuery = clazz.isAbstract
         ? ""
@@ -106,6 +109,8 @@ class _InspectoroGenerator {
 
           $strNewInstance
 
+          $strInitInstance
+
           $strNewQuery
 
           $fields
@@ -113,6 +118,44 @@ class _InspectoroGenerator {
           $methods
       }
       ''';
+  }
+
+  bool isOneToMany(FieldElement field) {
+    return field.metadata
+        .where((annot) => annot.name == 'OneToMany')
+        .isNotEmpty;
+  }
+
+  String? genInitInstance() {
+    var oneToManyFields = clazz.fields.where(isOneToMany).toList();
+    if (oneToManyFields.isEmpty) return null;
+
+    var str = oneToManyFields.map((field) {
+      var annot =
+          field.metadata.firstWhere((a) => a.name == 'OneToMany').toOneToMany();
+
+      return """
+          {
+            var meta = ModelInspector.lookupClass('${field.type.toString().genericListType()}');
+            var field = meta
+                .allFields(searchParents: true)
+                .firstWhere((f) => f.name == '${annot.mappedBy?.removePrefix()}');
+            m.${field.name.removePrefix()} = LazyOneToManyList(
+                db: topQuery.db, clz: meta, refField: field, refFieldValue: m.id);
+          }
+        """;
+    }).join("\n");
+
+    return """
+        /// init model properties after [newInstance()]
+        @override
+        void initInstance(User m, {required ModelQuery<Model> topQuery}) {
+          
+          $str
+
+          super.initInstance(m, topQuery: topQuery);
+        }
+      """;
   }
 }
 

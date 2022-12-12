@@ -1,19 +1,42 @@
-import 'sql.dart';
+import 'dart:collection';
+import 'helper.dart';
+import 'inspector.dart';
 import 'meta.dart';
+import 'sql.dart';
 
-part 'api.helper.part.dart';
 part 'api.query.part.dart';
-part 'api.inspector.part.dart';
 
-/// Base class for all Models
+/// Needle Api
+class Needle {
+  static void Function(String className, OrmMetaClass metaClass)
+      registerMetaClass = ModelInspector.registerMetaClass;
+
+  static void Function(List<OrmMetaClass> metaClasses) registerAllMetaClasses =
+      ModelInspector.registerAllMetaClasses;
+
+  static void Function(String className, ModelInspector inspector) register =
+      ModelInspector.register;
+
+  static void Function(List<ModelInspector> inspectors) registerAll =
+      ModelInspector.registerAll;
+
+  /// get current login user
+  static String? Function()? currentUser;
+
+  static ModelHelper helper(Model model) {
+    return model._innerHelper;
+  }
+}
+
+/// Base class for all Models with @ID
 abstract class Model {
-  /// ID
+  @ID()
   dynamic id;
 
-  late final _ModelHelper _innerHelper;
+  late final ModelHelper _innerHelper;
 
   Model() {
-    _innerHelper = _ModelHelper(this, runtimeType.toString());
+    _innerHelper = ModelHelper(this, runtimeType.toString());
   }
 
   /// convert model to map, with specified [fields] (default:*).
@@ -59,6 +82,8 @@ abstract class Model {
     return _innerHelper.deletePermanent(db: db);
   }
 }
+
+/// Needle
 
 /// Orm Base Annotation
 abstract class OrmAnnotation {

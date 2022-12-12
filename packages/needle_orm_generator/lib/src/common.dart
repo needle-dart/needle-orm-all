@@ -234,3 +234,14 @@ const strFieldFilter = r'''
   }
 
 ''';
+
+var strOrmMetaInfoModel = """
+class _OrmMetaInfoModel extends OrmMetaClass {
+  _OrmMetaInfoModel()
+      : super('Model', isAbstract: true, superClassName: null, ormAnnotations: [
+          Entity(),
+        ], fields: [
+          OrmMetaClass.idField,
+        ], methods: []);
+}
+""";

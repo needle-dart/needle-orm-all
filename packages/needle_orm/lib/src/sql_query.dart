@@ -148,7 +148,7 @@ class SqlJoin {
   Map<String, dynamic> get params => conditions.params;
 }
 
-extension SqlJoinGroup on List<SqlJoin> {
+extension SqlJoinGroupExtension on List<SqlJoin> {
   String toSql() {
     return map((j) => j.toSql()).join(' ');
   }

@@ -6,13 +6,13 @@ import 'package:needle_orm_example/domain.dart';
 import 'dart:async';
 
 import 'package:logging/logging.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:test/test.dart';
 
 const dbMariadb = "mariadb";
 const dbPostgres = "postgres";
 void main() async {
-  initOrm();
+  initNeedle();
   setUp(() async {
     initLogger();
 

@@ -1,7 +1,8 @@
 // ignore_for_file: unused_field, unused_element
 
 import 'package:logging/logging.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
+import 'package:needle_orm/impl.dart';
 import 'package:needle_orm_migration/needle_orm_migration.dart';
 
 part 'domain.g.dart'; // auto generated code
@@ -12,9 +13,6 @@ part 'domain.biz.dart';
 
 @Entity()
 abstract class Basic extends Model {
-  @ID()
-  int? _id;
-
   @Version()
   int? _version;
 
@@ -119,9 +117,6 @@ class User extends Basic {
 @Table()
 @Entity()
 class Device extends Model {
-  @ID()
-  int? _id;
-
   @Column()
   String? _name;
 

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:needle_orm_mariadb/needle_orm_mariadb.dart';
 import 'package:needle_orm_postgres/needle_orm_postgres.dart';
 import 'package:postgres_pool/postgres_pool.dart';

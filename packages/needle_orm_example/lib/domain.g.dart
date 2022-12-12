@@ -221,6 +221,15 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
   }
 }
 
+class _OrmMetaInfoModel extends OrmMetaClass {
+  _OrmMetaInfoModel()
+      : super('Model', isAbstract: true, superClassName: null, ormAnnotations: [
+          Entity(),
+        ], fields: [
+          OrmMetaClass.idField,
+        ], methods: []);
+}
+
 class _OrmMetaInfoBasic extends OrmMetaClass {
   _OrmMetaInfoBasic()
       : super('Basic',
@@ -230,9 +239,6 @@ class _OrmMetaInfoBasic extends OrmMetaClass {
               Entity(),
             ],
             fields: [
-              OrmMetaField('id', 'int?', ormAnnotations: [
-                ID(),
-              ]),
               OrmMetaField('version', 'int?', ormAnnotations: [
                 Version(),
               ]),
@@ -354,9 +360,6 @@ class _OrmMetaInfoDevice extends OrmMetaClass {
               Entity(),
             ],
             fields: [
-              OrmMetaField('id', 'int?', ormAnnotations: [
-                ID(),
-              ]),
               OrmMetaField('name', 'String?', ormAnnotations: [
                 Column(),
               ]),
@@ -375,6 +378,7 @@ class _OrmMetaInfoDevice extends OrmMetaClass {
 }
 
 final _allModelMetaClasses = [
+  _OrmMetaInfoModel(),
   _OrmMetaInfoBasic(),
   _OrmMetaInfoBook(),
   _OrmMetaInfoUser(),
@@ -391,7 +395,6 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
 
   BasicQuery({super.db, super.topQuery, super.propName});
 
-  IntColumn id = IntColumn("id");
   IntColumn version = IntColumn("version");
   BoolColumn softDeleted = BoolColumn("softDeleted");
   DateTimeColumn createdAt = DateTimeColumn("createdAt");
@@ -402,14 +405,14 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
 
   @override
   List<ColumnQuery> get columns => [
-        id,
         version,
         softDeleted,
         createdAt,
         updatedAt,
         createdBy,
         lastUpdatedBy,
-        remark
+        remark,
+        ...super.columns
       ];
 
   @override
@@ -462,12 +465,11 @@ class DeviceQuery extends _BaseModelQuery<Device> {
 
   DeviceQuery({super.db, super.topQuery, super.propName});
 
-  IntColumn id = IntColumn("id");
   StringColumn name = StringColumn("name");
   StringColumn address = StringColumn("address");
 
   @override
-  List<ColumnQuery> get columns => [id, name, address];
+  List<ColumnQuery> get columns => [name, address, ...super.columns];
 
   @override
   List<BaseModelQuery> get joins => [];
@@ -479,16 +481,6 @@ class DeviceQuery extends _BaseModelQuery<Device> {
 
 extension BasicImpl on Basic {
   ModelInspector<Basic> get _modelInspector => ModelInspector.lookup("Basic");
-
-  int? get id {
-    _modelInspector.ensureLoaded(this);
-    return _id;
-  }
-
-  set id(int? v) {
-    _modelInspector.markDirty(this, 'id', _id, v);
-    _id = v;
-  }
 
   int? get version {
     _modelInspector.ensureLoaded(this);
@@ -672,16 +664,6 @@ extension UserImpl on User {
 extension DeviceImpl on Device {
   ModelInspector<Device> get _modelInspector => ModelInspector.lookup("Device");
 
-  int? get id {
-    _modelInspector.ensureLoaded(this);
-    return _id;
-  }
-
-  set id(int? v) {
-    _modelInspector.markDirty(this, 'id', _id, v);
-    _id = v;
-  }
-
   String? get name {
     _modelInspector.ensureLoaded(this);
     return _name;
@@ -731,8 +713,6 @@ class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
   @override
   getFieldValue(T model, String fieldName) {
     switch (fieldName) {
-      case "id":
-        return model.id;
       case "version":
         return model.version;
       case "softDeleted":
@@ -756,9 +736,6 @@ class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
   void setFieldValue(T model, String fieldName, value,
       {errorOnNonExistField = false}) {
     switch (fieldName) {
-      case "id":
-        model.id = value;
-        break;
       case "version":
         model.version = value;
         break;
@@ -796,6 +773,7 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
     var m = Book();
     m.id = id;
+    initInstance(m, topQuery: topQuery);
     m._modelInspector.markAttached(m, topQuery: topQuery);
     return m;
   }
@@ -858,8 +836,24 @@ class _UserModelInspector extends _BasicModelInspector<User> {
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
     var m = User();
     m.id = id;
+    initInstance(m, topQuery: topQuery);
     m._modelInspector.markAttached(m, topQuery: topQuery);
     return m;
+  }
+
+  /// init model properties after [newInstance()]
+  @override
+  void initInstance(User m, {required ModelQuery<Model> topQuery}) {
+    {
+      var meta = ModelInspector.lookupClass('Book');
+      var field = meta
+          .allFields(searchParents: true)
+          .firstWhere((f) => f.name == 'author');
+      m.books = LazyOneToManyList(
+          db: topQuery.db, clz: meta, refField: field, refFieldValue: m.id);
+    }
+
+    super.initInstance(m, topQuery: topQuery);
   }
 
   @override
@@ -965,6 +959,7 @@ class _DeviceModelInspector extends ModelInspector<Device> {
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
     var m = Device();
     m.id = id;
+    initInstance(m, topQuery: topQuery);
     m._modelInspector.markAttached(m, topQuery: topQuery);
     return m;
   }
@@ -977,8 +972,6 @@ class _DeviceModelInspector extends ModelInspector<Device> {
   @override
   getFieldValue(Device model, String fieldName) {
     switch (fieldName) {
-      case "id":
-        return model.id;
       case "name":
         return model.name;
       case "address":
@@ -992,9 +985,6 @@ class _DeviceModelInspector extends ModelInspector<Device> {
   void setFieldValue(Device model, String fieldName, value,
       {errorOnNonExistField = false}) {
     switch (fieldName) {
-      case "id":
-        model.id = value;
-        break;
       case "name":
         model.name = value;
         break;
@@ -1025,9 +1015,9 @@ final _allModelInspectors = <ModelInspector>[
   _DeviceModelInspector()
 ];
 
-initOrm() {
-  ModelInspector.registerAll(_allModelInspectors);
-  ModelInspector.registerAllClass(_allModelMetaClasses);
+initNeedle() {
+  Needle.registerAll(_allModelInspectors);
+  Needle.registerAllMetaClasses(_allModelMetaClasses);
 }
 
 // **************************************************************************
@@ -1047,8 +1037,6 @@ class _BookMigration extends Migration {
       table.blob('image');
 
       table.clob('content');
-
-      table.serial('id');
 
       table.integer('version');
 
@@ -1084,8 +1072,6 @@ class _UserMigration extends Migration {
 
       table.integer('age');
 
-      table.serial('id');
-
       table.integer('version');
 
       table.boolean('soft_deleted');
@@ -1112,8 +1098,6 @@ class _DeviceMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('devices', (table) {
-      table.serial('id');
-
       table.varChar('name', length: 255);
 
       table.varChar('address', length: 255);

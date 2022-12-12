@@ -221,6 +221,15 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
   }
 }
 
+class _OrmMetaInfoModel extends OrmMetaClass {
+  _OrmMetaInfoModel()
+      : super('Model', isAbstract: true, superClassName: null, ormAnnotations: [
+          Entity(),
+        ], fields: [
+          OrmMetaClass.idField,
+        ], methods: []);
+}
+
 class _OrmMetaInfoBasic extends OrmMetaClass {
   _OrmMetaInfoBasic()
       : super('Basic',
@@ -230,9 +239,6 @@ class _OrmMetaInfoBasic extends OrmMetaClass {
               Entity(),
             ],
             fields: [
-              OrmMetaField('id', 'int?', ormAnnotations: [
-                ID(),
-              ]),
               OrmMetaField('version', 'int?', ormAnnotations: [
                 Version(),
               ]),
@@ -364,6 +370,7 @@ class _OrmMetaInfoJob extends OrmMetaClass {
 }
 
 final _allModelMetaClasses = [
+  _OrmMetaInfoModel(),
   _OrmMetaInfoBasic(),
   _OrmMetaInfoBook(),
   _OrmMetaInfoUser(),
@@ -380,7 +387,6 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
 
   BasicQuery({super.db, super.topQuery, super.propName});
 
-  IntColumn id = IntColumn("id");
   IntColumn version = IntColumn("version");
   BoolColumn softDeleted = BoolColumn("softDeleted");
   DateTimeColumn createdAt = DateTimeColumn("createdAt");
@@ -391,14 +397,14 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
 
   @override
   List<ColumnQuery> get columns => [
-        id,
         version,
         softDeleted,
         createdAt,
         updatedAt,
         createdBy,
         lastUpdatedBy,
-        remark
+        remark,
+        ...super.columns
       ];
 
   @override
@@ -466,16 +472,6 @@ class JobQuery extends BasicQuery<Job> {
 
 extension BasicImpl on Basic {
   ModelInspector<Basic> get _modelInspector => ModelInspector.lookup("Basic");
-
-  int? get id {
-    _modelInspector.ensureLoaded(this);
-    return _id;
-  }
-
-  set id(int? v) {
-    _modelInspector.markDirty(this, 'id', _id, v);
-    _id = v;
-  }
 
   int? get version {
     _modelInspector.ensureLoaded(this);
@@ -708,8 +704,6 @@ class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
   @override
   getFieldValue(T model, String fieldName) {
     switch (fieldName) {
-      case "id":
-        return model.id;
       case "version":
         return model.version;
       case "softDeleted":
@@ -735,9 +729,6 @@ class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
   void setFieldValue(T model, String fieldName, value,
       {errorOnNonExistField = false}) {
     switch (fieldName) {
-      case "id":
-        model.id = value;
-        break;
       case "version":
         model.version = value;
         break;
@@ -987,7 +978,7 @@ final _allModelInspectors = <ModelInspector>[
   _JobModelInspector()
 ];
 
-initOrm() {
-  ModelInspector.registerAll(_allModelInspectors);
-  ModelInspector.registerAllClass(_allModelMetaClasses);
+initNeedle() {
+  Needle.registerAll(_allModelInspectors);
+  Needle.registerAllMetaClasses(_allModelMetaClasses);
 }

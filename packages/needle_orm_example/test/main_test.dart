@@ -4,13 +4,13 @@ import 'package:needle_orm_example/domain.dart';
 import 'dart:async';
 
 import 'package:logging/logging.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:test/test.dart';
 
 const dbMariadb = "mariadb";
 const dbPostgres = "postgres";
 void main() async {
-  initOrm();
+  initNeedle();
 
   setUp(() async {
     initLogger();
@@ -110,10 +110,10 @@ Future<void> testFindByIds() async {
 Future<void> testFindBy() async {
   var log = Logger('$logPrefix testFindBy');
 
-  await testInsert();
+  var authorId = await testInsert();
 
-  var books =
-      await BookQuery().findBy({"author": 5100}); // can use model.id as value
+  var books = await BookQuery()
+      .findBy({"author": authorId}); // can use model.id as value
   log.info('books list: $books');
   // load properties before calling toMap(author(...))
   for (var book in books) {
@@ -122,12 +122,12 @@ Future<void> testFindBy() async {
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
 
-  log.info(
-      'books all: ${(await BookQuery().findList()).map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
-
   var users = await UserQuery().findList();
   log.info('users: $users');
 
+  for (var user in users) {
+    await user.books?.load();
+  }
   log.info('user.toMap() : ${users[0].toMap(fields: '*,books(id,title)')}');
 }
 
@@ -152,10 +152,11 @@ Future<void> testCount() async {
   log.info(await BookQuery().count());
 }
 
-Future<void> testInsert() async {
+Future<int> testInsert() async {
   var log = Logger('$logPrefix testInsert');
 
   log.info('count before insert : ${await BookQuery().count()}');
+  var lastUserId = 0;
   var n = 5;
   for (int i = 0; i < n; i++) {
     var user = User()
@@ -163,6 +164,7 @@ Future<void> testInsert() async {
       ..address = 'China Shanghai street_$i'
       ..age = (n * 0.1).toInt();
     await user.save();
+    lastUserId = user.id;
     log.info('\t used saved with id: ${user.id}');
 
     var book = Book()
@@ -173,6 +175,7 @@ Future<void> testInsert() async {
     log.info('\t book saved with id: ${book.id}');
   }
   log.info('count after insert : ${await BookQuery().count()}');
+  return lastUserId;
 }
 
 Future<void> testInsertBatch() async {
@@ -423,9 +426,7 @@ Future<void> testOneToMany() async {
   var users = await q.findList();
   for (User user in users) {
     var books = user.books;
-    if (books != null && books is LazyOneToManyList) {
-      await (books as LazyOneToManyList).load();
-    }
+    await books?.load();
     log.info(books?.length);
     if ((books?.length ?? 0) > 0) {
       log.info(

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/src/builder/build_step.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
 import 'package:needle_orm_generator/src/common.dart';
 import 'package:source_gen/source_gen.dart';
 import 'helper.dart';
@@ -28,7 +28,9 @@ class NeedleOrmMetaInfoGenerator extends Generator {
     values.add(strModelCache);
     values.add(strFieldFilter);
     values.add(strBaseQuery);
+    values.add(strOrmMetaInfoModel);
 
+    all.add('_OrmMetaInfoModel()');
     for (var clz in classes) {
       var classGen = ClassMetaInfoGenerator(clz);
       values.add(classGen.generate());

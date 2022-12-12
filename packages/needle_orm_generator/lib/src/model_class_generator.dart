@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/src/builder/build_step.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
+import 'package:needle_orm/impl.dart';
 import 'package:source_gen/source_gen.dart';
 import 'helper.dart';
 
@@ -252,7 +253,7 @@ class ClassInspector {
         @override
         List<ColumnQuery> get columns => [${[
       if (columns.isNotEmpty) columns,
-      if (!isTopModel) '... super.columns',
+      '... super.columns',
     ].join(',')}];
 
         @override

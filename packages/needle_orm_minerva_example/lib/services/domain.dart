@@ -1,7 +1,8 @@
 // ignore_for_file: unused_field, unused_element
 
 import 'package:logging/logging.dart';
-import 'package:needle_orm/needle_orm.dart';
+import 'package:needle_orm/api.dart';
+import 'package:needle_orm/impl.dart';
 
 part 'domain.g.dart'; // auto generated code
 part 'domain.part.dart'; // business logic code
@@ -11,9 +12,6 @@ part 'domain.part.dart'; // business logic code
 
 @Entity()
 abstract class Basic extends Model {
-  @ID()
-  int? _id;
-
   @Version()
   int? _version;
 

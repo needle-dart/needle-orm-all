@@ -1,8 +1,10 @@
-part of 'api.dart';
+import 'api.dart';
+import 'inspector.dart';
+import 'sql.dart';
 
-/// [_ModelHelper] keeps inner state of a [Model] instance.
+/// [ModelHelper] keeps inner state of a [Model] instance.
 /// can ONLY be used by generators!
-class _ModelHelper<M extends Model> {
+class ModelHelper<M extends Model> {
   final M model;
   ModelQuery? topQuery;
   bool storeLoaded = false; // if fields has been loaded from db.
@@ -12,7 +14,7 @@ class _ModelHelper<M extends Model> {
   String className;
 
   late ModelInspector<M> inspector;
-  _ModelHelper(this.model, this.className) {
+  ModelHelper(this.model, this.className) {
     inspector = ModelInspector.lookup(className);
   }
 

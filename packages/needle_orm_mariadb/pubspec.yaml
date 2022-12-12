@@ -5,7 +5,7 @@ homepage: https://github.com/needle-dart/needle-orm-all
 repository: https://github.com/needle-dart/needle-orm-all.git
 
 environment:
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: '>=2.18.5 <3.0.0'
 
 dependencies:
   mysql1: ^0.20.0
