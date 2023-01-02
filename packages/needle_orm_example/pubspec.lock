@@ -141,6 +141,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.5.0"
+  crypt:
+    dependency: "direct main"
+    description:
+      name: crypt
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "4.2.1"
   crypto:
     dependency: transitive
     description:

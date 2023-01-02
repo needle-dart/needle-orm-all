@@ -1,7 +1,7 @@
 import 'package:logging/logging.dart';
 import 'package:needle_orm_example/common.dart';
 
-import 'package:needle_orm_example/domain.dart';
+import 'package:needle_orm_example/domain.mig.dart';
 import 'package:needle_orm_migration_runner/mariadb.dart';
 import 'package:needle_orm_migration_runner/needle_orm_migration_runner.dart';
 import 'package:needle_orm_migration_runner/postgres.dart';

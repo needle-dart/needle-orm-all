@@ -309,6 +309,9 @@ class _OrmMetaInfoUser extends OrmMetaClass {
               OrmMetaField('loginName', 'String?', ormAnnotations: [
                 Column(),
               ]),
+              OrmMetaField('password', 'String?', ormAnnotations: [
+                Column(),
+              ]),
               OrmMetaField('address', 'String?', ormAnnotations: [
                 Column(),
               ]),
@@ -320,6 +323,8 @@ class _OrmMetaInfoUser extends OrmMetaClass {
               ]),
             ],
             methods: [
+              OrmMetaMethod('resetPassword', ormAnnotations: []),
+              OrmMetaMethod('verifyPassword', ormAnnotations: []),
               OrmMetaMethod('beforeInsert', ormAnnotations: [
                 PrePersist(),
               ]),
@@ -447,13 +452,14 @@ class UserQuery extends BasicQuery<User> {
 
   StringColumn name = StringColumn("name");
   StringColumn loginName = StringColumn("loginName");
+  StringColumn password = StringColumn("password");
   StringColumn address = StringColumn("address");
   IntColumn age = IntColumn("age");
   BookQuery get books => topQuery.findQuery(db, "Book", "books");
 
   @override
   List<ColumnQuery> get columns =>
-      [name, loginName, address, age, ...super.columns];
+      [name, loginName, password, address, age, ...super.columns];
 
   @override
   List<BaseModelQuery> get joins => [books, ...super.joins];
@@ -628,6 +634,16 @@ extension UserImpl on User {
   set loginName(String? v) {
     _modelInspector.markDirty(this, 'loginName', _loginName, v);
     _loginName = v;
+  }
+
+  String? get password {
+    _modelInspector.ensureLoaded(this);
+    return _password;
+  }
+
+  set password(String? v) {
+    _modelInspector.markDirty(this, 'password', _password, v);
+    _password = v;
   }
 
   String? get address {
@@ -868,6 +884,8 @@ class _UserModelInspector extends _BasicModelInspector<User> {
         return model.name;
       case "loginName":
         return model.loginName;
+      case "password":
+        return model.password;
       case "address":
         return model.address;
       case "age":
@@ -888,6 +906,9 @@ class _UserModelInspector extends _BasicModelInspector<User> {
         break;
       case "loginName":
         model.loginName = value;
+        break;
+      case "password":
+        model.password = value;
         break;
       case "address":
         model.address = value;
@@ -1019,99 +1040,3 @@ initNeedle() {
   Needle.registerAll(_allModelInspectors);
   Needle.registerAllMetaClasses(_allModelMetaClasses);
 }
-
-// **************************************************************************
-// NeedleOrmMigrationGenerator
-// **************************************************************************
-
-class _BookMigration extends Migration {
-  @override
-  void up(Schema schema) {
-    schema.create('books', (table) {
-      table.varChar('title', length: 255);
-
-      table.float('price');
-
-      table.integer('author_id');
-
-      table.blob('image');
-
-      table.clob('content');
-
-      table.integer('version');
-
-      table.boolean('soft_deleted');
-
-      table.timeStamp('created_at');
-
-      table.timeStamp('updated_at');
-
-      table.varChar('created_by');
-
-      table.varChar('last_updated_by');
-
-      table.varChar('remark', length: 255);
-    });
-  }
-
-  @override
-  void down(Schema schema) {
-    schema.drop('books');
-  }
-}
-
-class _UserMigration extends Migration {
-  @override
-  void up(Schema schema) {
-    schema.create('users', (table) {
-      table.varChar('name', length: 255);
-
-      table.varChar('login_name', length: 255);
-
-      table.varChar('address', length: 255);
-
-      table.integer('age');
-
-      table.integer('version');
-
-      table.boolean('soft_deleted');
-
-      table.timeStamp('created_at');
-
-      table.timeStamp('updated_at');
-
-      table.varChar('created_by');
-
-      table.varChar('last_updated_by');
-
-      table.varChar('remark', length: 255);
-    });
-  }
-
-  @override
-  void down(Schema schema) {
-    schema.drop('users');
-  }
-}
-
-class _DeviceMigration extends Migration {
-  @override
-  void up(Schema schema) {
-    schema.create('devices', (table) {
-      table.varChar('name', length: 255);
-
-      table.varChar('address', length: 255);
-    });
-  }
-
-  @override
-  void down(Schema schema) {
-    schema.drop('devices');
-  }
-}
-
-final allMigrations = <Migration>[
-  _BookMigration(),
-  _UserMigration(),
-  _DeviceMigration()
-];

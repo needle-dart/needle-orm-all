@@ -12,12 +12,16 @@ const dbPostgres = "postgres";
 void main() async {
   initNeedle();
 
+  Needle.currentUser = () {
+    return "userName";
+  };
+
   setUp(() async {
     initLogger();
 
     // the first db will be the default one as well
-    Database.register(dbPostgres, await initPostgreSQL());
     Database.register(dbMariadb, await initMariaDb());
+    Database.register(dbPostgres, await initPostgreSQL());
     await clean();
   });
 
@@ -163,7 +167,11 @@ Future<int> testInsert() async {
       ..name = 'name_$i'
       ..address = 'China Shanghai street_$i'
       ..age = (n * 0.1).toInt();
+    user.resetPassword('newPassw0rd');
     await user.save();
+
+    expect(user.verifyPassword('newPassw0rd'), true);
+
     lastUserId = user.id;
     log.info('\t used saved with id: ${user.id}');
 

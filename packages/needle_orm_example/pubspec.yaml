@@ -18,6 +18,7 @@ dependencies:
   needle_orm_migration: ^0.1.1
   needle_orm_migration_runner: ^0.1.1
   stack_trace: ^1.10.0
+  crypt: ^4.2.1
 
 dev_dependencies:
   lints: ^2.0.0

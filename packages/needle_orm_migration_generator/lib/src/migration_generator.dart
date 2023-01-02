@@ -17,6 +17,9 @@ class NeedleOrmMigrationGenerator extends Generator {
   FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
     final values = <String>[];
 
+    values.add(
+        "import 'package:needle_orm_migration/needle_orm_migration.dart';");
+
     var elements = library.annotatedWith(typeChecker);
     if (elements.isEmpty) {
       return '';
@@ -91,7 +94,7 @@ class ClassMigrationGenerator {
         void up(Schema schema) {
           schema.create('$tableName', (table) {
             table.serial('id');
-            
+
             $fields
           });
         }

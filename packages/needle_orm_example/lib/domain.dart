@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:needle_orm/api.dart';
 import 'package:needle_orm/impl.dart';
 import 'package:needle_orm_migration/needle_orm_migration.dart';
+import 'package:crypt/crypt.dart';
 
 part 'domain.g.dart'; // auto generated code
 part 'domain.biz.dart';
@@ -70,6 +71,9 @@ class User extends Basic {
   String? _loginName;
 
   @Column()
+  String? _password;
+
+  @Column()
   String? _address;
 
   @Column()
@@ -79,6 +83,14 @@ class User extends Basic {
   List<Book>? _books;
 
   User();
+
+  void resetPassword(String newPassword) {
+    password = Crypt.sha512(newPassword).toString();
+  }
+
+  bool verifyPassword(String tryPassword) {
+    return Crypt(_password!).match(tryPassword);
+  }
 
   @PrePersist()
   void beforeInsert() {
