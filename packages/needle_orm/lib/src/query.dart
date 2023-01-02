@@ -345,6 +345,8 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
       modelInspector.setFieldValue(model, versionField.name, 1);
     }
 
+    modelInspector.setCurrentUser(model, insert: true, update: true);
+
     var dirtyMap = modelInspector.getDirtyFields(model);
     var ssFields = clz.serverSideFields(action, searchParents: true);
 
@@ -439,6 +441,10 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
       }
     }
 
+    for (var model in modelList) {
+      modelInspector.setCurrentUser(model, insert: true, update: true);
+    }
+
     // all but id fields
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.isIdField || f.notExistsInDb);
@@ -492,6 +498,9 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
     var modelInspector = ModelInspector.lookup(className);
     var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
+
+    modelInspector.setCurrentUser(model, insert: false, update: true);
+
     var dirtyMap = modelInspector.getDirtyFields(model);
 
     var idField = clz.idFields.first; // @TODO

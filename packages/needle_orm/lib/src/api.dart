@@ -21,7 +21,7 @@ class Needle {
       ModelInspector.registerAll;
 
   /// get current login user
-  static String? Function()? currentUser;
+  static dynamic Function()? currentUser;
 
   static ModelHelper helper(Model model) {
     return model._innerHelper;
@@ -316,14 +316,16 @@ class WhenModified extends OrmAnnotation {
           : '';
 }
 
-/// @WhoCreated , NOT implemented yet!
-// io.ebean extension
+/// @WhoCreated
+/// seealso: [Needle.currentUser]
+/// io.ebean extension
 class WhoCreated extends OrmAnnotation {
   const WhoCreated();
 }
 
-/// @WhoModified , NOT implemented yet!
-// io.ebean extension
+/// @WhoModified
+/// seealso: [Needle.currentUser]
+/// io.ebean extension
 class WhoModified extends OrmAnnotation {
   const WhoModified();
 }

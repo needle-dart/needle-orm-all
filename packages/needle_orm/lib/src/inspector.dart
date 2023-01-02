@@ -232,6 +232,35 @@ abstract class ModelInspector<M extends Model> {
     return map2;
   }
 
+  /// set current user by [Needle.currentUser]
+  void setCurrentUser(M model, {bool insert = false, bool update = false}) {
+    if (Needle.currentUser == null) {
+      return;
+    }
+    if (!insert && !update) {
+      return;
+    }
+    dynamic current = Needle.currentUser!.call();
+
+    if (insert) {
+      allFields(className, searchParents: true)
+          ?.where((field) =>
+              field.ormAnnotations.any((annot) => annot is WhoCreated))
+          .forEach((field) {
+        setFieldValue(model, field.name, current);
+      });
+    }
+
+    if (update) {
+      allFields(className, searchParents: true)
+          ?.where((field) =>
+              field.ormAnnotations.any((annot) => annot is WhoModified))
+          .forEach((field) {
+        setFieldValue(model, field.name, current);
+      });
+    }
+  }
+
   void postLoad(M model) {}
   void prePersist(M model) {}
   void postPersist(M model) {}
