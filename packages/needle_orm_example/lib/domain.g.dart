@@ -401,11 +401,11 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
   BasicQuery({super.db, super.topQuery, super.propName});
 
   IntColumn version = IntColumn("version");
-  BoolColumn softDeleted = BoolColumn("softDeleted");
-  DateTimeColumn createdAt = DateTimeColumn("createdAt");
-  DateTimeColumn updatedAt = DateTimeColumn("updatedAt");
-  StringColumn createdBy = StringColumn("createdBy");
-  StringColumn lastUpdatedBy = StringColumn("lastUpdatedBy");
+  BoolColumn softDeleted = BoolColumn("soft_deleted");
+  DateTimeColumn createdAt = DateTimeColumn("created_at");
+  DateTimeColumn updatedAt = DateTimeColumn("updated_at");
+  StringColumn createdBy = StringColumn("created_by");
+  StringColumn lastUpdatedBy = StringColumn("last_updated_by");
   StringColumn remark = StringColumn("remark");
 
   @override
@@ -451,7 +451,7 @@ class UserQuery extends BasicQuery<User> {
   UserQuery({super.db, super.topQuery, super.propName});
 
   StringColumn name = StringColumn("name");
-  StringColumn loginName = StringColumn("loginName");
+  StringColumn loginName = StringColumn("login_name");
   StringColumn password = StringColumn("password");
   StringColumn address = StringColumn("address");
   IntColumn age = IntColumn("age");

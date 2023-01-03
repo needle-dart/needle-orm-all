@@ -5,6 +5,7 @@ import 'package:needle_orm/api.dart';
 import 'package:needle_orm/impl.dart';
 import 'package:source_gen/source_gen.dart';
 import 'helper.dart';
+import 'package:recase/recase.dart';
 
 /// generator model parital file.
 class NeedleOrmModelGenerator extends GeneratorForAnnotation<Entity> {
@@ -121,7 +122,11 @@ class FieldInspector {
 
   String generateColumnQuery() {
     var queryClassName = ColumnQuery.classNameForType(_queryCleanType);
-    return '$queryClassName $name = $queryClassName("$name");';
+    return '$queryClassName $name = $queryClassName("${getColumnName(name)}");';
+  }
+
+  String getColumnName(String fieldName) {
+    return ReCase(fieldName).snakeCase;
   }
 
   String generateJoin() {
