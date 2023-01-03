@@ -28,3 +28,7 @@ scripts:
   doc-clean:
     exec: rm -rf doc
 
+  server:
+    exec: minerva run
+    select-package:
+      scope: needle_orm_minerva_example
