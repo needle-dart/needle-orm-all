@@ -3,12 +3,10 @@
 import 'package:logging/logging.dart';
 import 'package:needle_orm/api.dart';
 import 'package:needle_orm/impl.dart';
-
 part 'domain.g.dart'; // auto generated code
-part 'domain.part.dart'; // business logic code
+// part 'domain.part.dart'; // business logic code
 
-// all Class names and Field names must start with '_'
-// all business logic must be defined in file : 'domain.part.dart'
+// all Field names must start with '_'
 
 @Entity()
 abstract class Basic extends Model {
@@ -72,6 +70,9 @@ class User extends Basic {
   String? _loginName;
 
   @Column()
+  String? _password;
+
+  @Column()
   String? _address;
 
   @Column()
@@ -82,33 +83,34 @@ class User extends Basic {
 
   User();
 
-  // need to implement beforeInsert() for User in domain.part.dart
   @PrePersist()
-  void beforeInsert() {}
+  void _beforeInsert() {
+    print('--> before insert user: $_name');
+  }
 
   @PostPersist()
-  void afterInsert() {}
+  void _afterInsert() {}
 
   @PreRemove()
-  void beforeRemove() {}
+  void _beforeRemove() {}
 
   @PreRemovePermanent()
-  void beforeRemovePermanent() {}
+  void _beforeRemovePermanent() {}
 
   @PreUpdate()
-  void beforeUpdate() {}
+  void _beforeUpdate() {}
 
   @PostLoad()
-  void afterLoad() {}
+  void _afterLoad() {}
 
   @PostUpdate()
-  void afterUpdate() {}
+  void _afterUpdate() {}
 
   @PostRemove()
-  void afterRemove() {}
+  void _afterRemove() {}
 
   @PostRemovePermanent()
-  void afterRemovePermanent() {}
+  void _afterRemovePermanent() {}
 }
 
 @Entity()

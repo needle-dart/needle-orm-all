@@ -9,6 +9,9 @@ import 'dart:async';
 final random = Random();
 
 Future<Book?> findOneBook(ServerContext context, MinervaRequest request) async {
+  LogPipeline logger = Zone.current[#logger];
+  logger.info("username: ${Zone.current[#username]}");
+
   var q = BookQuery();
   q.maxRows = 1;
 

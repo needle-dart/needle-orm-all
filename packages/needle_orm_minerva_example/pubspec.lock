@@ -8,6 +8,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "50.0.0"
+  adaptive_number:
+    dependency: transitive
+    description:
+      name: adaptive_number
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.0.0"
   analyzer:
     dependency: transitive
     description:
@@ -99,6 +106,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "8.4.2"
+  charcode:
+    dependency: transitive
+    description:
+      name: charcode
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "1.3.1"
   checked_yaml:
     dependency: transitive
     description:
@@ -142,7 +156,7 @@ packages:
     source: hosted
     version: "1.6.1"
   crypt:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: crypt
       url: "https://pub.flutter-io.cn"
@@ -155,6 +169,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "3.0.2"
+  dart_jsonwebtoken:
+    dependency: "direct main"
+    description:
+      name: dart_jsonwebtoken
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.6.2"
   dart_style:
     dependency: transitive
     description:
@@ -169,6 +190,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "4.0.6"
+  ed25519_edwards:
+    dependency: transitive
+    description:
+      name: ed25519_edwards
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.3.1"
   executor:
     dependency: transitive
     description:
@@ -298,10 +326,10 @@ packages:
   minerva:
     dependency: "direct main"
     description:
-      name: minerva
-      url: "https://pub.flutter-io.cn"
-    source: hosted
-    version: "0.2.7"
+      path: "/data/work/dart/minerva"
+      relative: false
+    source: path
+    version: "0.3.3"
   mysql1:
     dependency: "direct main"
     description:
@@ -309,6 +337,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "0.20.0"
+  mysql_client:
+    dependency: transitive
+    description:
+      name: mysql_client
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.0.27"
   needle_orm:
     dependency: "direct main"
     description:
@@ -327,6 +362,27 @@ packages:
     dependency: "direct main"
     description:
       path: "../needle_orm_mariadb"
+      relative: true
+    source: path
+    version: "0.1.1"
+  needle_orm_migration:
+    dependency: "direct dev"
+    description:
+      path: "../needle_orm_migration"
+      relative: true
+    source: path
+    version: "0.1.1"
+  needle_orm_migration_generator:
+    dependency: "direct dev"
+    description:
+      path: "../needle_orm_migration_generator"
+      relative: true
+    source: path
+    version: "0.1.1"
+  needle_orm_migration_runner:
+    dependency: "direct dev"
+    description:
+      path: "../needle_orm_migration_runner"
       relative: true
     source: path
     version: "0.1.1"
@@ -365,6 +421,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.11.1"
+  pointycastle:
+    dependency: transitive
+    description:
+      name: pointycastle
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "3.6.2"
   pool:
     dependency: transitive
     description:
@@ -428,6 +491,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.2"
+  scope:
+    dependency: transitive
+    description:
+      name: scope
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.2.1"
   shelf:
     dependency: transitive
     description:
@@ -547,6 +617,13 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.0.0"
+  tuple:
+    dependency: transitive
+    description:
+      name: tuple
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.1"
   typed_data:
     dependency: transitive
     description:

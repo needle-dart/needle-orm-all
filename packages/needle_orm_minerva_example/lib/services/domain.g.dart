@@ -312,6 +312,9 @@ class _OrmMetaInfoUser extends OrmMetaClass {
               OrmMetaField('loginName', 'String?', ormAnnotations: [
                 Column(),
               ]),
+              OrmMetaField('password', 'String?', ormAnnotations: [
+                Column(),
+              ]),
               OrmMetaField('address', 'String?', ormAnnotations: [
                 Column(),
               ]),
@@ -323,31 +326,31 @@ class _OrmMetaInfoUser extends OrmMetaClass {
               ]),
             ],
             methods: [
-              OrmMetaMethod('beforeInsert', ormAnnotations: [
+              OrmMetaMethod('_beforeInsert', ormAnnotations: [
                 PrePersist(),
               ]),
-              OrmMetaMethod('afterInsert', ormAnnotations: [
+              OrmMetaMethod('_afterInsert', ormAnnotations: [
                 PostPersist(),
               ]),
-              OrmMetaMethod('beforeRemove', ormAnnotations: [
+              OrmMetaMethod('_beforeRemove', ormAnnotations: [
                 PreRemove(),
               ]),
-              OrmMetaMethod('beforeRemovePermanent', ormAnnotations: [
+              OrmMetaMethod('_beforeRemovePermanent', ormAnnotations: [
                 PreRemovePermanent(),
               ]),
-              OrmMetaMethod('beforeUpdate', ormAnnotations: [
+              OrmMetaMethod('_beforeUpdate', ormAnnotations: [
                 PreUpdate(),
               ]),
-              OrmMetaMethod('afterLoad', ormAnnotations: [
+              OrmMetaMethod('_afterLoad', ormAnnotations: [
                 PostLoad(),
               ]),
-              OrmMetaMethod('afterUpdate', ormAnnotations: [
+              OrmMetaMethod('_afterUpdate', ormAnnotations: [
                 PostUpdate(),
               ]),
-              OrmMetaMethod('afterRemove', ormAnnotations: [
+              OrmMetaMethod('_afterRemove', ormAnnotations: [
                 PostRemove(),
               ]),
-              OrmMetaMethod('afterRemovePermanent', ormAnnotations: [
+              OrmMetaMethod('_afterRemovePermanent', ormAnnotations: [
                 PostRemovePermanent(),
               ]),
             ]);
@@ -388,11 +391,11 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
   BasicQuery({super.db, super.topQuery, super.propName});
 
   IntColumn version = IntColumn("version");
-  BoolColumn softDeleted = BoolColumn("softDeleted");
-  DateTimeColumn createdAt = DateTimeColumn("createdAt");
-  DateTimeColumn updatedAt = DateTimeColumn("updatedAt");
-  StringColumn createdBy = StringColumn("createdBy");
-  StringColumn lastUpdatedBy = StringColumn("lastUpdatedBy");
+  BoolColumn softDeleted = BoolColumn("soft_deleted");
+  DateTimeColumn createdAt = DateTimeColumn("created_at");
+  DateTimeColumn updatedAt = DateTimeColumn("updated_at");
+  StringColumn createdBy = StringColumn("created_by");
+  StringColumn lastUpdatedBy = StringColumn("last_updated_by");
   StringColumn remark = StringColumn("remark");
 
   @override
@@ -438,14 +441,15 @@ class UserQuery extends BasicQuery<User> {
   UserQuery({super.db, super.topQuery, super.propName});
 
   StringColumn name = StringColumn("name");
-  StringColumn loginName = StringColumn("loginName");
+  StringColumn loginName = StringColumn("login_name");
+  StringColumn password = StringColumn("password");
   StringColumn address = StringColumn("address");
   IntColumn age = IntColumn("age");
   BookQuery get books => topQuery.findQuery(db, "Book", "books");
 
   @override
   List<ColumnQuery> get columns =>
-      [name, loginName, address, age, ...super.columns];
+      [name, loginName, password, address, age, ...super.columns];
 
   @override
   List<BaseModelQuery> get joins => [books, ...super.joins];
@@ -631,6 +635,16 @@ extension UserImpl on User {
     _loginName = v;
   }
 
+  String? get password {
+    _modelInspector.ensureLoaded(this);
+    return _password;
+  }
+
+  set password(String? v) {
+    _modelInspector.markDirty(this, 'password', _password, v);
+    _password = v;
+  }
+
   String? get address {
     _modelInspector.ensureLoaded(this);
     return _address;
@@ -769,6 +783,7 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
     var m = Book();
     m.id = id;
+    initInstance(m, topQuery: topQuery);
     m._modelInspector.markAttached(m, topQuery: topQuery);
     return m;
   }
@@ -831,8 +846,24 @@ class _UserModelInspector extends _BasicModelInspector<User> {
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
     var m = User();
     m.id = id;
+    initInstance(m, topQuery: topQuery);
     m._modelInspector.markAttached(m, topQuery: topQuery);
     return m;
+  }
+
+  /// init model properties after [newInstance()]
+  @override
+  void initInstance(User m, {required ModelQuery<Model> topQuery}) {
+    {
+      var meta = ModelInspector.lookupClass('Book');
+      var field = meta
+          .allFields(searchParents: true)
+          .firstWhere((f) => f.name == 'author');
+      m.books = LazyOneToManyList(
+          db: topQuery.db, clz: meta, refField: field, refFieldValue: m.id);
+    }
+
+    super.initInstance(m, topQuery: topQuery);
   }
 
   @override
@@ -847,6 +878,8 @@ class _UserModelInspector extends _BasicModelInspector<User> {
         return model.name;
       case "loginName":
         return model.loginName;
+      case "password":
+        return model.password;
       case "address":
         return model.address;
       case "age":
@@ -868,6 +901,9 @@ class _UserModelInspector extends _BasicModelInspector<User> {
       case "loginName":
         model.loginName = value;
         break;
+      case "password":
+        model.password = value;
+        break;
       case "address":
         model.address = value;
         break;
@@ -885,47 +921,47 @@ class _UserModelInspector extends _BasicModelInspector<User> {
 
   @override
   void prePersist(User model) {
-    model.beforeInsert();
+    model._beforeInsert();
   }
 
   @override
   void postPersist(User model) {
-    model.afterInsert();
+    model._afterInsert();
   }
 
   @override
   void preRemove(User model) {
-    model.beforeRemove();
+    model._beforeRemove();
   }
 
   @override
   void preRemovePermanent(User model) {
-    model.beforeRemovePermanent();
+    model._beforeRemovePermanent();
   }
 
   @override
   void preUpdate(User model) {
-    model.beforeUpdate();
+    model._beforeUpdate();
   }
 
   @override
   void postLoad(User model) {
-    model.afterLoad();
+    model._afterLoad();
   }
 
   @override
   void postUpdate(User model) {
-    model.afterUpdate();
+    model._afterUpdate();
   }
 
   @override
   void postRemove(User model) {
-    model.afterRemove();
+    model._afterRemove();
   }
 
   @override
   void postRemovePermanent(User model) {
-    model.afterRemovePermanent();
+    model._afterRemovePermanent();
   }
 }
 
@@ -938,6 +974,7 @@ class _JobModelInspector extends _BasicModelInspector<Job> {
       {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
     var m = Job();
     m.id = id;
+    initInstance(m, topQuery: topQuery);
     m._modelInspector.markAttached(m, topQuery: topQuery);
     return m;
   }
