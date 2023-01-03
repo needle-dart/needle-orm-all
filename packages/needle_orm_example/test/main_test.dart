@@ -20,8 +20,8 @@ void main() async {
     initLogger();
 
     // the first db will be the default one as well
-    Database.register(dbMariadb, await initMariaDb());
     Database.register(dbPostgres, await initPostgreSQL());
+    Database.register(dbMariadb, await initMariaDb());
     await clean();
   });
 
@@ -165,6 +165,7 @@ Future<int> testInsert() async {
   for (int i = 0; i < n; i++) {
     var user = User()
       ..name = 'name_$i'
+      ..loginName = 'name_$i'
       ..address = 'China Shanghai street_$i'
       ..age = (n * 0.1).toInt();
     user.resetPassword('newPassw0rd');

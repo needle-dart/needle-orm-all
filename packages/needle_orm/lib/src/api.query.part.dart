@@ -43,6 +43,18 @@ abstract class ModelQuery<M extends Model> {
   /// find list
   Future<List<M>> findList({bool includeSoftDeleted = false});
 
+  /// find unique
+  Future<M?> findUnique({bool includeSoftDeleted = false}) async {
+    var list = await findList(includeSoftDeleted: includeSoftDeleted);
+    if (list.isEmpty) {
+      return null;
+    }
+    if (list.length == 1) {
+      return list.first;
+    }
+    throw 'findUnique error[actually returned lenght is : ${list.length}]';
+  }
+
   /// return count of this query.
   Future<int> count();
 
