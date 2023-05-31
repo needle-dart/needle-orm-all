@@ -3,25 +3,480 @@ import 'dart:collection';
 import 'dart:math';
 
 import 'package:logging/logging.dart';
+import 'package:recase/recase.dart';
 
 import 'api.dart';
 import 'meta.dart';
 import 'inspector.dart';
 import 'sql.dart';
 import 'sql_query.dart';
-import 'common.dart';
+
+class QueryCondition {
+  final ColumnConditionOper oper;
+
+  final ColumnQuery? column;
+
+  final dynamic value;
+
+  QueryCondition(this.column, this.oper, this.value);
+
+  @override
+  String toString() {
+    var p = _path;
+    return [
+      if (p.isNotEmpty) ...[p, '.'],
+      column?._name ?? '',
+      ' ',
+      oper,
+      ' {',
+      value ?? '',
+      '}',
+    ].join('');
+  }
+
+  String toSql(JoinTranslator joinTranslator) {
+    var jp = JoinPath(_path);
+    var p = joinTranslator._search(jp);
+    return '${p.alias}.${column!._name} ${oper.text} $value ';
+  }
+
+  List<TableQuery> get _path => column == null ? [] : column!._path;
+}
+
+class CompoundQueryCondition extends QueryCondition {
+  CompoundQueryCondition(super.column, super.oper, super.value);
+
+  @override
+  String toSql(JoinTranslator joinTranslator) {
+    List<QueryCondition> queryConditions = value as List<QueryCondition>;
+    switch (oper) {
+      case ColumnConditionOper.AND:
+        var str =
+            queryConditions.map((q) => q.toSql(joinTranslator)).join(' and ');
+        return "( $str )";
+      case ColumnConditionOper.OR:
+        var str =
+            queryConditions.map((q) => q.toSql(joinTranslator)).join(' or ');
+        return "( $str )";
+      case ColumnConditionOper.NOT:
+        var str = queryConditions[0].toSql(joinTranslator);
+        return " not ( $str )";
+      default:
+        return '';
+    }
+  }
+}
+
+Iterable<List<TableQuery>> _getPath(QueryCondition value) sync* {
+  if (value is CompoundQueryCondition) {
+    for (var v in (value.value as List<QueryCondition>)) {
+      for (List<TableQuery> sub in _getPath(v)) {
+        yield sub;
+      }
+    }
+  } else {
+    yield value._path;
+  }
+}
+
+class TableQuery<T> extends ColumnQuery<T> {
+  @override
+  final List<TableQuery> _path;
+
+  TableQuery(super.parentTableQuery, super.columnName)
+      : _path = parentTableQuery == null
+            ? []
+            : [...parentTableQuery._path, parentTableQuery];
+
+  String get _innerType => '$T';
+
+  @override
+  String toString() {
+    return '${super._name}:$_innerType';
+  }
+}
+
+/* 
+  SqlJoin _toSqlJoin() {
+    var clz = ModelInspector.meta(className)!;
+    var tableName = clz.tableName;
+    var columnName = getColumnName(propName!);
+    var joinStmt = '${relatedQuery!._alias}.${columnName}_id = $_alias.id';
+
+    var join = SqlJoin(tableName, _alias, joinStmt);
+    columns.where((column) => column._hasCondition).forEach((column) {
+      join.conditions.appendAll(
+          column.toSqlConditions(_alias, clz.softDeleteField?.columnName));
+    });
+    return join;
+  } */
+
+class TopTableQueryHelper<T> {
+  List<QueryCondition> conditions = [];
+
+  void addCondition(QueryCondition queryCondition) {
+    conditions.add(queryCondition);
+  }
+
+  void addAllCondition(Iterable<QueryCondition> queryConditions) {
+    conditions.addAll(queryConditions);
+  }
+
+  void executeQuery() {
+    print(conditions);
+
+    print('------------ origin (sorted) \n');
+    JoinTranslator joinTranslator = JoinTranslator.of(this);
+    joinTranslator.debug();
+
+    print('------------ _insert Mid Path\n');
+    joinTranslator._insertMidPath();
+    joinTranslator.debug();
+
+    print('------------ assign alias\n');
+    joinTranslator._assignTableAlias();
+    joinTranslator.debug();
+
+    print('------------ join sql \n');
+    String joins = joinTranslator._joinSql().join('\n');
+    if (joins.isEmpty) {
+      joins = 'from $T';
+    }
+
+    String sql = 'select * $joins';
+    print(sql);
+
+    if (conditions.isEmpty) {
+      return;
+    }
+
+    print('------------ with where sql \n');
+    var where = <String>[];
+    for (var cond in conditions) {
+      where.add(cond.toSql(joinTranslator));
+      /* if (cond is CompoundQueryCondition) {
+        //cond.oper
+      } else {
+        var jp = JoinPath(cond._path);
+        var p = joinTranslator._search(jp);
+        where.add(
+            '${p.alias}.${cond.column!._name} ${cond.oper.text} ${cond.value} ');
+      } */
+    }
+    sql += '\n where ${where.join(' AND ')}';
+    print(sql);
+  }
+}
+
+class TopTableQuery<T> extends TableQuery<T> {
+  final TopTableQueryHelper<T> _helper = TopTableQueryHelper<T>();
+  final Database? _db;
+
+  List<OrderField> orders = [];
+  int offset = 0;
+  int maxRows = 0;
+
+  TopTableQuery({Database? db})
+      : _db = db,
+        super(null, "");
+
+  QueryCondition and(List<QueryCondition> queryConditions) =>
+      CompoundQueryCondition(null, ColumnConditionOper.AND, queryConditions);
+
+  QueryCondition or(List<QueryCondition> queryConditions) =>
+      CompoundQueryCondition(null, ColumnConditionOper.OR, queryConditions);
+
+  QueryCondition not(QueryCondition queryCondition) =>
+      CompoundQueryCondition(null, ColumnConditionOper.NOT, [queryCondition]);
+
+  TopTableQuery<T> where(Iterable<QueryCondition> conditions) {
+    _helper.addAllCondition(conditions);
+    return this;
+  }
+
+  void debugQuery() {
+    _helper.executeQuery();
+  }
+
+  void paging(int pageNumber, int pageSize) {
+    maxRows = pageSize;
+    offset = pageNumber * pageSize;
+  }
+
+  @override
+  QueryCondition eq(T value) {
+    throw 'should not call eq() directly on TopTableQuery($runtimeType)';
+  }
+
+  // operate for query.
+
+  /// find single model by [id]
+  /// if [existModel] is given, [existModel] will be filled and returned, otherwise a new model will be returned.
+  Future<T?> findById(ID id, {T? existModel, bool includeSoftDeleted = false}) {
+    throw UnimplementedError();
+  }
+
+  /// find models by [idList]
+  Future<List<T>> findByIds(List idList,
+      {List<T>? existModeList, bool includeSoftDeleted = false}) {
+    throw UnimplementedError();
+  }
+
+  /// find models by params
+  Future<List<T>> findBy(Map<String, dynamic> params,
+      {List<T>? existModeList, bool includeSoftDeleted = false}) {
+    throw UnimplementedError();
+  }
+
+  /// find list
+  Future<List<T>> findList({bool includeSoftDeleted = false}) {
+    throw UnimplementedError();
+  }
+
+  /// find unique
+  Future<T?> findUnique({bool includeSoftDeleted = false}) async {
+    var list = await findList(includeSoftDeleted: includeSoftDeleted);
+    if (list.isEmpty) {
+      return null;
+    }
+    if (list.length == 1) {
+      return list.first;
+    }
+    throw 'findUnique error[actually returned lenght is : ${list.length}]';
+  }
+
+  /// return count of this query.
+  Future<int> count({bool includeSoftDeleted = false}) {
+    throw UnimplementedError();
+  }
+
+  /// select with raw sql.
+  /// example: findListBySql(' select distinct(t.*) from table t, another_table t2 where t.column_name=t2.id and t.column_name2=@param1 and t2.column_name3=@param2 order by t.id, limit 10 offset 10 ', {'param1':100,'param2':'hello'})
+  Future<List<T>> findListBySql(String rawSql,
+      [Map<String, dynamic> params = const {}]) {
+    throw UnimplementedError();
+  }
+
+  Future<int> deleteAll() {
+    throw UnimplementedError();
+  }
+
+  Future<int> deleteAllPermanent() {
+    throw UnimplementedError();
+  }
+
+  Future<void> insertBatch(List<T> modelList, {int batchSize = 100}) {
+    throw UnimplementedError();
+  }
+}
+
+/*
+// step1:Query
+  
+  var q = UserQuery();
+  q.where([
+      q.age.gt(18),
+      q.books.lastUpdatedBy.name.endsWith('_user'),
+    ]);
+
+// step2:QueryCondition
+  
+  [
+      [:User].age > {18},
+      [:User, books:Book, lastUpdatedBy:User].name like {%_user}
+  ]
+
+// step3:find all Paths
+
+  [:User]
+  [:User, books:Book, lastUpdatedBy:User]
+
+// step4:Path[] with middle paths
+
+  [:User]
+  [:User, books:Book]
+  [:User, books:Book, lastUpdatedBy:User]
+
+// step5:Path[] assign alias table name
+
+  [:User] -> t0
+  [:User, books:Book] -> t1
+  [:User, books:Book, lastUpdatedBy:User] -> t2
+
+// step6:generate join statements
+
+   select distinct(t0.*)
+   from user t0
+   left join book t1 on t1.author_id = t0.id
+   left join user t2 on t2.id = t1.last_updated_by_id
+
+// step7:generate where statement
+
+   select distinct(t0.*)
+   from user t0
+   left join book t1 on t1.author_id = t0.id
+   left join user t2 on t2.id = t1.last_updated_by_id
+   where
+    t0.age > 18  
+    and t2.name like '%[_]user'
+ */
+
+class JoinTranslator {
+  final List<JoinPath> paths;
+  JoinTranslator(this.paths);
+
+  factory JoinTranslator.of(TopTableQueryHelper helper) {
+    var all = <JoinPath>[];
+    var set = <String>{}; // remove duplicated list;
+    for (var cond in helper.conditions) {
+      _getPath(cond).forEach((element) {
+        var jp = JoinPath(element);
+        if (set.add(jp.text)) {
+          all.add(jp);
+        }
+      });
+    }
+    all.sort((a, b) => a.text.compareTo(b.text));
+    return JoinTranslator(all);
+  }
+
+  void _insertMidPath() {
+    //whether first path is the root path
+    if (paths.isEmpty) {
+      return;
+    }
+    if (paths[0].length != 1) {
+      paths.insert(0, JoinPath([paths[0].path[0]]));
+    }
+    if (paths.length < 2) {
+      return;
+    }
+    for (int i = 1; i < paths.length; i++) {
+      List<JoinPath> midPathList = _findMidPath(paths[i - 1], paths[i]);
+      if (midPathList.isNotEmpty) {
+        for (int j = 0; j < midPathList.length; j++) {
+          paths.insert(i, midPathList[j]);
+        }
+        i += midPathList.length;
+      }
+    }
+  }
+
+  List<JoinPath> _findMidPath(JoinPath pathStart, JoinPath pathEnd) {
+    var result = <JoinPath>[];
+    for (int i = 0; i < pathEnd.length; i++) {
+      if (i >= pathStart.length ||
+          pathStart[i].toString() != pathEnd[i].toString()) {
+        for (int k = i; k < pathEnd.length - 1; k++) {
+          result.add(JoinPath(pathEnd.sublist(0, k + 1)));
+        }
+        break;
+      }
+    }
+    return result;
+  }
+
+  bool _exist(JoinPath path) {
+    return paths.any((element) => path.text == element.text);
+  }
+
+  void _assignTableAlias() {
+    for (int i = 0; i < paths.length; i++) {
+      paths[i].alias = 't$i';
+    }
+  }
+
+  JoinPath _searchLeftJoin(JoinPath path) {
+    if (path.length < 2) throw 'no join needed!';
+    var index = paths.indexWhere((element) =>
+        element.text == JoinPath(path.path.sublist(0, path.length - 1)).text);
+    return paths[index];
+  }
+
+  JoinPath _search(JoinPath path) {
+    var index = paths.indexWhere((element) => element.text == path.text);
+    return paths[index];
+  }
+
+  List<String> _joinSql() {
+    var result = <String>[];
+    for (var path in paths) {
+      if (path.length == 1) {
+        result.add('from ${path._lastTableName()} ${path.alias}');
+      } else {
+        var p = _searchLeftJoin(path);
+        // join = '${p.text} :: ${p.alias}';
+        var joinColumns = path._findJoinColumns();
+        result.add(
+            'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
+      }
+      //print('${path.text} :: ${path.alias} ---> $join');
+    }
+    return result;
+  }
+
+  void debug() {
+    for (var element in paths) {
+      print(element);
+    }
+  }
+}
+
+class JoinPath with ListMixin<TableQuery> {
+  final List<TableQuery> path;
+  final String text;
+  String alias = '';
+
+  JoinPath(this.path) : text = _toText(path);
+
+  static String _toText(List<TableQuery> path) {
+    return path.map((e) => e.toString()).join('/');
+  }
+
+  String _lastTableName() {
+    return path.last._innerType;
+  }
+
+  List<String> _findJoinColumns() {
+    return ['id', path.last._name];
+  }
+
+  @override
+  String toString() {
+    return '$text :: $alias';
+  }
+
+  @override
+  int get length => path.length;
+  @override
+  set length(int length) => path.length = length;
+
+  @override
+  TableQuery operator [](int index) => path[index];
+
+  @override
+  void operator []=(int index, TableQuery value) {
+    path[index] = value;
+  }
+}
 
 /// ColumnQuery defines operations for column
-class ColumnQuery<T, R> {
-  final List<ColumnCondition> conditions = [];
-  final String name;
+class ColumnQuery<T> {
+  final List<ColumnCondition> _conditions = [];
+  final String _name;
+  final TableQuery? _tableQuery;
 
-  ColumnQuery(this.name);
+  ColumnQuery(TableQuery? parentTableQuery, String columnName)
+      : _tableQuery = parentTableQuery,
+        _name = columnName;
 
-  bool get hasCondition => conditions.isNotEmpty;
+  List<TableQuery> get _path =>
+      _tableQuery == null ? [] : [..._tableQuery!._path, _tableQuery!];
 
-  void clear() {
-    conditions.clear();
+  bool get _hasCondition => _conditions.isNotEmpty;
+
+  void _clear() {
+    _conditions.clear();
   }
 
   static String classNameForType(String type) {
@@ -41,24 +496,21 @@ class ColumnQuery<T, R> {
     }
   }
 
-  R _addCondition(ColumnConditionOper oper, dynamic value) {
-    conditions.add(ColumnCondition(name, oper, value));
-    return this as R;
-  }
-
-  R eq(T value) => _addCondition(ColumnConditionOper.EQ, value);
+  QueryCondition eq(T value) =>
+      QueryCondition(this, ColumnConditionOper.EQ, value);
+  // _addCondition(ColumnConditionOper.EQ, value);
 
   Iterable<SqlCondition> toSqlConditions(
       String tableAlias, String? softDeleteColumnName) {
-    return conditions
+    return _conditions
         .map((e) => _toSqlCondition(tableAlias, softDeleteColumnName, e));
   }
 
   SqlCondition _toSqlCondition(
       String tableAlias, String? softDeleteColumnName, ColumnCondition cc) {
     SqlCondition sc = SqlCondition("r.$softDeleteColumnName = 0");
-    String columnName = '$tableAlias.$name';
-    String paramName = '${tableAlias}__$name';
+    String columnName = '$tableAlias.$_name';
+    String paramName = '${tableAlias}__$_name';
     bool isRemote = false;
     String? ssExpr;
     if (cc.value is ServerSideExpr) {
@@ -93,6 +545,14 @@ class ColumnQuery<T, R> {
       case ColumnConditionOper.IS_NOT_NULL:
         sc = SqlCondition("$columnName $op ");
         break;
+      case ColumnConditionOper.EXISTS:
+      case ColumnConditionOper.NOT_EXISTS:
+      case ColumnConditionOper.NOT:
+        break;
+      case ColumnConditionOper.AND:
+        break;
+      case ColumnConditionOper.OR:
+        break;
     }
     return sc;
   }
@@ -113,7 +573,7 @@ class OrderField {
 
   @override
   String toString() {
-    return column.name + (order == Order.desc ? ' desc' : '');
+    return column._name + (order == Order.desc ? ' desc' : '');
   }
 }
 
@@ -124,42 +584,50 @@ class ServerSideExpr {
 }
 
 /// support IN , notIn for columns
-mixin RangeCondition<T, R> on ColumnQuery<T, R> {
+mixin RangeCondition<T> on ColumnQuery<T> {
   // ignore: non_constant_identifier_names
-  R IN(List<T> value) => _addCondition(ColumnConditionOper.IN, value);
+  QueryCondition IN(List<T> value) =>
+      QueryCondition(this, ColumnConditionOper.IN, value);
 
-  R notIn(List<T> value) => _addCondition(ColumnConditionOper.NOT_IN, value);
+  QueryCondition notIn(List<T> value) =>
+      QueryCondition(this, ColumnConditionOper.NOT_IN, value);
 }
 
 /// support isNull, isNotNull for columns
-mixin NullCondition<T, R> on ColumnQuery<T, R> {
-  R isNull() => _addCondition(ColumnConditionOper.IS_NULL, null);
+mixin NullCondition<T> on ColumnQuery<T> {
+  QueryCondition isNull() =>
+      QueryCondition(this, ColumnConditionOper.IS_NULL, null);
 
-  R isNotNull() => _addCondition(ColumnConditionOper.IS_NOT_NULL, null);
+  QueryCondition isNotNull() =>
+      QueryCondition(this, ColumnConditionOper.IS_NOT_NULL, null);
 }
 
 /// support > < = >= <= between for columns
-mixin ComparableCondition<T, R> on ColumnQuery<T, R> {
-  R gt(T value) => _addCondition(ColumnConditionOper.GT, value);
+mixin ComparableCondition<T> on ColumnQuery<T> {
+  QueryCondition gt(T value) =>
+      QueryCondition(this, ColumnConditionOper.GT, value);
 
-  R ge(T value) => _addCondition(ColumnConditionOper.GE, value);
+  QueryCondition ge(T value) =>
+      QueryCondition(this, ColumnConditionOper.GE, value);
 
-  R lt(T value) => _addCondition(ColumnConditionOper.LT, value);
+  QueryCondition lt(T value) =>
+      QueryCondition(this, ColumnConditionOper.LT, value);
 
-  R le(T value) => _addCondition(ColumnConditionOper.LE, value);
+  QueryCondition le(T value) =>
+      QueryCondition(this, ColumnConditionOper.LE, value);
 
-  R between(T beginValue, T endValue) =>
-      _addCondition(ColumnConditionOper.BETWEEN, [beginValue, endValue]);
+  QueryCondition between(T beginValue, T endValue) =>
+      QueryCondition(this, ColumnConditionOper.BETWEEN, [beginValue, endValue]);
 
-  R notBetween(T beginValue, T endValue) =>
-      _addCondition(ColumnConditionOper.NOT_BETWEEN, [beginValue, endValue]);
+  QueryCondition notBetween(T beginValue, T endValue) => QueryCondition(
+      this, ColumnConditionOper.NOT_BETWEEN, [beginValue, endValue]);
+}
 
-/* 
-  R operator >(T value) => gt(value);
-  R operator <(T value) => lt(value);
-  R operator >=(T value) => ge(value);
-  R operator <=(T value) => le(value);
- */
+mixin ListCondition<T> on ColumnQuery<T> {
+  QueryCondition isEmpty() =>
+      QueryCondition(this, ColumnConditionOper.NOT_EXISTS, null);
+  QueryCondition isNotEmpty() =>
+      QueryCondition(this, ColumnConditionOper.EXISTS, null);
 }
 
 /// ColumnCondition
@@ -175,72 +643,85 @@ class ColumnCondition {
 }
 
 /// number column
-class NumberColumn<T, R> extends ColumnQuery<T, R>
-    with ComparableCondition<T, R>, RangeCondition<T, R> {
-  NumberColumn(String name) : super(name);
+class NumberColumn<T> extends ColumnQuery<T>
+    with ComparableCondition<T>, RangeCondition<T> {
+  NumberColumn(super.owner, super.name);
 }
 
 /// int column
-class IntColumn extends NumberColumn<int, IntColumn> {
-  IntColumn(String name) : super(name);
+class IntColumn extends NumberColumn<int> {
+  IntColumn(super.owner, super.name);
 }
 
 /// double column
-class DoubleColumn extends NumberColumn<double, DoubleColumn> {
-  DoubleColumn(String name) : super(name);
+class DoubleColumn extends NumberColumn<double> {
+  DoubleColumn(super.owner, super.name);
 }
 
 /// string column
-class StringColumn extends ColumnQuery<String, StringColumn>
+class StringColumn extends ColumnQuery<String>
     with
-        ComparableCondition<String, StringColumn>,
-        RangeCondition<String, StringColumn>,
-        NullCondition<String, StringColumn> {
-  StringColumn(String name) : super(name);
+        ComparableCondition<String>,
+        RangeCondition<String>,
+        NullCondition<String> {
+  StringColumn(super.owner, super.name);
 
-  StringColumn like(String pattern) =>
-      _addCondition(ColumnConditionOper.LIKE, pattern);
+  QueryCondition like(String pattern) =>
+      QueryCondition(this, ColumnConditionOper.LIKE, pattern);
 
-  StringColumn startsWith(String prefix) =>
-      _addCondition(ColumnConditionOper.LIKE, '$prefix%');
+  QueryCondition startsWith(String prefix) =>
+      QueryCondition(this, ColumnConditionOper.LIKE, '$prefix%');
 
-  StringColumn endsWith(String prefix) =>
-      _addCondition(ColumnConditionOper.LIKE, '%$prefix');
+  QueryCondition endsWith(String prefix) =>
+      QueryCondition(this, ColumnConditionOper.LIKE, '%$prefix');
 
-  StringColumn contains(String subString) =>
-      _addCondition(ColumnConditionOper.LIKE, '%$subString%');
+  QueryCondition contains(String subString) =>
+      QueryCondition(this, ColumnConditionOper.LIKE, '%$subString%');
 }
 
 /// bool column
-class BoolColumn extends ColumnQuery<bool, BoolColumn> {
-  BoolColumn(String name) : super(name);
+class BoolColumn extends ColumnQuery<bool> {
+  BoolColumn(super.owner, super.name);
 
-  BoolColumn isTrue() => _addCondition(ColumnConditionOper.EQ, true);
+  QueryCondition isTrue() => QueryCondition(this, ColumnConditionOper.EQ, true);
 
-  BoolColumn isFalse() => _addCondition(ColumnConditionOper.EQ, false);
+  QueryCondition isFalse() =>
+      QueryCondition(this, ColumnConditionOper.EQ, false);
 }
 
 /// DateTime column
-class DateTimeColumn extends ColumnQuery<DateTime, DateTimeColumn>
-    with
-        ComparableCondition<DateTime, DateTimeColumn>,
-        NullCondition<DateTime, DateTimeColumn> {
-  DateTimeColumn(String name) : super(name);
+class DateTimeColumn extends ColumnQuery<DateTime>
+    with ComparableCondition<DateTime>, NullCondition<DateTime> {
+  DateTimeColumn(super.owner, super.name);
 }
 
 enum ColumnConditionOper {
-  EQ,
-  GT,
-  LT,
-  GE,
-  LE,
-  BETWEEN,
-  NOT_BETWEEN,
-  LIKE,
-  IN,
-  NOT_IN,
-  IS_NULL,
-  IS_NOT_NULL
+  EQ('='),
+  GT('>'),
+  LT('<'),
+  GE('>='),
+  LE('<='),
+  BETWEEN('between'),
+  NOT_BETWEEN('not between'),
+  LIKE('like'),
+  IN('in'),
+  NOT_IN('not in'),
+  IS_NULL('is null'),
+  IS_NOT_NULL('is not null'),
+  EXISTS('exists'),
+  NOT_EXISTS('not exists'),
+  NOT('not'),
+  AND('and'),
+  OR('or');
+
+  final String text;
+
+  const ColumnConditionOper(this.text);
+
+  @override
+  String toString() {
+    return text;
+  }
 }
 
 const List<String> _sql = [
@@ -265,6 +746,8 @@ String toSql(ColumnConditionOper oper) {
 /// basic implement for AbstractModelQuery
 abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
   static final Logger _logger = Logger('ORM');
+
+  @override
   final Database db;
   // final ModelInspector modelInspector;
 
@@ -278,11 +761,12 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
 
   String get alias => _alias;
 
-  IntColumn id = IntColumn("id");
+  // IntColumn get id => IntColumn(this, "id");
 
-  List<ColumnQuery> get columns => [id];
+  // List<ColumnQuery> get columns => [id];
+  List<ColumnQuery> get columns => [];
 
-  List<BaseModelQuery> get joins;
+  // List<BaseModelQuery> get joins;
 
   List<OrderField> orders = [];
   int offset = 0;
@@ -295,35 +779,44 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
   BaseModelQuery(this.db, {BaseModelQuery? topQuery, this.propName}) {
     _topQuery = topQuery ?? this;
   }
-
-  bool _hasCondition([List<BaseModelQuery>? refrenceCache]) {
+/* 
+  bool __hasCondition([List<BaseModelQuery>? historyCache]) {
     // prevent cycle reference
-    if (refrenceCache == null) {
-      refrenceCache = [this];
+    print('>> \t$propName:$className');
+    if (historyCache == null) {
+      historyCache = [this];
     } else {
-      if (refrenceCache.contains(this)) {
+      if (historyCache.contains(this)) {
         return false;
+      } else {
+        historyCache.add(this);
       }
     }
 
-    return columns.any((c) => c.hasCondition) ||
-        joins.any((j) => j._hasCondition(refrenceCache));
-  }
+    var flag = columns.any((c) => c._hasCondition) ||
+        joins.any((j) => j.__hasCondition(historyCache));
+    print('<< \t$propName:$className.flag:$flag');
+    return flag;
+  } */
 
   BaseModelQuery get topQuery => _topQuery;
 
   SqlJoin _toSqlJoin() {
     var clz = ModelInspector.meta(className)!;
     var tableName = clz.tableName;
-
-    var joinStmt = '${relatedQuery!._alias}.${propName}_id = $_alias.id';
+    var columnName = getColumnName(propName!);
+    var joinStmt = '${relatedQuery!._alias}.${columnName}_id = $_alias.id';
 
     var join = SqlJoin(tableName, _alias, joinStmt);
-    columns.where((column) => column.hasCondition).forEach((column) {
+    columns.where((column) => column._hasCondition).forEach((column) {
       join.conditions.appendAll(
           column.toSqlConditions(_alias, clz.softDeleteField?.columnName));
     });
     return join;
+  }
+
+  String getColumnName(String fieldName) {
+    return ReCase(fieldName).snakeCase;
   }
 
   @override
@@ -858,7 +1351,6 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
     SqlQuery q = SqlQuery(tableName, _alias);
     q.columns.addAll(allFields.map((f) => "$_alias.${f.columnName}"));
 
-    // _allJoins().map((e) => )
     q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
 
     if (softDeleteField != null && !includeSoftDeleted) {
@@ -968,18 +1460,22 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
     return (rows[0][0]).toInt();
   }
 
-  T findQuery<T extends BaseModelQuery>(
-      Database db, String modelName, String propName) {
-    var modelInspector = ModelInspector.lookup(className);
-    var q = topQuery.queryMap[modelName];
+  T findQuery<T extends BaseModelQuery>(Database db, String ownerModelName,
+      String propName, String propModelName) {
+    var key = '$ownerModelName-$propName';
+    print('>> lookup query: $key');
+    var q = topQuery.queryMap[key];
+
+/*  @TODO   
     if (q == null) {
-      q = ModelInspector.lookup(modelName).newQuery(db, modelName)
+      q = ModelInspector.lookup(propModelName).newQuery(db, propModelName)
           as BaseModelQuery
         .._topQuery = this
         ..propName = propName
         ..relatedQuery = this;
-      topQuery.queryMap[modelName] = q;
+      topQuery.queryMap[key] = q;
     }
+ */
     return q as T;
   }
 
@@ -994,19 +1490,23 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
   }
 
   List<BaseModelQuery> _allJoins() {
-    return _subJoins([]);
+    return _subJoins([], []);
   }
 
-  List<BaseModelQuery> _subJoins(List<BaseModelQuery> refrenceCache) {
-    joins
+  List<BaseModelQuery> _subJoins(
+      List<BaseModelQuery> refrenceCache, List<BaseModelQuery> historyCache) {
+    /* print('==allJoins of $this , $className');
+    var joins2 = joins
         // filter those with conditions
-        .where((j) => j._hasCondition())
-        // prevent cycle reference
-        .where((j) => !refrenceCache.contains(j))
-        .forEach((j) {
+        .where((j) => j._hasCondition(historyCache))
+        .toList();
+    // prevent cycle reference
+    var joins3 = joins2.where((j) => !refrenceCache.contains(j)).toList();
+    joins3.forEach((j) {
       refrenceCache.add(j);
     });
-    return refrenceCache;
+    return refrenceCache; */
+    return [];
   }
 }
 

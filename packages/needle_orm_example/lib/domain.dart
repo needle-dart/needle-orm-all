@@ -3,7 +3,6 @@
 import 'package:logging/logging.dart';
 import 'package:needle_orm/api.dart';
 import 'package:needle_orm/impl.dart';
-import 'package:needle_orm_migration/needle_orm_migration.dart';
 import 'package:crypt/crypt.dart';
 
 part 'domain.g.dart'; // auto generated code
@@ -27,10 +26,12 @@ abstract class Basic extends Model {
   DateTime? _updatedAt;
 
   @WhoCreated()
-  String? _createdBy; // user login name
+  @ManyToOne()
+  User? _createdBy; // user login name
 
   @WhoModified()
-  String? _lastUpdatedBy; // user login name
+  @ManyToOne()
+  User? _lastUpdatedBy; // user login name
 
   @Column()
   String? _remark;

@@ -2,9 +2,9 @@ part of 'api.dart';
 
 /// Query for a Model
 abstract class ModelQuery<M extends Model> {
-  static ModelQuery newQuery(Database db, String className) {
+  /* static ModelQuery newQuery(Database db, String className) {
     return ModelInspector.lookup(className).newQuery(db, className);
-  }
+  } */
 
   ModelQuery();
 
@@ -25,43 +25,6 @@ abstract class ModelQuery<M extends Model> {
 
   /// return how many rows affected!
   Future<void> deletePermanent(M model);
-
-  // operate for query.
-
-  /// find single model by [id]
-  /// if [existModel] is given, [existModel] will be filled and returned, otherwise a new model will be returned.
-  Future<M?> findById(ID id, {M? existModel, bool includeSoftDeleted = false});
-
-  /// find models by [idList]
-  Future<List<M>> findByIds(List idList,
-      {List<Model>? existModeList, bool includeSoftDeleted = false});
-
-  /// find models by params
-  Future<List<M>> findBy(Map<String, dynamic> params,
-      {List<Model>? existModeList, bool includeSoftDeleted = false});
-
-  /// find list
-  Future<List<M>> findList({bool includeSoftDeleted = false});
-
-  /// find unique
-  Future<M?> findUnique({bool includeSoftDeleted = false}) async {
-    var list = await findList(includeSoftDeleted: includeSoftDeleted);
-    if (list.isEmpty) {
-      return null;
-    }
-    if (list.length == 1) {
-      return list.first;
-    }
-    throw 'findUnique error[actually returned lenght is : ${list.length}]';
-  }
-
-  /// return count of this query.
-  Future<int> count();
-
-  /// select with raw sql.
-  /// example: findListBySql(' select distinct(t.*) from table t, another_table t2 where t.column_name=t2.id and t.column_name2=@param1 and t2.column_name3=@param2 order by t.id, limit 10 offset 10 ', {'param1':100,'param2':'hello'})
-  Future<List<M>> findListBySql(String rawSql,
-      [Map<String, dynamic> params = const {}]);
 
   Future<int> deleteAll();
 
@@ -119,9 +82,11 @@ class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
   /// load list from db.
   Future<void> load() async {
     if (_loaded) return;
+/* @TODO 
     var modelInspector = ModelInspector.lookup(clz.name);
     var query = modelInspector.newQuery(db, clz.name) as ModelQuery<T>;
     _list = await query.findBy({refField.name: refFieldValue});
+ */
     _loaded = true;
   }
 }

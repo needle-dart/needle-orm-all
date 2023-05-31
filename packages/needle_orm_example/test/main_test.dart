@@ -13,7 +13,7 @@ void main() async {
   initNeedle();
 
   Needle.currentUser = () {
-    return "userName";
+    return User()..id = 0;
   };
 
   setUp(() async {
@@ -22,11 +22,60 @@ void main() async {
     // the first db will be the default one as well
     Database.register(dbPostgres, await initPostgreSQL());
     Database.register(dbMariadb, await initMariaDb());
-    await clean();
+    // await clean();
   });
 
   tearDown(() async {
     // await Database.closeAll();
+  });
+
+  test('testQueryCondition', () {
+    var q = UserQuery();
+    // test 1
+    q.where([
+      q.age.between(22, 33),
+      q.name.startsWith('inner_'),
+      q.books.createdBy.name.startsWith('root'),
+      q.books.price.ge(20.0),
+      q.not(q.and([
+        q.createdBy.name.startsWith('root'),
+        q.or([
+          q.books.lastUpdatedBy.name.endsWith('_user'),
+          q.lastUpdatedBy.name.endsWith('_guest')
+        ])
+      ])),
+    ]);
+
+    // test 2
+    /* q.where([
+      q.age.gt(18),
+      q.books.lastUpdatedBy.name.endsWith('_user'),
+    ]); */
+
+    /* q.books.createdBy.name.startsWith('root');
+    q.lastUpdatedBy.name.endsWith('_user');
+    q.books.isNotEmpty();
+    q.createdBy.name.startsWith('root');
+    q.not(q.createdBy.name.startsWith('root'));
+    q.and([
+      q.createdBy.name.startsWith('root'),
+      q.lastUpdatedBy.name.endsWith('_user')
+    ]);
+    q.and([
+      q.createdBy.name.startsWith('root'),
+      q.or([
+        q.lastUpdatedBy.name.endsWith('_user'),
+        q.lastUpdatedBy.name.endsWith('_guest')
+      ])
+    ]);
+    q.or([
+      q.createdBy.name.startsWith('root'),
+      q.lastUpdatedBy.name.endsWith('_user')
+    ]); */
+    q.orders = [q.age.asc(), q.id.desc()];
+    q.maxRows = 10;
+    q.offset = 20;
+    q.debugQuery();
   });
 
   test('testCount', testCount);
@@ -112,7 +161,7 @@ Future<void> testFindByIds() async {
 }
 
 Future<void> testFindBy() async {
-  var log = Logger('$logPrefix testFindBy');
+  /* var log = Logger('$logPrefix testFindBy');
 
   var authorId = await testInsert();
 
@@ -133,6 +182,14 @@ Future<void> testFindBy() async {
     await user.books?.load();
   }
   log.info('user.toMap() : ${users[0].toMap(fields: '*,books(id,title)')}');
+ */
+  {
+    var query = UserQuery();
+    query.createdBy.id.eq(1);
+    query.lastUpdatedBy.id.between(0, 2);
+    var list = await query.findList();
+    print('user list: $list');
+  }
 }
 
 Future<void> testFindListBySql() async {

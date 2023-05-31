@@ -93,7 +93,7 @@ class ClassMigrationGenerator {
         @override
         void up(Schema schema) {
           schema.create('$tableName', (table) {
-            table.serial('id');
+            table.serial('id').primaryKey();
 
             $fields
           });

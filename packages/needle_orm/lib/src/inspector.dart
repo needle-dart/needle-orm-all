@@ -1,7 +1,6 @@
 import 'api.dart';
 import 'meta.dart';
 import 'helper.dart';
-import 'sql.dart';
 
 /// Inspector: to spy and operate on model objects
 abstract class ModelInspector<M extends Model> {
@@ -81,11 +80,11 @@ abstract class ModelInspector<M extends Model> {
   /// newInstance() might return an instance cached in top query.
   M newInstance(
       {bool attachDb = false, dynamic id, required ModelQuery<M> topQuery});
-
+/* 
   ModelQuery newQuery(Database db, String className) {
     throw UnimplementedError();
   }
-
+ */
   /// return class meta info for [className]
   static OrmMetaClass? meta(String className) => metaMap[className];
 

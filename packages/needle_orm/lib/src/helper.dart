@@ -85,8 +85,8 @@ class ModelHelper<M extends Model> {
     });
   }
 
-  ModelQuery _query(Database? db) =>
-      ModelQuery.newQuery(db ?? Database.defaultDb, className);
+  ModelQuery _query(Database? db) => throw UnimplementedError();
+  // @TODO ModelQuery.newQuery(db ?? Database.defaultDb, className);
 
   Future<void> insert({Database? db}) async {
     inspector.prePersist(model);

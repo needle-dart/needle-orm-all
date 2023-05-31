@@ -10,7 +10,7 @@ class _BookMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('books', (table) {
-      table.serial('id');
+      table.serial('id').primaryKey();
 
       table.varChar('title', length: 255);
 
@@ -30,9 +30,9 @@ class _BookMigration extends Migration {
 
       table.timeStamp('updated_at');
 
-      table.varChar('created_by');
+      table.integer('created_by_id');
 
-      table.varChar('last_updated_by');
+      table.integer('last_updated_by_id');
 
       table.varChar('remark', length: 255);
     });
@@ -48,7 +48,7 @@ class _UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('users', (table) {
-      table.serial('id');
+      table.serial('id').primaryKey();
 
       table.varChar('name', length: 255);
 
@@ -68,9 +68,9 @@ class _UserMigration extends Migration {
 
       table.timeStamp('updated_at');
 
-      table.varChar('created_by');
+      table.integer('created_by_id');
 
-      table.varChar('last_updated_by');
+      table.integer('last_updated_by_id');
 
       table.varChar('remark', length: 255);
     });
@@ -86,7 +86,7 @@ class _DeviceMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('devices', (table) {
-      table.serial('id');
+      table.serial('id').primaryKey();
 
       table.varChar('name', length: 255);
 

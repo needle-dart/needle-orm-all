@@ -164,6 +164,8 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
         .map((e) => modelInspector.getFieldValue(e, idFieldName))
         .toSet()
         .toList(growable: false);
+
+/*  @TODO   
     var newQuery = modelInspector.newQuery(db, className);
     var modelListResult =
         await newQuery.findByIds(idList, existModeList: modelList);
@@ -171,7 +173,7 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
       _inspector(m).markLoaded(m);
     }
     _inspector(m).markLoaded(m);
-    // lock.release();
+ */
   }
 
   ModelInspector _inspector(Model m) =>
@@ -251,11 +253,13 @@ class _OrmMetaInfoBasic extends OrmMetaClass {
               OrmMetaField('updatedAt', 'DateTime?', ormAnnotations: [
                 WhenModified(),
               ]),
-              OrmMetaField('createdBy', 'String?', ormAnnotations: [
+              OrmMetaField('createdBy', 'User?', ormAnnotations: [
                 WhoCreated(),
+                ManyToOne(),
               ]),
-              OrmMetaField('lastUpdatedBy', 'String?', ormAnnotations: [
+              OrmMetaField('lastUpdatedBy', 'User?', ormAnnotations: [
                 WhoModified(),
+                ManyToOne(),
               ]),
               OrmMetaField('remark', 'String?', ormAnnotations: [
                 Column(),
@@ -399,86 +403,117 @@ abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
   String get className => 'Basic';
 
   BasicQuery({super.db, super.topQuery, super.propName});
-
+/* 
   IntColumn version = IntColumn("version");
   BoolColumn softDeleted = BoolColumn("soft_deleted");
   DateTimeColumn createdAt = DateTimeColumn("created_at");
   DateTimeColumn updatedAt = DateTimeColumn("updated_at");
-  StringColumn createdBy = StringColumn("created_by");
-  StringColumn lastUpdatedBy = StringColumn("last_updated_by");
+  UserQuery get createdBy =>
+      topQuery.findQuery(db, className, "createdBy", "User");
+  UserQuery get lastUpdatedBy =>
+      topQuery.findQuery(db, className, "lastUpdatedBy", "User");
   StringColumn remark = StringColumn("remark");
+ */
+  /* @override
+  List<ColumnQuery> get columns =>
+      [version, softDeleted, createdAt, updatedAt, remark, ...super.columns];
+  */
 
   @override
-  List<ColumnQuery> get columns => [
-        version,
-        softDeleted,
-        createdAt,
-        updatedAt,
-        createdBy,
-        lastUpdatedBy,
-        remark,
-        ...super.columns
-      ];
-
-  @override
-  List<BaseModelQuery> get joins => [];
+  List<BaseModelQuery> get joins => []; // createdBy, lastUpdatedBy
 }
 
-class BookQuery extends BasicQuery<Book> {
+/* 
+class BookQuery extends BasicQuery<Book>
+    with ModelMixin, BasicMixin, BookMixin {
   @override
   String get className => 'Book';
 
   BookQuery({super.db, super.topQuery, super.propName});
 
-  StringColumn title = StringColumn("title");
-  DoubleColumn price = DoubleColumn("price");
-  UserQuery get author => topQuery.findQuery(db, "User", "author");
-  ColumnQuery image = ColumnQuery("image");
-  StringColumn content = StringColumn("content");
+  StringColumn get title => StringColumn(this,"title");
+  DoubleColumn get price => DoubleColumn(this,"price");
+  ColumnQuery get image => ColumnQuery(this,"image");
+  StringColumn get content => StringColumn(this,"content");
 
+  // UserQuery get author => topQuery.findQuery(db, className, "author", "User");
   @override
   List<ColumnQuery> get columns =>
       [title, price, image, content, ...super.columns];
 
   @override
   List<BaseModelQuery> get joins => [author, ...super.joins];
+} */
+
+mixin ModelMixin<T> on TableQuery<T> {
+  IntColumn get id => IntColumn(this, "id");
 }
 
-class UserQuery extends BasicQuery<User> {
-  @override
-  String get className => 'User';
+mixin BasicMixin<T> on TableQuery<T> {
+  IntColumn get version => IntColumn(this, "version");
+  BoolColumn get softDeleted => BoolColumn(this, "softDeleted");
+  DateTimeColumn get createdAt => DateTimeColumn(this, "createdAt");
+  DateTimeColumn get updatedAt => DateTimeColumn(this, "updatedAt");
+  StringColumn get remark => StringColumn(this, "remark");
 
-  UserQuery({super.db, super.topQuery, super.propName});
+  UserColumn get createdBy => UserColumn(this, "createdBy");
 
-  StringColumn name = StringColumn("name");
-  StringColumn loginName = StringColumn("login_name");
-  StringColumn password = StringColumn("password");
-  StringColumn address = StringColumn("address");
-  IntColumn age = IntColumn("age");
-  BookQuery get books => topQuery.findQuery(db, "Book", "books");
-
-  @override
-  List<ColumnQuery> get columns =>
-      [name, loginName, password, address, age, ...super.columns];
-
-  @override
-  List<BaseModelQuery> get joins => [books, ...super.joins];
+  // topQuery.findQuery(db, className, "createdBy", "User");
+  UserColumn get lastUpdatedBy => UserColumn(this, "lastUpdatedBy");
+  // topQuery.findQuery(db, className, "lastUpdatedBy", "User");
 }
 
-class DeviceQuery extends _BaseModelQuery<Device> {
-  @override
-  String get className => 'Device';
+mixin UserMixin on TableQuery<User> {
+  StringColumn get name => StringColumn(this, "name");
+  StringColumn get loginName => StringColumn(this, "loginName");
+  StringColumn get password => StringColumn(this, "password");
+  StringColumn get address => StringColumn(this, "address");
+  IntColumn get age => IntColumn(this, "age");
+  BookListColumn get books => BookListColumn(this, "books");
+  // BookQuery get books => topQuery.findQuery(db, className, "books", "Book");
+}
 
-  DeviceQuery({super.db, super.topQuery, super.propName});
+mixin BookMixin on TableQuery<Book> {
+  StringColumn get title => StringColumn(this, "title");
+  DoubleColumn get price => DoubleColumn(this, "price");
+  ColumnQuery get image => ColumnQuery(this, "image");
+  StringColumn get content => StringColumn(this, "content");
+  UserColumn get author => UserColumn(this, "author");
+}
 
-  StringColumn name = StringColumn("name");
-  StringColumn address = StringColumn("address");
+mixin DeviceMixin on TableQuery<Device> {
+  StringColumn get name => StringColumn(this, "name");
+  DoubleColumn get address => DoubleColumn(this, "address");
+}
 
-  @override
-  List<ColumnQuery> get columns => [name, address, ...super.columns];
+class UserColumn extends TableQuery<User>
+    with ModelMixin, BasicMixin, UserMixin {
+  UserColumn(super.owner, super.name);
+}
 
-  @override
-  List<BaseModelQuery> get joins => [];
+class BookColumn extends TableQuery<Book>
+    with ModelMixin, BasicMixin, BookMixin {
+  BookColumn(super.owner, super.name);
+}
+
+class BookListColumn extends TableQuery<Book>
+    with ModelMixin, BasicMixin, BookMixin, ListCondition {
+  BookListColumn(super.owner, super.name);
+}
+
+class BookQuery extends TopTableQuery<Book>
+    with ModelMixin, BasicMixin, BookMixin {
+  BookQuery({super.db});
+}
+
+class UserQuery extends TopTableQuery<User>
+    with ModelMixin, BasicMixin, UserMixin {
+  UserQuery({super.db});
+}
+
+class DeviceQuery extends TopTableQuery<Device>
+    with ModelMixin, BasicMixin, DeviceMixin {
+  DeviceQuery({super.db});
 }
 
 // **************************************************************************
@@ -528,22 +563,22 @@ extension BasicImpl on Basic {
     _updatedAt = v;
   }
 
-  String? get createdBy {
+  User? get createdBy {
     _modelInspector.ensureLoaded(this);
     return _createdBy;
   }
 
-  set createdBy(String? v) {
+  set createdBy(User? v) {
     _modelInspector.markDirty(this, 'createdBy', _createdBy, v);
     _createdBy = v;
   }
 
-  String? get lastUpdatedBy {
+  User? get lastUpdatedBy {
     _modelInspector.ensureLoaded(this);
     return _lastUpdatedBy;
   }
 
-  set lastUpdatedBy(String? v) {
+  set lastUpdatedBy(User? v) {
     _modelInspector.markDirty(this, 'lastUpdatedBy', _lastUpdatedBy, v);
     _lastUpdatedBy = v;
   }
@@ -794,11 +829,12 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
     return m;
   }
 
+/* 
   @override
   BookQuery newQuery(Database db, String className) {
     return BookQuery(db: db);
   }
-
+ */
   @override
   getFieldValue(Book model, String fieldName) {
     switch (fieldName) {
@@ -872,10 +908,10 @@ class _UserModelInspector extends _BasicModelInspector<User> {
     super.initInstance(m, topQuery: topQuery);
   }
 
-  @override
+/*   @override
   UserQuery newQuery(Database db, String className) {
     return UserQuery(db: db);
-  }
+  } */
 
   @override
   getFieldValue(User model, String fieldName) {
@@ -985,10 +1021,10 @@ class _DeviceModelInspector extends ModelInspector<Device> {
     return m;
   }
 
-  @override
+/*   @override
   DeviceQuery newQuery(Database db, String className) {
     return DeviceQuery(db: db);
-  }
+  } */
 
   @override
   getFieldValue(Device model, String fieldName) {

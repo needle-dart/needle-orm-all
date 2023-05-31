@@ -4,14 +4,14 @@ repository: https://github.com/needle-dart/needle_orm_all.dart
 
 packages:
   - packages/**
-
-command:
-  bootstrap:
-    usePubspecOverrides: true
     
 scripts:
   get:
     exec: dart pub get .
+  update:
+    exec: dart pub update .
+  upgrade:
+    exec: dart pub upgrade .
   test:
     exec: dart test .
   analyze:
@@ -20,7 +20,7 @@ scripts:
     exec: dart format .
   generate:
     exec: dart run build_runner build
-    select-package:
+    packageFilters:
       depends-on: build_runner
 
   doc:
@@ -30,5 +30,5 @@ scripts:
 
   server:
     exec: minerva run
-    select-package:
+    packageFilters:
       scope: needle_orm_minerva_example

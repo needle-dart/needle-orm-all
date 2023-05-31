@@ -133,7 +133,7 @@ class FieldInspector {
     var queryClassName = '${_queryCleanType}Query';
     //@TODO late : prevent cycle dependency, should be removed in later release
     // UserModelQuery get author => topQuery.findQuery('User');
-    return '$queryClassName get $name => topQuery.findQuery(db, "$_queryCleanType","$name");';
+    return '$queryClassName get $name => topQuery.findQuery(db, className ,"$name","$_queryCleanType");';
   }
 
   static List<String> simpleTypes = [
