@@ -122,7 +122,11 @@ class FieldInspector {
 
   String generateColumnQuery() {
     var queryClassName = ColumnQuery.classNameForType(_queryCleanType);
-    return '$queryClassName $name = $queryClassName("${getColumnName(name)}");';
+    if(_isSimpleType){
+      return '$queryClassName get $name => $queryClassName(this, "$name");';
+    }else{
+      return '${_queryCleanType}Column get $name => ${_queryCleanType}Column(this, "$name");';
+    }
   }
 
   String getColumnName(String fieldName) {
@@ -215,60 +219,44 @@ class ClassInspector {
   }
 
   String generate() {
-    var _fields = classElement.fields.map((f) => FieldInspector(f));
+    return [genMixin(), genColumnClass(), genQueryClass()].join('\n');
+  }
 
+  String genMixin(){
+    var isAbstract = classElement.isAbstract;
+    var def = isAbstract ? 'mixin ${name}Mixin<T> on TableQuery<T>' : 'mixin ${name}Mixin on TableQuery<${name}> ';
+    var _fields = classElement.fields.map((f) => FieldInspector(f));
     var fields = _fields
         .map((f) => f.isTransient
             ? ''
-            : f._isSimpleType
-                ? f.generateColumnQuery()
-                : f.generateJoin())
+            : f.generateColumnQuery()
+            )
         .join('\n');
 
-    var columns = _fields
-        .where((f) => !f.isTransient && f._isSimpleType)
-        .map((e) => e.name)
-        .join(',');
-
-    var joins = _fields
-        .where((f) => !f.isTransient && !f._isSimpleType)
-        .map((e) => e.name)
-        .join(',');
-
-    var isAbstract = classElement.isAbstract;
-    var strAbstract = isAbstract ? "abstract" : "";
-    var superClassElementName = superClassElement?.name ?? "";
-
-    var isTopModel = superClassElementName == 'Model';
-    var queryClassName =
-        isAbstract ? '${name}Query<T extends ${name}>' : '${name}Query';
-    var queryExtendsClass = isTopModel
-        ? (isAbstract ? '_BaseModelQuery<T>' : '_BaseModelQuery<${name}>')
-        : '${superClassElementName}Query<$name>';
 
     return '''
-      $strAbstract class $queryClassName extends $queryExtendsClass {
-        @override
-        String get className => '$name';
+$def {
+  $fields
+}
+''';
+  }
 
-        ${name}Query({super.db, super.topQuery, super.propName});
-
-        $fields
-
-        @override
-        List<ColumnQuery> get columns => [${[
-      if (columns.isNotEmpty) columns,
-      '... super.columns',
-    ].join(',')}];
-
-        @override
-        List<BaseModelQuery> get joins => [${[
-      if (joins.isNotEmpty) joins,
-      if (!isTopModel) '... super.joins',
-    ].join(',')}];
-
+  String genColumnClass() {
+    return '''
+      class ${name}Column extends TableQuery<${name}>
+          with ModelMixin, BasicMixin, ${name}Mixin {
+        ${name}Column(super.owner, super.name);
       }
-      ''';
+  ''';
+  }
+
+  String genQueryClass(){
+    return '''
+class ${name}Query extends TopTableQuery<${name}>
+    with ModelMixin, BasicMixin, ${name}Mixin {
+  ${name}Query({super.db});
+}
+''';
   }
 
   String overrideEvent(String eventType, String eventHandler) {

@@ -15,7 +15,8 @@ Builder ormGenerator(BuilderOptions options) => SharedPartBuilder(
         NeedleOrmImplGenerator(),
         NeedleOrmInspectorGenerator()
       ],
-      'needle_orm',
+      'orm',
+      allowSyntaxErrors: true
     );
 
 // Builder ormGenerator2(BuilderOptions options) =>

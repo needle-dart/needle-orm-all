@@ -37,6 +37,7 @@ void main() async {
       q.name.startsWith('inner_'),
       q.books.createdBy.name.startsWith('root'),
       q.books.price.ge(20.0),
+      q.not(q.age.lt(25)),
       q.not(q.and([
         q.createdBy.name.startsWith('root'),
         q.or([

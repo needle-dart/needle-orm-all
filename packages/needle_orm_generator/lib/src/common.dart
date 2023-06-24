@@ -49,6 +49,11 @@ class _QueryModelCache {
 }
 ''';
 
+const strModelMixin = r'''
+mixin ModelMixin<T> on TableQuery<T> {
+  IntColumn get id => IntColumn(this, "id");
+}''';
+
 const strBaseQuery = r'''
 abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
   late _QueryModelCache _modelCache;
@@ -93,6 +98,7 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
         .map((e) => modelInspector.getFieldValue(e, idFieldName))
         .toSet()
         .toList(growable: false);
+    /* @TODO
     var newQuery = modelInspector.newQuery(db, className);
     var modelListResult =
         await newQuery.findByIds(idList, existModeList: modelList);
@@ -100,6 +106,7 @@ abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
       _inspector(m).markLoaded(m);
     }
     _inspector(m).markLoaded(m);
+    */
     // lock.release();
   }
 

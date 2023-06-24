@@ -89,14 +89,14 @@ class _InspectoroGenerator {
 
     var strInitInstance = genInitInstance() ?? "";
 
-    var strNewQuery = clazz.isAbstract
+    /* var strNewQuery = clazz.isAbstract
         ? ""
         : """
           @override
             ${name}Query newQuery(Database db, String className) {
               return ${name}Query(db: db);
             }
-          """;
+          """; */
 
     var defClass = """
           class $inspectorClassName${isAbstract ? '<T extends $name>' : ''} extends ${superClassName == 'Model' ? 'ModelInspector' : '_${superClassName}ModelInspector'}<${isAbstract ? 'T' : name}>
@@ -110,8 +110,6 @@ class _InspectoroGenerator {
           $strNewInstance
 
           $strInitInstance
-
-          $strNewQuery
 
           $fields
 

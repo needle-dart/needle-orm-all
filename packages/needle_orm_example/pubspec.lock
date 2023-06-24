@@ -366,7 +366,7 @@ packages:
     source: path
     version: "0.1.1"
   needle_orm_migration_generator:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       path: "../needle_orm_migration_generator"
       relative: true
