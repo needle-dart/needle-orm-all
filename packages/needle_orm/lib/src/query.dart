@@ -34,32 +34,46 @@ class QueryCondition {
     ].join('');
   }
 
-  String toSql(JoinTranslator joinTranslator) {
+  String toSql(
+      JoinTranslator joinTranslator, PreparedConditions preparedConditions) {
     var jp = JoinPath(_path);
     var p = joinTranslator._search(jp);
-    return '${p.alias}.${column!._name} ${oper.text} $value ';
+    return '${p.alias}.${column!._name} ${oper.text} ${preparedConditions.add(value)} ';
   }
 
   List<TableQuery> get _path => column == null ? [] : column!._path;
+}
+
+class PreparedConditions {
+  final Map<String, dynamic> values = {};
+
+  String add(dynamic value) {
+    var key = '__v${values.length}';
+    values[key] = value;
+    return key;
+  }
 }
 
 class CompoundQueryCondition extends QueryCondition {
   CompoundQueryCondition(super.column, super.oper, super.value);
 
   @override
-  String toSql(JoinTranslator joinTranslator) {
+  String toSql(
+      JoinTranslator joinTranslator, PreparedConditions preparedConditions) {
     List<QueryCondition> queryConditions = value as List<QueryCondition>;
     switch (oper) {
       case ColumnConditionOper.AND:
-        var str =
-            queryConditions.map((q) => q.toSql(joinTranslator)).join(' and ');
+        var str = queryConditions
+            .map((q) => q.toSql(joinTranslator, preparedConditions))
+            .join(' and ');
         return "( $str )";
       case ColumnConditionOper.OR:
-        var str =
-            queryConditions.map((q) => q.toSql(joinTranslator)).join(' or ');
+        var str = queryConditions
+            .map((q) => q.toSql(joinTranslator, preparedConditions))
+            .join(' or ');
         return "( $str )";
       case ColumnConditionOper.NOT:
-        var str = queryConditions[0].toSql(joinTranslator);
+        var str = queryConditions[0].toSql(joinTranslator, preparedConditions);
         return " not ( $str )";
       default:
         return '';
@@ -122,7 +136,7 @@ class TopTableQueryHelper<T> {
     conditions.addAll(queryConditions);
   }
 
-  void executeQuery() {
+  void debugQuery() {
     print(conditions);
 
     print('------------ origin (sorted) \n');
@@ -150,22 +164,49 @@ class TopTableQueryHelper<T> {
       return;
     }
 
-    print('------------ with where sql \n');
+    {
+      print('------------ with where sql[prepared style] \n');
+      var where = <String>[];
+      PreparedConditions preparedConditions = PreparedConditions();
+      for (var cond in conditions) {
+        where.add(cond.toSql(joinTranslator, preparedConditions));
+      }
+      sql += '\n where ${where.join(' AND ')}';
+      print('sql: $sql');
+      print('preparedConditions: ${preparedConditions.values}');
+    }
+  }
+
+  PreparedQuery toPreparedQuery() {
+    JoinTranslator joinTranslator = JoinTranslator.of(this);
+    joinTranslator._insertMidPath();
+    joinTranslator._assignTableAlias();
+    String joins = joinTranslator._joinSql().join('\n');
+    if (joins.isEmpty) {
+      joins = 'from $T';
+    }
+
+    String sql = 'select * $joins';
+
+    if (conditions.isEmpty) {
+      return PreparedQuery(sql, PreparedConditions());
+    }
+
     var where = <String>[];
+    PreparedConditions preparedConditions = PreparedConditions();
     for (var cond in conditions) {
-      where.add(cond.toSql(joinTranslator));
-      /* if (cond is CompoundQueryCondition) {
-        //cond.oper
-      } else {
-        var jp = JoinPath(cond._path);
-        var p = joinTranslator._search(jp);
-        where.add(
-            '${p.alias}.${cond.column!._name} ${cond.oper.text} ${cond.value} ');
-      } */
+      where.add(cond.toSql(joinTranslator, preparedConditions));
     }
     sql += '\n where ${where.join(' AND ')}';
-    print(sql);
+    return PreparedQuery(sql, preparedConditions);
   }
+}
+
+class PreparedQuery {
+  final String sql;
+  final PreparedConditions conditions;
+
+  PreparedQuery(this.sql, this.conditions);
 }
 
 class TopTableQuery<T> extends TableQuery<T> {
@@ -195,7 +236,7 @@ class TopTableQuery<T> extends TableQuery<T> {
   }
 
   void debugQuery() {
-    _helper.executeQuery();
+    _helper.debugQuery();
   }
 
   void paging(int pageNumber, int pageSize) {
@@ -229,7 +270,20 @@ class TopTableQuery<T> extends TableQuery<T> {
   }
 
   /// find list
-  Future<List<T>> findList({bool includeSoftDeleted = false}) {
+  Future<List<T>> findList({bool includeSoftDeleted = false}) async {
+    var preparedQuery = _helper.toPreparedQuery();
+
+    var rows = await _db!.query(
+        preparedQuery.sql, preparedQuery.conditions.values,
+        tableName: "");
+    print('result: $rows');
+/* 
+    var result = rows.map((row) {
+      return toModel<M>(row, allFields, className);
+    });
+
+    return result.toList(); */
+
     throw UnimplementedError();
   }
 

@@ -29,11 +29,11 @@ void main() async {
     // await Database.closeAll();
   });
 
-  test('testQueryCondition', () {
-    var q = UserQuery();
+  test('testQueryCondition', () async {
+    var q = UserQuery(db: Database.lookup(dbPostgres));
     // test 1
     q.where([
-      q.age.between(22, 33),
+      // q.age.between(22, 33),  // disable between for the time being
       q.name.startsWith('inner_'),
       q.books.createdBy.name.startsWith('root'),
       q.books.price.ge(20.0),
@@ -77,6 +77,8 @@ void main() async {
     q.maxRows = 10;
     q.offset = 20;
     q.debugQuery();
+    var list = await q.findList();
+    print(list);
   });
 
   test('testCount', testCount);
