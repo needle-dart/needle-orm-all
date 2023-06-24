@@ -122,9 +122,9 @@ class FieldInspector {
 
   String generateColumnQuery() {
     var queryClassName = ColumnQuery.classNameForType(_queryCleanType);
-    if(_isSimpleType){
+    if (_isSimpleType) {
       return '$queryClassName get $name => $queryClassName(this, "$name");';
-    }else{
+    } else {
       return '${_queryCleanType}Column get $name => ${_queryCleanType}Column(this, "$name");';
     }
   }
@@ -163,6 +163,30 @@ class FieldInspector {
   }
 }
 
+class SuperClassInfo {
+  final ClassElement superClassElement;
+  final String superClassName;
+  SuperClassInfo(this.superClassElement, this.superClassName);
+
+  static SuperClassInfo? of(ClassElement ce) {
+    if (ce.supertype != null && ce.supertype!.element.name != 'Object') {
+      return SuperClassInfo(ce.supertype!.element as ClassElement,
+          ce.supertype!.element.name.removePrefix());
+    }
+    return null;
+  }
+
+  static List<SuperClassInfo> chainOf(ClassElement ce) {
+    var list = <SuperClassInfo>[];
+    var sci = of(ce);
+    while (sci != null) {
+      list.add(sci);
+      sci = of(sci.superClassElement);
+    }
+    return list;
+  }
+}
+
 class ClassInspector {
   final ClassElement classElement;
   String name;
@@ -172,6 +196,7 @@ class ClassInspector {
   String? superClassName;
   List<OrmAnnotation> ormAnnotations = [];
   late Entity entity;
+  List<SuperClassInfo> superClassChain = [];
 
   bool isTopClass = true;
   List<FieldElement> fields = [];
@@ -184,6 +209,8 @@ class ClassInspector {
       superClassElement = classElement.supertype!.element as ClassElement;
       superClassName = superClassElement!.name.removePrefix();
       isTopClass = false;
+
+      superClassChain = SuperClassInfo.chainOf(classElement);
     }
 
     handleAnnotations(this.classElement);
@@ -222,17 +249,15 @@ class ClassInspector {
     return [genMixin(), genColumnClass(), genQueryClass()].join('\n');
   }
 
-  String genMixin(){
+  String genMixin() {
     var isAbstract = classElement.isAbstract;
-    var def = isAbstract ? 'mixin ${name}Mixin<T> on TableQuery<T>' : 'mixin ${name}Mixin on TableQuery<${name}> ';
+    var def = isAbstract
+        ? 'mixin ${name}Mixin<T> on TableQuery<T>'
+        : 'mixin ${name}Mixin on TableQuery<${name}> ';
     var _fields = classElement.fields.map((f) => FieldInspector(f));
     var fields = _fields
-        .map((f) => f.isTransient
-            ? ''
-            : f.generateColumnQuery()
-            )
+        .map((f) => f.isTransient ? '' : f.generateColumnQuery())
         .join('\n');
-
 
     return '''
 $def {
@@ -242,18 +267,22 @@ $def {
   }
 
   String genColumnClass() {
+    var superMins =
+        superClassChain.map((e) => '${e.superClassName}Mixin').join(', ');
     return '''
       class ${name}Column extends TableQuery<${name}>
-          with ModelMixin, BasicMixin, ${name}Mixin {
+          with $superMins, ${name}Mixin {
         ${name}Column(super.owner, super.name);
       }
   ''';
   }
 
-  String genQueryClass(){
+  String genQueryClass() {
+    var superMins =
+        superClassChain.map((e) => '${e.superClassName}Mixin').join(', ');
     return '''
 class ${name}Query extends TopTableQuery<${name}>
-    with ModelMixin, BasicMixin, ${name}Mixin {
+    with $superMins, ${name}Mixin {
   ${name}Query({super.db});
 }
 ''';

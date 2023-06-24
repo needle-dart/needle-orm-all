@@ -412,13 +412,11 @@ mixin BasicMixin<T> on TableQuery<T> {
   StringColumn get remark => StringColumn(this, "remark");
 }
 
-class BasicColumn extends TableQuery<Basic>
-    with ModelMixin, BasicMixin, BasicMixin {
+class BasicColumn extends TableQuery<Basic> with ModelMixin, BasicMixin {
   BasicColumn(super.owner, super.name);
 }
 
-class BasicQuery extends TopTableQuery<Basic>
-    with ModelMixin, BasicMixin, BasicMixin {
+class BasicQuery extends TopTableQuery<Basic> with ModelMixin, BasicMixin {
   BasicQuery({super.db});
 }
 
@@ -431,12 +429,12 @@ mixin BookMixin on TableQuery<Book> {
 }
 
 class BookColumn extends TableQuery<Book>
-    with ModelMixin, BasicMixin, BookMixin {
+    with BasicMixin, ModelMixin, BookMixin {
   BookColumn(super.owner, super.name);
 }
 
 class BookQuery extends TopTableQuery<Book>
-    with ModelMixin, BasicMixin, BookMixin {
+    with BasicMixin, ModelMixin, BookMixin {
   BookQuery({super.db});
 }
 
@@ -450,12 +448,12 @@ mixin UserMixin on TableQuery<User> {
 }
 
 class UserColumn extends TableQuery<User>
-    with ModelMixin, BasicMixin, UserMixin {
+    with BasicMixin, ModelMixin, UserMixin {
   UserColumn(super.owner, super.name);
 }
 
 class UserQuery extends TopTableQuery<User>
-    with ModelMixin, BasicMixin, UserMixin {
+    with BasicMixin, ModelMixin, UserMixin {
   UserQuery({super.db});
 }
 
@@ -464,13 +462,11 @@ mixin DeviceMixin on TableQuery<Device> {
   StringColumn get address => StringColumn(this, "address");
 }
 
-class DeviceColumn extends TableQuery<Device>
-    with ModelMixin, BasicMixin, DeviceMixin {
+class DeviceColumn extends TableQuery<Device> with ModelMixin, DeviceMixin {
   DeviceColumn(super.owner, super.name);
 }
 
-class DeviceQuery extends TopTableQuery<Device>
-    with ModelMixin, BasicMixin, DeviceMixin {
+class DeviceQuery extends TopTableQuery<Device> with ModelMixin, DeviceMixin {
   DeviceQuery({super.db});
 }
 
