@@ -21,7 +21,7 @@ scripts:
   generate:
     exec: dart run build_runner build
     packageFilters:
-      depends-on: build_runner
+      dependsOn: build_runner
 
   doc:
     exec: dart doc
