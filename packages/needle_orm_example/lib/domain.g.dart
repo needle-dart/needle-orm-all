@@ -778,8 +778,7 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
   String get className => "Book";
 
   @override
-  Book newInstance(
-      {bool attachDb = false, id}) {
+  Book newInstance({bool attachDb = false, id}) {
     var m = Book();
     m.id = id;
     initInstance(m);
@@ -836,8 +835,7 @@ class _UserModelInspector extends _BasicModelInspector<User> {
   String get className => "User";
 
   @override
-  User newInstance(
-      {bool attachDb = false, id}) {
+  User newInstance({bool attachDb = false, id}) {
     var m = User();
     m.id = id;
     initInstance(m);
@@ -853,7 +851,8 @@ class _UserModelInspector extends _BasicModelInspector<User> {
       var field = meta
           .allFields(searchParents: true)
           .firstWhere((f) => f.name == 'author');
-      m.books = LazyOneToManyList(clz: meta, refField: field, refFieldValue: m.id);
+      m.books =
+          LazyOneToManyList(clz: meta, refField: field, refFieldValue: m.id);
     }
 
     super.initInstance(m);
@@ -958,8 +957,7 @@ class _DeviceModelInspector extends ModelInspector<Device> {
   String get className => "Device";
 
   @override
-  Device newInstance(
-      {bool attachDb = false, id}) {
+  Device newInstance({bool attachDb = false, id}) {
     var m = Device();
     m.id = id;
     initInstance(m);

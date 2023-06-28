@@ -71,18 +71,18 @@ class _InspectoroGenerator {
         ? """
           @override
           T newInstance(
-              {bool attachDb = false, id, required ModelQuery<T> topQuery}) {
+              {bool attachDb = false, id}) {
             throw UnimplementedError();
           }
           """
         : """
             @override
               $name newInstance(
-                  {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+                  {bool attachDb = false, id}) {
                 var m = $name();
                 m.id = id;
-                initInstance(m, topQuery: topQuery);
-                m._modelInspector.markAttached(m, topQuery: topQuery);
+                initInstance(m);
+                m._modelInspector.markAttached(m);
                 return m;
               }
           """;
@@ -139,7 +139,7 @@ class _InspectoroGenerator {
                 .allFields(searchParents: true)
                 .firstWhere((f) => f.name == '${annot.mappedBy?.removePrefix()}');
             m.${field.name.removePrefix()} = LazyOneToManyList(
-                db: topQuery.db, clz: meta, refField: field, refFieldValue: m.id);
+                clz: meta, refField: field, refFieldValue: m.id);
           }
         """;
     }).join("\n");
@@ -147,11 +147,11 @@ class _InspectoroGenerator {
     return """
         /// init model properties after [newInstance()]
         @override
-        void initInstance(User m, {required ModelQuery<Model> topQuery}) {
+        void initInstance(User m) {
           
           $str
 
-          super.initInstance(m, topQuery: topQuery);
+          super.initInstance(m);
         }
       """;
   }

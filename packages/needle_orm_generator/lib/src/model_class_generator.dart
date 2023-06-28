@@ -103,7 +103,7 @@ class FieldInspector {
         if (__dbAttached && _$name == null) {
           var meta = _modelInspector.meta('$_queryCleanType')!;
           var field = meta.fields.firstWhere((f) => f.name=='${fieldName.removePrefix()}');
-          _$name = LazyOneToManyList(db: __topQuery!.db, clz: meta, refField:field, refFieldValue: id);
+          _$name = LazyOneToManyList(clz: meta, refField:field, refFieldValue: id);
         }
       ''';
     }
