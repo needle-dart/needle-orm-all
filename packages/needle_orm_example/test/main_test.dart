@@ -35,16 +35,17 @@ void main() async {
     q.where([
       // q.age.between(22, 33),  // disable between for the time being
       q.name.startsWith('inner_'),
-      q.books.createdBy.name.startsWith('root'),
+      q.age.IN([10,20,30]),
+      // q.books.createdBy.name.startsWith('root'),
       q.books.price.ge(20.0),
-      q.not(q.age.lt(25)),
-      q.not(q.and([
-        q.createdBy.name.startsWith('root'),
-        q.or([
-          q.books.lastUpdatedBy.name.endsWith('_user'),
-          q.lastUpdatedBy.name.endsWith('_guest')
-        ])
-      ])),
+      // q.not(q.age.lt(25)),
+      // q.not(q.and([
+      //   q.createdBy.name.startsWith('root'),
+      //   q.or([
+      //     q.books.lastUpdatedBy.name.endsWith('_user'),
+      //     q.lastUpdatedBy.name.endsWith('_guest')
+      //   ])
+      // ])),
     ]);
 
     // test 2
@@ -87,7 +88,6 @@ void main() async {
   test('testUpdate', testUpdate);
   test('testVersion', testVersion);
   test('testFindByIds', testFindByIds);
-  test('testFindBy', testFindBy);
   test('testFindListBySql', testFindListBySql);
   test('testCache', testCache);
   test('testInsertBatch', testInsertBatch);
@@ -150,66 +150,19 @@ Future<void> clean() async {
 Future<void> testFindByIds() async {
   var log = Logger('$logPrefix testFindByIds');
 
-  var existBooks = [Book()..id = 4660];
-  var books = await BookQuery()
-      .findByIds([1, 15, 16, 4660, 4674], existModeList: existBooks);
-  log.info('books list: $books');
-  bool reused = books.any((book1) => existBooks.any((book2) => book1 == book2));
-  log.info('reused: $reused');
-  // load properties before calling toMap(author(...))
-  for (var book in books) {
-    // await book.author?.load();
-  }
+  var bookQuery = BookQuery(db: Database.lookup(dbPostgres))..id.IN([1,2,19,21]);
+  var books = await bookQuery.findList();
   log.info(
-      'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
-}
-
-Future<void> testFindBy() async {
-  /* var log = Logger('$logPrefix testFindBy');
-
-  var authorId = await testInsert();
-
-  var books = await BookQuery()
-      .findBy({"author": authorId}); // can use model.id as value
-  log.info('books list: $books');
-  // load properties before calling toMap(author(...))
-  for (var book in books) {
-    await book.author?.load();
-  }
-  log.info(
-      'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
-
-  var users = await UserQuery().findList();
-  log.info('users: $users');
-
-  for (var user in users) {
-    await user.books?.load();
-  }
-  log.info('user.toMap() : ${users[0].toMap(fields: '*,books(id,title)')}');
- */
-  {
-    var query = UserQuery();
-    query.createdBy.id.eq(1);
-    query.lastUpdatedBy.id.between(0, 2);
-    var list = await query.findList();
-    print('user list: $list');
-  }
+      'books: ${books.map((e) => e.toMap()).toList()}');
 }
 
 Future<void> testFindListBySql() async {
   var log = Logger('$logPrefix testFindBy');
-
-  await testInsert();
-  //postgresql supports:  select distinct(t.*) from books t limit 3
-  //mariadb doesn't support!
-  var books = await BookQuery()
-      .findListBySql('select distinct(t.id) from books t limit 3');
+  var books = await BookQuery(db: Database.lookup(dbPostgres))
+      .findListBySql(',users t1 where t0.author_id=t1.id and t1.age>@age limit 3',{'age':10});
   log.info('books list: $books');
-  for (var book in books) {
-    // await book.author?.load();
-  }
   log.info(
-      'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
+      'books: ${books.map((e) => e.toMap()).toList()}');
 }
 
 Future<void> testCount() async {
@@ -496,7 +449,6 @@ Future<void> testOneToMany() async {
   var users = await q.findList();
   for (User user in users) {
     var books = user.books;
-    await books?.load();
     log.info(books?.length);
     if ((books?.length ?? 0) > 0) {
       log.info(

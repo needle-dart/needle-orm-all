@@ -209,8 +209,9 @@ class TopTableQueryHelper<T> {
     joinTranslator._insertMidPath();
     joinTranslator._assignTableAlias();
     String joins = joinTranslator._joinSql().join('\n');
+    var clsName = '$T';
     if (joins.isEmpty) {
-      joins = 'from $T';
+      joins = 'from ${genTableName(clsName)} t0';
     }
 
     var clz = ModelInspector.meta('$T')!;
@@ -220,7 +221,7 @@ class TopTableQueryHelper<T> {
 
     var strAllFields = allFields.map((f) => "t0.${f.columnName}").join(',');
 
-    String sql = 'select $strAllFields $joins';
+    String sql = 'select distinct $strAllFields $joins';
 
     if (conditions.isEmpty) {
       return PreparedQuery(sql, PreparedConditions());
@@ -284,24 +285,6 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   }
 
   // operate for query.
-
-  /// find single model by [id]
-  /// if [existModel] is given, [existModel] will be filled and returned, otherwise a new model will be returned.
-  Future<T?> findById(ID id, {T? existModel, bool includeSoftDeleted = false}) {
-    throw UnimplementedError();
-  }
-
-  /// find models by [idList]
-  Future<List<T>> findByIds(List idList,
-      {List<T>? existModeList, bool includeSoftDeleted = false}) {
-    throw UnimplementedError();
-  }
-
-  /// find models by params
-  Future<List<T>> findBy(Map<String, dynamic> params,
-      {List<T>? existModeList, bool includeSoftDeleted = false}) {
-    throw UnimplementedError();
-  }
 
   /// find list
   Future<List<T>> findList({bool includeSoftDeleted = false}) async {
@@ -382,10 +365,28 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   }
 
   /// select with raw sql.
-  /// example: findListBySql(' select distinct(t.*) from table t, another_table t2 where t.column_name=t2.id and t.column_name2=@param1 and t2.column_name3=@param2 order by t.id, limit 10 offset 10 ', {'param1':100,'param2':'hello'})
+  /// example: findListBySql(' , another_table t1 where t.column_name=t1.id and t.column_name2=@param1 and t1.column_name3=@param2 order by t0.id limit 10 offset 10 ', {'param1':100,'param2':'hello'})
   Future<List<T>> findListBySql(String rawSql,
-      [Map<String, dynamic> params = const {}]) {
-    throw UnimplementedError();
+      [Map<String, dynamic> params = const {}]) async {
+
+    var clzName = '$T';
+    var clz = ModelInspector.meta(clzName)!;
+    var tableName = genTableName(clzName);
+
+    var allFields = clz.allFields(searchParents: true)
+      ..removeWhere((f) => f.notExistsInDb);
+
+    var strAllFields = allFields.map((f) => "t0.${f.columnName}").join(',');
+    var rows = await _db!.query('select distinct $strAllFields from $tableName t0 $rawSql', params);
+
+    print('result: $rows');
+
+
+    var result = rows.map((row) {
+      return toModel(row, allFields);
+    });
+
+    return result.toList();
   }
 
   Future<int> deleteAll() {
@@ -432,7 +433,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
   [:User] -> t0
   [:User, books:Book] -> t1
-  [:User, books:Book, lastUpdatedBy:User] -> t2
+  [:User, books:Book, lastUpdatedBy:User] -> t1
 
 // step6:generate join statements
 
