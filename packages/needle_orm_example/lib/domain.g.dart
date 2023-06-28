@@ -407,8 +407,8 @@ mixin BasicMixin<T> on TableQuery<T> {
   BoolColumn get softDeleted => BoolColumn(this, "softDeleted");
   DateTimeColumn get createdAt => DateTimeColumn(this, "createdAt");
   DateTimeColumn get updatedAt => DateTimeColumn(this, "updatedAt");
-  UserColumn get createdBy => UserColumn(this, "createdBy");
-  UserColumn get lastUpdatedBy => UserColumn(this, "lastUpdatedBy");
+  UserColumn get createdBy => UserColumn(this, "createdBy")..joinRelation=JoinRelation();
+  UserColumn get lastUpdatedBy => UserColumn(this, "lastUpdatedBy")..joinRelation=JoinRelation();
   StringColumn get remark => StringColumn(this, "remark");
 }
 
@@ -423,7 +423,7 @@ class BasicQuery extends TopTableQuery<Basic> with ModelMixin, BasicMixin {
 mixin BookMixin on TableQuery<Book> {
   StringColumn get title => StringColumn(this, "title");
   DoubleColumn get price => DoubleColumn(this, "price");
-  UserColumn get author => UserColumn(this, "author");
+  UserColumn get author => UserColumn(this, "author")..joinRelation=JoinRelation();
   ColumnQuery get image => ColumnQuery(this, "image");
   StringColumn get content => StringColumn(this, "content");
 }
@@ -444,7 +444,7 @@ mixin UserMixin on TableQuery<User> {
   StringColumn get password => StringColumn(this, "password");
   StringColumn get address => StringColumn(this, "address");
   IntColumn get age => IntColumn(this, "age");
-  BookColumn get books => BookColumn(this, "books");
+  BookColumn get books => BookColumn(this, "books")..joinRelation=JoinRelation(JoinKind.oneToMany, "author");
 }
 
 class UserColumn extends TableQuery<User>

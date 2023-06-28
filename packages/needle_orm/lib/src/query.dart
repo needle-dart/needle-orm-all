@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:recase/recase.dart';
 
 import 'api.dart';
+import 'generator.dart';
 import 'meta.dart';
 import 'inspector.dart';
 import 'sql.dart';
@@ -48,9 +49,9 @@ class PreparedConditions {
   final Map<String, dynamic> values = {};
 
   String add(dynamic value) {
-    var key = '__v${values.length}';
+    var key = '_v${values.length}';
     values[key] = value;
-    return key;
+    return '@'+key;
   }
 }
 
@@ -93,9 +94,25 @@ Iterable<List<TableQuery>> _getPath(QueryCondition value) sync* {
   }
 }
 
+enum JoinKind {
+  oneToOne,
+  oneToMany,
+  manyToOne,
+  manyToMany
+}
+
+final class JoinRelation {
+  final JoinKind kind;
+  final String mappedBy;
+
+  JoinRelation([this.kind=JoinKind.manyToOne, this.mappedBy=""]);
+}
+
 class TableQuery<T> extends ColumnQuery<T> {
   @override
   final List<TableQuery> _path;
+
+  late JoinRelation joinRelation;
 
   TableQuery(super.parentTableQuery, super.columnName)
       : _path = parentTableQuery == null
@@ -157,7 +174,7 @@ class TopTableQueryHelper<T> {
       joins = 'from $T';
     }
 
-    String sql = 'select * $joins';
+    String sql = 'select t0.* $joins';
     print(sql);
 
     if (conditions.isEmpty) {
@@ -186,7 +203,7 @@ class TopTableQueryHelper<T> {
       joins = 'from $T';
     }
 
-    String sql = 'select * $joins';
+    String sql = 'select t0.* $joins';
 
     if (conditions.isEmpty) {
       return PreparedQuery(sql, PreparedConditions());
@@ -456,13 +473,13 @@ class JoinTranslator {
     var result = <String>[];
     for (var path in paths) {
       if (path.length == 1) {
-        result.add('from ${path._lastTableName()} ${path.alias}');
+        result.add('from ${genTableName(path._lastTableName())} ${path.alias}');
       } else {
         var p = _searchLeftJoin(path);
         // join = '${p.text} :: ${p.alias}';
         var joinColumns = path._findJoinColumns();
         result.add(
-            'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
+            'left join ${genTableName(path._lastTableName())} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
       }
       //print('${path.text} :: ${path.alias} ---> $join');
     }
@@ -492,7 +509,16 @@ class JoinPath with ListMixin<TableQuery> {
   }
 
   List<String> _findJoinColumns() {
-    return ['id', path.last._name];
+    var joinRelation = path.last.joinRelation;
+    var joinKind = joinRelation.kind;
+    if(joinKind==JoinKind.manyToOne){
+      return ['id',genColumnName(path.last._name)+"_id"];
+    }else if(joinKind==JoinKind.oneToMany){
+      // find mappedBy
+      var mappedBy = joinRelation.mappedBy;
+      return [genColumnName(mappedBy)+"_id",'id'];
+    }
+    return ['id', genColumnName(path.last._name)+"_id"];
   }
 
   @override
