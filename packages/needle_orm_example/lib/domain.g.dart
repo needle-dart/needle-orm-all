@@ -843,21 +843,6 @@ class _UserModelInspector extends _BasicModelInspector<User> {
     return m;
   }
 
-  /// init model properties after [newInstance()]
-  @override
-  void initInstance(User m) {
-    {
-      var meta = ModelInspector.lookupClass('Book');
-      var field = meta
-          .allFields(searchParents: true)
-          .firstWhere((f) => f.name == 'author');
-      m.books =
-          LazyOneToManyList(clz: meta, refField: field, refFieldValue: m.id);
-    }
-
-    super.initInstance(m);
-  }
-
   @override
   getFieldValue(User model, String fieldName) {
     switch (fieldName) {
