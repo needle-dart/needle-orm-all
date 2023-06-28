@@ -78,7 +78,8 @@ void main() async {
     q.offset = 20;
     q.debugQuery();
     var list = await q.findList();
-    print(list);
+    // print(list);
+    print(list.map((e) => e.toMap()));
   });
 
   test('testCount', testCount);
@@ -157,7 +158,7 @@ Future<void> testFindByIds() async {
   log.info('reused: $reused');
   // load properties before calling toMap(author(...))
   for (var book in books) {
-    await book.author?.load();
+    // await book.author?.load();
   }
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
@@ -205,7 +206,7 @@ Future<void> testFindListBySql() async {
       .findListBySql('select distinct(t.id) from books t limit 3');
   log.info('books list: $books');
   for (var book in books) {
-    await book.author?.load();
+    // await book.author?.load();
   }
   log.info(
       'books: ${books.map((e) => e.toMap(fields: '*,author(id,name,loginName)')).toList()}');
@@ -384,7 +385,7 @@ Future<void> testLoadNestedFields() async {
 
   // should load nested property: author first
   for (Book book in books) {
-    await book.author?.load();
+    // await book.author?.load();
     // await book.author?.load(batchSize: 3); // can fetch 3 authors from database every time
   }
   books

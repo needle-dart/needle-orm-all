@@ -34,7 +34,7 @@ abstract class ModelQuery<M extends Model> {
 }
 
 class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
-  late Database db; // model who holds the reference id
+  // late Database db; // model who holds the reference id
   late OrmMetaClass clz; // model who holds the reference id
   late OrmMetaField refField; // field in model
   late dynamic refFieldValue; // usually foreign id
@@ -43,7 +43,7 @@ class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
   var _loaded = false;
 
   LazyOneToManyList(
-      {required this.db,
+      { //required this.db,
       required this.clz,
       required this.refField,
       required this.refFieldValue});
@@ -55,7 +55,10 @@ class LazyOneToManyList<T extends Model> with ListMixin<T> implements List<T> {
 
   @override
   int get length {
-    _checkLoaded();
+    if(!_loaded){
+      return 0;
+    }
+    //_checkLoaded();
     return _list.length;
   }
 

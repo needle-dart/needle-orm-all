@@ -6,7 +6,6 @@ import 'sql.dart';
 /// can ONLY be used by generators!
 class ModelHelper<M extends Model> {
   final M model;
-  ModelQuery? topQuery;
   bool storeLoaded = false; // if fields has been loaded from db.
   bool storeAttached = false; // if this instance is created by Query
   // mark all modified fields after loaded
@@ -20,10 +19,8 @@ class ModelHelper<M extends Model> {
 
   /// mark model as [attached]
   /// can also bind to a [ModelQuery] as well
-  void markAttached(bool attached, {ModelQuery? topQuery}) {
+  void markAttached(bool attached) {
     storeAttached = attached;
-    this.topQuery = topQuery;
-    // topQuery.cache(this);
   }
 
   /// mark model as [loaded]
@@ -58,15 +55,6 @@ class ModelHelper<M extends Model> {
   void ensureLoaded() {
     if (storeAttached && !storeLoaded) {
       throw 'should call load() before accessing properties!';
-      // __topQuery?.ensureLoaded(this);
-    }
-  }
-
-  /// load model from database.
-  /// other models of the same class will be loaded also, in order to reuse database connections. in this case you can set the [batchSize]
-  Future<void> load({int batchSize = 1}) async {
-    if (storeAttached && !storeLoaded) {
-      await topQuery?.ensureLoaded(model, batchSize: batchSize);
     }
   }
 

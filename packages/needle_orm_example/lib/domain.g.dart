@@ -715,7 +715,7 @@ class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
   String get className => "Basic";
 
   @override
-  T newInstance({bool attachDb = false, id, required ModelQuery<T> topQuery}) {
+  T newInstance({bool attachDb = false, id}) {
     throw UnimplementedError();
   }
 
@@ -779,11 +779,11 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
 
   @override
   Book newInstance(
-      {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+      {bool attachDb = false, id}) {
     var m = Book();
     m.id = id;
-    initInstance(m, topQuery: topQuery);
-    m._modelInspector.markAttached(m, topQuery: topQuery);
+    initInstance(m);
+    m._modelInspector.markAttached(m);
     return m;
   }
 
@@ -837,27 +837,26 @@ class _UserModelInspector extends _BasicModelInspector<User> {
 
   @override
   User newInstance(
-      {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+      {bool attachDb = false, id}) {
     var m = User();
     m.id = id;
-    initInstance(m, topQuery: topQuery);
-    m._modelInspector.markAttached(m, topQuery: topQuery);
+    initInstance(m);
+    m._modelInspector.markAttached(m);
     return m;
   }
 
   /// init model properties after [newInstance()]
   @override
-  void initInstance(User m, {required ModelQuery<Model> topQuery}) {
+  void initInstance(User m) {
     {
       var meta = ModelInspector.lookupClass('Book');
       var field = meta
           .allFields(searchParents: true)
           .firstWhere((f) => f.name == 'author');
-      m.books = LazyOneToManyList(
-          db: topQuery.db, clz: meta, refField: field, refFieldValue: m.id);
+      m.books = LazyOneToManyList(clz: meta, refField: field, refFieldValue: m.id);
     }
 
-    super.initInstance(m, topQuery: topQuery);
+    super.initInstance(m);
   }
 
   @override
@@ -960,11 +959,11 @@ class _DeviceModelInspector extends ModelInspector<Device> {
 
   @override
   Device newInstance(
-      {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+      {bool attachDb = false, id}) {
     var m = Device();
     m.id = id;
-    initInstance(m, topQuery: topQuery);
-    m._modelInspector.markAttached(m, topQuery: topQuery);
+    initInstance(m);
+    m._modelInspector.markAttached(m);
     return m;
   }
 

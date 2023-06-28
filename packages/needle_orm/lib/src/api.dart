@@ -53,11 +53,6 @@ abstract class Model {
     _innerHelper.loadMap(m, errorOnNonExistField: errorOnNonExistField);
   }
 
-  /// load data from database. Model instancce should have an ID at least.
-  Future<void> load({int batchSize = 1}) {
-    return _innerHelper.load(batchSize: batchSize);
-  }
-
   /// insert Model to [db]
   Future<void> insert({Database? db}) {
     return _innerHelper.insert(db: db);

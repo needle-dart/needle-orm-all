@@ -53,7 +53,7 @@ abstract class ModelInspector<M extends Model> {
   /// create a new instance of specified [className]
   /// newInstance() might return an instance cached in top query.
   static Model newModel(String className,
-      {bool attachDb = false, dynamic id, required ModelQuery topQuery}) {
+      {bool attachDb = false, dynamic id}) {
 /*     if (id != null) {
       var cacheModel =
           (topQuery as _BaseModelQuery)._modelCache.find(className, id);
@@ -63,14 +63,14 @@ abstract class ModelInspector<M extends Model> {
     }
  */
     var inspector = lookup(className);
-    Model model = inspector.newInstance(topQuery: topQuery, id: id);
+    Model model = inspector.newInstance(id: id);
 
     // topQuery._modelCache.add(model);
     return model;
   }
 
   /// init model properties after [newInstance()]
-  void initInstance(M m, {required ModelQuery<Model> topQuery}) {}
+  void initInstance(M m) {}
 
   static bool storeLoaded(Model model) => _helper(model).storeLoaded;
 
@@ -79,7 +79,7 @@ abstract class ModelInspector<M extends Model> {
   /// create a new instance of specified [className]
   /// newInstance() might return an instance cached in top query.
   M newInstance(
-      {bool attachDb = false, dynamic id, required ModelQuery<M> topQuery});
+      {bool attachDb = false, dynamic id});
 /* 
   ModelQuery newQuery(Database db, String className) {
     throw UnimplementedError();
@@ -176,8 +176,8 @@ abstract class ModelInspector<M extends Model> {
   }
 
   /// mark [model] has been attached with DB.
-  void markAttached(M model, {ModelQuery? topQuery}) {
-    _helper(model).markAttached(true, topQuery: topQuery);
+  void markAttached(M model) {
+    _helper(model).markAttached(true);
   }
 
   bool isStoreLoaded(M model) => _helper(model).storeLoaded;

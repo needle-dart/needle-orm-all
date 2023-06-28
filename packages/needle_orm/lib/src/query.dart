@@ -51,7 +51,7 @@ class PreparedConditions {
   String add(dynamic value) {
     var key = '_v${values.length}';
     values[key] = value;
-    return '@'+key;
+    return '@$key';
   }
 }
 
@@ -106,6 +106,8 @@ final class JoinRelation {
   final String mappedBy;
 
   JoinRelation([this.kind=JoinKind.manyToOne, this.mappedBy=""]);
+
+  String get mappedByColumnName => genColumnName(mappedBy);
 }
 
 class TableQuery<T> extends ColumnQuery<T> {
@@ -174,7 +176,15 @@ class TopTableQueryHelper<T> {
       joins = 'from $T';
     }
 
-    String sql = 'select t0.* $joins';
+    var clz = ModelInspector.meta('$T')!;
+
+    var allFields = clz.allFields(searchParents: true)
+      ..removeWhere((f) => f.notExistsInDb);
+
+    var strAllFields = allFields.map((f) => "t0.${f.columnName}").join(',');
+
+    String sql = 'select $strAllFields $joins';
+
     print(sql);
 
     if (conditions.isEmpty) {
@@ -203,7 +213,14 @@ class TopTableQueryHelper<T> {
       joins = 'from $T';
     }
 
-    String sql = 'select t0.* $joins';
+    var clz = ModelInspector.meta('$T')!;
+
+    var allFields = clz.allFields(searchParents: true)
+      ..removeWhere((f) => f.notExistsInDb);
+
+    var strAllFields = allFields.map((f) => "t0.${f.columnName}").join(',');
+
+    String sql = 'select $strAllFields $joins';
 
     if (conditions.isEmpty) {
       return PreparedQuery(sql, PreparedConditions());
@@ -226,7 +243,7 @@ class PreparedQuery {
   PreparedQuery(this.sql, this.conditions);
 }
 
-class TopTableQuery<T> extends TableQuery<T> {
+class TopTableQuery<T extends Model> extends TableQuery<T> {
   final TopTableQueryHelper<T> _helper = TopTableQueryHelper<T>();
   final Database? _db;
 
@@ -294,14 +311,57 @@ class TopTableQuery<T> extends TableQuery<T> {
         preparedQuery.sql, preparedQuery.conditions.values,
         tableName: "");
     print('result: $rows');
-/* 
+
+    var clz = ModelInspector.meta('$T')!;
+    var fields = clz.allFields(searchParents: true)
+      ..removeWhere((f) => f.notExistsInDb);
+ 
     var result = rows.map((row) {
-      return toModel<M>(row, allFields, className);
+      return toModel(row, fields);
     });
 
-    return result.toList(); */
+    return result.toList();
 
-    throw UnimplementedError();
+    // throw UnimplementedError();
+  }
+
+
+  T toModel(
+      List<dynamic> dbRow, List<OrmMetaField> selectedFields,
+      {T? existModel}) {
+    T? model = existModel;
+    var className = '$T';
+    var modelInspector = ModelInspector.lookup(className);
+    if (model == null) {
+      var idField = ModelInspector.idFields(className)?.first;
+      if (idField != null) {
+        int j = selectedFields.indexOf(idField);
+        if (j >= 0) {
+          model = ModelInspector.newModel(className,
+              attachDb: true, id: dbRow[j]) as T;
+        }
+      } else {
+        model = ModelInspector.newModel(className,
+            attachDb: true) as T;
+      }
+    }
+
+    for (int i = 0; i < dbRow.length; i++) {
+      var f = selectedFields[i];
+      var name = f.name;
+      var value = dbRow[i];
+      if (f.isModelType) {
+        if (value != null) {
+          var obj = ModelInspector.newModel(f.elementType,
+              id: value, attachDb: true);
+          modelInspector.setFieldValue(model!, name, obj);
+        }
+      } else {
+        modelInspector.setFieldValue(model!, name, value);
+      }
+    }
+    modelInspector.markLoaded(model!);
+    return model;
   }
 
   /// find unique
@@ -473,13 +533,13 @@ class JoinTranslator {
     var result = <String>[];
     for (var path in paths) {
       if (path.length == 1) {
-        result.add('from ${genTableName(path._lastTableName())} ${path.alias}');
+        result.add('from ${path._lastTableName()} ${path.alias}');
       } else {
         var p = _searchLeftJoin(path);
         // join = '${p.text} :: ${p.alias}';
         var joinColumns = path._findJoinColumns();
         result.add(
-            'left join ${genTableName(path._lastTableName())} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
+            'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
       }
       //print('${path.text} :: ${path.alias} ---> $join');
     }
@@ -505,20 +565,20 @@ class JoinPath with ListMixin<TableQuery> {
   }
 
   String _lastTableName() {
-    return path.last._innerType;
+    return genTableName(path.last._innerType);
   }
 
   List<String> _findJoinColumns() {
     var joinRelation = path.last.joinRelation;
     var joinKind = joinRelation.kind;
     if(joinKind==JoinKind.manyToOne){
-      return ['id',genColumnName(path.last._name)+"_id"];
+      return ['id',"${path.last._columnName}_id"];
     }else if(joinKind==JoinKind.oneToMany){
       // find mappedBy
-      var mappedBy = joinRelation.mappedBy;
-      return [genColumnName(mappedBy)+"_id",'id'];
+      var mappedByColumnName = joinRelation.mappedByColumnName;
+      return ["${mappedByColumnName}_id",'id'];
     }
-    return ['id', genColumnName(path.last._name)+"_id"];
+    return ['id', "${path.last._name}_id"];
   }
 
   @override
@@ -554,6 +614,8 @@ class ColumnQuery<T> {
       _tableQuery == null ? [] : [..._tableQuery!._path, _tableQuery!];
 
   bool get _hasCondition => _conditions.isNotEmpty;
+
+  String get _columnName => genColumnName(_name);
 
   void _clear() {
     _conditions.clear();
@@ -1390,11 +1452,11 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
         int j = selectedFields.indexOf(idField);
         if (j >= 0) {
           model = ModelInspector.newModel(className,
-              attachDb: true, id: dbRow[j], topQuery: topQuery) as N;
+              attachDb: true, id: dbRow[j]) as N;
         }
       } else {
         model = ModelInspector.newModel(className,
-            attachDb: true, topQuery: topQuery) as N;
+            attachDb: true) as N;
       }
     }
 
@@ -1405,7 +1467,7 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
       if (f.isModelType) {
         if (value != null) {
           var obj = ModelInspector.newModel(f.elementType,
-              id: value, attachDb: true, topQuery: topQuery);
+              id: value, attachDb: true);
           modelInspector.setFieldValue(model!, name, obj);
         }
       } else {
