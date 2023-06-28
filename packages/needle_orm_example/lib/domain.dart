@@ -80,7 +80,7 @@ class User extends Basic {
   @Column()
   int? _age;
 
-  @OneToMany(mappedBy: "_author")
+  @OneToMany(mappedBy: "author")
   List<Book>? _books;
 
   User();

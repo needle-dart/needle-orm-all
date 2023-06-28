@@ -125,7 +125,12 @@ class FieldInspector {
     if (_isSimpleType) {
       return '$queryClassName get $name => $queryClassName(this, "$name");';
     } else {
-      return '${_queryCleanType}Column get $name => ${_queryCleanType}Column(this, "$name");';
+      var strJoinRelation = '..joinRelation=JoinRelation()';
+      if(isOneToMany){
+        var oneToMany = ormAnnotations.whereType<OneToMany>().first;
+        strJoinRelation = '..joinRelation=JoinRelation(JoinKind.oneToMany,"${oneToMany.mappedBy}")';
+      }
+      return '${_queryCleanType}Column get $name => ${_queryCleanType}Column(this, "$name")$strJoinRelation;';
     }
   }
 
