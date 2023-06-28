@@ -87,8 +87,6 @@ class _InspectoroGenerator {
               }
           """;
 
-    var strInitInstance = genInitInstance() ?? "";
-
     /* var strNewQuery = clazz.isAbstract
         ? ""
         : """
@@ -109,8 +107,6 @@ class _InspectoroGenerator {
 
           $strNewInstance
 
-          $strInitInstance
-
           $fields
 
           $methods
@@ -124,37 +120,6 @@ class _InspectoroGenerator {
         .isNotEmpty;
   }
 
-  String? genInitInstance() {
-    var oneToManyFields = clazz.fields.where(isOneToMany).toList();
-    if (oneToManyFields.isEmpty) return null;
-
-    var str = oneToManyFields.map((field) {
-      var annot =
-          field.metadata.firstWhere((a) => a.name == 'OneToMany').toOneToMany();
-
-      return """
-          {
-            var meta = ModelInspector.lookupClass('${field.type.toString().genericListType()}');
-            var field = meta
-                .allFields(searchParents: true)
-                .firstWhere((f) => f.name == '${annot.mappedBy?.removePrefix()}');
-            m.${field.name.removePrefix()} = LazyOneToManyList(
-                clz: meta, refField: field, refFieldValue: m.id);
-          }
-        """;
-    }).join("\n");
-
-    return """
-        /// init model properties after [newInstance()]
-        @override
-        void initInstance(User m) {
-          
-          $str
-
-          super.initInstance(m);
-        }
-      """;
-  }
 }
 
 /// generator for fields meta info.
