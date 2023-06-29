@@ -33,9 +33,9 @@ void main() async {
     var q = UserQuery(db: Database.lookup(dbPostgres));
     // test 1
     q.where([
-      q.age.between(12, 33),  // disable between for the time being
+      q.age.between(12, 33), // disable between for the time being
       q.name.startsWith('inner_'),
-      q.age.IN([10,20,30]),
+      q.age.IN([10, 20, 30]),
       // q.books.createdBy.name.startsWith('root'),
       q.books.price.ge(20.0),
       // q.not(q.age.lt(25)),
@@ -150,24 +150,26 @@ Future<void> clean() async {
 Future<void> testFindByIds() async {
   var log = Logger('$logPrefix testFindByIds');
 
-  var bookQuery = BookQuery(db: Database.lookup(dbPostgres))..id.IN([1,2,19,21]);
+  var bookQuery = BookQuery(db: Database.lookup(dbPostgres))
+    ..id.IN([1, 2, 19, 21]);
   var books = await bookQuery.findList();
-  log.info(
-      'books: ${books.map((e) => e.toMap()).toList()}');
+  log.info('books: ${books.map((e) => e.toMap()).toList()}');
 }
 
 Future<void> testFindListBySql() async {
   var log = Logger('$logPrefix testFindBy');
-  var books = await BookQuery(db: Database.lookup(dbPostgres))
-      .findListBySql(',users t1 where t0.author_id=t1.id and t1.age>@age limit 3',{'age':10});
+  var books = await BookQuery(db: Database.lookup(dbPostgres)).findListBySql(
+      ',users t1 where t0.author_id=t1.id and t1.age>@age limit 3',
+      {'age': 10});
   log.info('books list: $books');
-  log.info(
-      'books: ${books.map((e) => e.toMap()).toList()}');
+  log.info('books: ${books.map((e) => e.toMap()).toList()}');
 }
 
 Future<void> testCount() async {
   var log = Logger('$logPrefix testCount');
-  log.info(await BookQuery().count());
+  var q = BookQuery();
+  q.where([q.price.gt(10)]);
+  log.info(await q.count());
 }
 
 Future<int> testInsert() async {
@@ -358,9 +360,11 @@ Future<void> testSoftDelete() async {
     log.info('\t book saved with id: ${book.id}');
   }
 
-  var q = BookQuery()
-    ..price.between(18, 19)
-    ..title.endsWith('test');
+  var q = BookQuery();
+  q.where([
+    q.price.between(18, 19),
+    q.title.endsWith('test'),
+  ]);
   var total = await q.count();
   var totalWithDeleted = await q.count(includeSoftDeleted: true);
   log.info('found books , total: $total, totalWithDeleted: $totalWithDeleted');

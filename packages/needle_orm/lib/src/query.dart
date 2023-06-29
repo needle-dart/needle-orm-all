@@ -146,10 +146,16 @@ class TableQuery<T> extends ColumnQuery<T> {
   } */
 
 class TopTableQueryHelper<T> {
-  String get className => '$T';
-  OrmMetaClass get clz => ModelInspector.meta(className)!;
+  final String className;
+  final String tableName;
+  final OrmMetaClass clz;
 
   List<QueryCondition> conditions = [];
+
+  TopTableQueryHelper()
+      : className = '$T',
+        tableName = genTableName('$T'),
+        clz = ModelInspector.meta('$T')!;
 
   void addCondition(QueryCondition queryCondition) {
     conditions.add(queryCondition);
@@ -178,8 +184,6 @@ class TopTableQueryHelper<T> {
     _logger.info('------------ join sql \n');
     String joins = joinTranslator._joinSql().join('\n');
 
-    var clz = ModelInspector.meta('$T')!;
-
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.notExistsInDb);
 
@@ -189,7 +193,8 @@ class TopTableQueryHelper<T> {
 
     _logger.info(sql);
 
-    var preparedQuery = PreparedQuery.of(sql, joinTranslator, conditions);
+    var preparedQuery =
+        PreparedQuery.forSelect(sql, joinTranslator, conditions);
 
     {
       _logger.info('------------ with where sql[prepared style] \n');
@@ -199,12 +204,11 @@ class TopTableQueryHelper<T> {
   }
 
   PreparedQuery toPreparedQuery({bool includeSoftDeleted = false}) {
-    JoinTranslator joinTranslator = JoinTranslator.of(this);
+    JoinTranslator joinTranslator =
+        JoinTranslator.of(this, includeSoftDeleted: includeSoftDeleted);
     joinTranslator._insertMidPath();
     joinTranslator._assignTableAlias();
     String joins = joinTranslator._joinSql().join('\n');
-
-    var clz = ModelInspector.meta('$T')!;
 
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.notExistsInDb);
@@ -213,7 +217,7 @@ class TopTableQueryHelper<T> {
 
     String sql = 'select distinct $strAllFields $joins';
 
-    return PreparedQuery.of(sql, joinTranslator, conditions);
+    return PreparedQuery.forSelect(sql, joinTranslator, conditions);
   }
 
   PreparedQuery toCountPreparedQuery({bool includeSoftDeleted = false}) {
@@ -225,7 +229,23 @@ class TopTableQueryHelper<T> {
 
     String sql = 'select count(t0.*) $joins';
 
-    return PreparedQuery.of(sql, joinTranslator, conditions);
+    return PreparedQuery.forSelect(sql, joinTranslator, conditions);
+  }
+
+  PreparedQuery toSoftDeletePreparedQuery() {
+    JoinTranslator joinTranslator =
+        JoinTranslator.of(this, includeSoftDeleted: false);
+    joinTranslator._insertMidPath();
+    joinTranslator._assignTableAlias();
+    if (joinTranslator.paths.isNotEmpty) {
+      joinTranslator.paths[0].alias = tableName;
+    }
+    String joins = joinTranslator._joinSqlForUpdate().join('\n');
+
+    String sql =
+        'update $tableName set ${clz.softDeleteField!.columnName} = true $joins';
+
+    return PreparedQuery.forUpdate(sql, joinTranslator, conditions);
   }
 }
 
@@ -235,8 +255,8 @@ class PreparedQuery {
 
   PreparedQuery(this.sql, this.conditions);
 
-  factory PreparedQuery.of(String sqlPrefix, JoinTranslator joinTranslator,
-      List<QueryCondition> conditions) {
+  factory PreparedQuery.forSelect(String sqlPrefix,
+      JoinTranslator joinTranslator, List<QueryCondition> conditions) {
     if (conditions.isEmpty) {
       return PreparedQuery(sqlPrefix, PreparedConditions());
     }
@@ -247,6 +267,34 @@ class PreparedQuery {
       var softDeleteField = clz.softDeleteField;
       if (softDeleteField != null) {
         where.add('t0.${softDeleteField.columnName} is false');
+      }
+    }
+    for (var cond in conditions) {
+      where.add(cond.toSql(joinTranslator, preparedConditions));
+    }
+    sqlPrefix += '\n where ${where.join(' AND ')}';
+    return PreparedQuery(sqlPrefix, preparedConditions);
+  }
+
+  factory PreparedQuery.forUpdate(String sqlPrefix,
+      JoinTranslator joinTranslator, List<QueryCondition> conditions) {
+    if (conditions.isEmpty) {
+      return PreparedQuery(sqlPrefix, PreparedConditions());
+    }
+    var where = <String>[];
+    PreparedConditions preparedConditions = PreparedConditions();
+    if (!joinTranslator.includeSoftDeleted) {
+      // add where for first join
+      var firstJoin =
+          joinTranslator.paths.where((p) => p.length > 1).firstOrNull;
+      if (firstJoin != null) {
+        var clzName = firstJoin._lastClassName();
+        var clz = ModelInspector.meta(clzName)!;
+        var softDeleteField = clz.softDeleteField;
+        if (softDeleteField != null) {
+          where
+              .add('${firstJoin.alias}.${softDeleteField.columnName} is false');
+        }
       }
     }
     for (var cond in conditions) {
@@ -301,7 +349,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
   /// find list
   Future<List<T>> findList({bool includeSoftDeleted = false}) async {
-    var preparedQuery = _helper.toPreparedQuery();
+    var preparedQuery =
+        _helper.toPreparedQuery(includeSoftDeleted: includeSoftDeleted);
 
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
@@ -372,7 +421,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
   /// return count of this query.
   Future<int> count({bool includeSoftDeleted = false}) async {
-    var preparedQuery = _helper.toCountPreparedQuery();
+    var preparedQuery =
+        _helper.toCountPreparedQuery(includeSoftDeleted: includeSoftDeleted);
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
         tableName: "");
@@ -405,12 +455,16 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     return result.toList();
   }
 
-  Future<int> deleteAll() {
-    throw UnimplementedError();
-  }
+  Future<int> deleteAll() async {
+    if (_helper.clz.softDeleteField == null) {
+      throw 'deleteAll() only support soft delete model for safety.';
+    }
+    var preparedQuery = _helper.toSoftDeletePreparedQuery();
 
-  Future<int> deleteAllPermanent() {
-    throw UnimplementedError();
+    var rows = await _db!.query(
+        preparedQuery.sql, preparedQuery.conditions.values,
+        tableName: "");
+    return rows.affectedRowCount ?? 0;
   }
 
   Future<void> insertBatch(List<T> modelList, {int batchSize = 100}) {
@@ -581,6 +635,36 @@ class JoinTranslator {
     return result;
   }
 
+  List<String> _joinSqlForUpdate() {
+    var result = <String>[];
+    for (var path in paths) {
+      if (path.length == 1) {
+        // ignore
+      } else {
+        var p = _searchLeftJoin(path);
+        if (result.isEmpty) {
+          result.add(' from ${path._lastTableName()} ${path.alias}');
+          continue;
+        }
+        // join = '${p.text} :: ${p.alias}';
+        var joinColumns = path._findJoinColumns();
+        var type = path.last._innerType;
+        var clz = ModelInspector.meta(type)!;
+        var softDeleteField = clz.softDeleteField;
+        if (softDeleteField != null && !includeSoftDeleted) {
+          result.add(
+              'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} and ${path.alias}.${softDeleteField.columnName} is false');
+        } else {
+          result.add(
+              'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
+        }
+      }
+      //_logger.info('${path.text} :: ${path.alias} ---> $join');
+    }
+
+    return result;
+  }
+
   void debug() {
     for (var element in paths) {
       _logger.info(element);
@@ -597,6 +681,10 @@ class JoinPath with ListMixin<TableQuery> {
 
   static String _toText(List<TableQuery> path) {
     return path.map((e) => e.toString()).join('/');
+  }
+
+  String _lastClassName() {
+    return path.last._innerType;
   }
 
   String _lastTableName() {
