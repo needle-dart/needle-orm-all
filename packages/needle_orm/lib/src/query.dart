@@ -146,6 +146,9 @@ class TableQuery<T> extends ColumnQuery<T> {
   } */
 
 class TopTableQueryHelper<T> {
+  String get className => '$T';
+  OrmMetaClass get clz => ModelInspector.meta(className)!;
+
   List<QueryCondition> conditions = [];
 
   void addCondition(QueryCondition queryCondition) {
@@ -156,11 +159,12 @@ class TopTableQueryHelper<T> {
     conditions.addAll(queryConditions);
   }
 
-  void debugQuery() {
+  void debugQuery({bool includeSoftDeleted = false}) {
     _logger.info(conditions);
 
     _logger.info('------------ origin (sorted) \n');
-    JoinTranslator joinTranslator = JoinTranslator.of(this);
+    JoinTranslator joinTranslator =
+        JoinTranslator.of(this, includeSoftDeleted: includeSoftDeleted);
     joinTranslator.debug();
 
     _logger.info('------------ _insert Mid Path\n');
@@ -173,9 +177,6 @@ class TopTableQueryHelper<T> {
 
     _logger.info('------------ join sql \n');
     String joins = joinTranslator._joinSql().join('\n');
-    if (joins.isEmpty) {
-      joins = 'from $T';
-    }
 
     var clz = ModelInspector.meta('$T')!;
 
@@ -188,32 +189,20 @@ class TopTableQueryHelper<T> {
 
     _logger.info(sql);
 
-    if (conditions.isEmpty) {
-      return;
-    }
+    var preparedQuery = PreparedQuery.of(sql, joinTranslator, conditions);
 
     {
       _logger.info('------------ with where sql[prepared style] \n');
-      var where = <String>[];
-      PreparedConditions preparedConditions = PreparedConditions();
-      for (var cond in conditions) {
-        where.add(cond.toSql(joinTranslator, preparedConditions));
-      }
-      sql += '\n where ${where.join(' AND ')}';
-      _logger.info('sql: $sql');
-      _logger.info('preparedConditions: ${preparedConditions.values}');
+      _logger.info('sql: ${preparedQuery.sql}');
+      _logger.info('preparedConditions: ${preparedQuery.conditions}');
     }
   }
 
-  PreparedQuery toPreparedQuery() {
+  PreparedQuery toPreparedQuery({bool includeSoftDeleted = false}) {
     JoinTranslator joinTranslator = JoinTranslator.of(this);
     joinTranslator._insertMidPath();
     joinTranslator._assignTableAlias();
     String joins = joinTranslator._joinSql().join('\n');
-    var clsName = '$T';
-    if (joins.isEmpty) {
-      joins = 'from ${genTableName(clsName)} t0';
-    }
 
     var clz = ModelInspector.meta('$T')!;
 
@@ -224,42 +213,19 @@ class TopTableQueryHelper<T> {
 
     String sql = 'select distinct $strAllFields $joins';
 
-    if (conditions.isEmpty) {
-      return PreparedQuery(sql, PreparedConditions());
-    }
-
-    var where = <String>[];
-    PreparedConditions preparedConditions = PreparedConditions();
-    for (var cond in conditions) {
-      where.add(cond.toSql(joinTranslator, preparedConditions));
-    }
-    sql += '\n where ${where.join(' AND ')}';
-    return PreparedQuery(sql, preparedConditions);
+    return PreparedQuery.of(sql, joinTranslator, conditions);
   }
 
-  PreparedQuery toCountPreparedQuery() {
-    JoinTranslator joinTranslator = JoinTranslator.of(this);
+  PreparedQuery toCountPreparedQuery({bool includeSoftDeleted = false}) {
+    JoinTranslator joinTranslator =
+        JoinTranslator.of(this, includeSoftDeleted: includeSoftDeleted);
     joinTranslator._insertMidPath();
     joinTranslator._assignTableAlias();
     String joins = joinTranslator._joinSql().join('\n');
-    var clsName = '$T';
-    if (joins.isEmpty) {
-      joins = 'from ${genTableName(clsName)} t0';
-    }
 
     String sql = 'select count(t0.*) $joins';
 
-    if (conditions.isEmpty) {
-      return PreparedQuery(sql, PreparedConditions());
-    }
-
-    var where = <String>[];
-    PreparedConditions preparedConditions = PreparedConditions();
-    for (var cond in conditions) {
-      where.add(cond.toSql(joinTranslator, preparedConditions));
-    }
-    sql += '\n where ${where.join(' AND ')}';
-    return PreparedQuery(sql, preparedConditions);
+    return PreparedQuery.of(sql, joinTranslator, conditions);
   }
 }
 
@@ -268,6 +234,27 @@ class PreparedQuery {
   final PreparedConditions conditions;
 
   PreparedQuery(this.sql, this.conditions);
+
+  factory PreparedQuery.of(String sqlPrefix, JoinTranslator joinTranslator,
+      List<QueryCondition> conditions) {
+    if (conditions.isEmpty) {
+      return PreparedQuery(sqlPrefix, PreparedConditions());
+    }
+    var where = <String>[];
+    PreparedConditions preparedConditions = PreparedConditions();
+    if (!joinTranslator.includeSoftDeleted) {
+      var clz = joinTranslator.helper.clz;
+      var softDeleteField = clz.softDeleteField;
+      if (softDeleteField != null) {
+        where.add('t0.${softDeleteField.columnName} is false');
+      }
+    }
+    for (var cond in conditions) {
+      where.add(cond.toSql(joinTranslator, preparedConditions));
+    }
+    sqlPrefix += '\n where ${where.join(' AND ')}';
+    return PreparedQuery(sqlPrefix, preparedConditions);
+  }
 }
 
 class TopTableQuery<T extends Model> extends TableQuery<T> {
@@ -483,10 +470,13 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
  */
 
 class JoinTranslator {
+  final TopTableQueryHelper helper;
   final List<JoinPath> paths;
-  JoinTranslator(this.paths);
+  final bool includeSoftDeleted;
+  JoinTranslator(this.helper, this.paths, {this.includeSoftDeleted = false});
 
-  factory JoinTranslator.of(TopTableQueryHelper helper) {
+  factory JoinTranslator.of(TopTableQueryHelper helper,
+      {bool includeSoftDeleted = false}) {
     var all = <JoinPath>[];
     var set = <String>{}; // remove duplicated list;
     for (var cond in helper.conditions) {
@@ -498,7 +488,7 @@ class JoinTranslator {
       });
     }
     all.sort((a, b) => a.text.compareTo(b.text));
-    return JoinTranslator(all);
+    return JoinTranslator(helper, all, includeSoftDeleted: includeSoftDeleted);
   }
 
   void _insertMidPath() {
@@ -568,11 +558,26 @@ class JoinTranslator {
         var p = _searchLeftJoin(path);
         // join = '${p.text} :: ${p.alias}';
         var joinColumns = path._findJoinColumns();
-        result.add(
-            'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
+        var type = path.last._innerType;
+        var clz = ModelInspector.meta(type)!;
+        var softDeleteField = clz.softDeleteField;
+        if (softDeleteField != null && !includeSoftDeleted) {
+          result.add(
+              'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} and ${path.alias}.${softDeleteField.columnName} is false');
+        } else {
+          result.add(
+              'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
+        }
       }
       //_logger.info('${path.text} :: ${path.alias} ---> $join');
     }
+
+    if (result.isEmpty) {
+      result = [
+        'from ${genTableName(helper.className)} t0',
+      ];
+    }
+
     return result;
   }
 
