@@ -379,8 +379,6 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     });
 
     return result.toList();
-
-    // throw UnimplementedError();
   }
 
   T toModel(List<dynamic> dbRow, List<OrmMetaField> selectedFields,
