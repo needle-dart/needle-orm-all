@@ -39,7 +39,14 @@ class QueryCondition {
       JoinTranslator joinTranslator, PreparedConditions preparedConditions) {
     var jp = JoinPath(_path);
     var p = joinTranslator._search(jp);
-    return '${p.alias}.${column!._name} ${oper.text} ${preparedConditions.add(value)} ';
+    switch (oper) {
+      case ColumnConditionOper.BETWEEN || ColumnConditionOper.NOT_BETWEEN:
+        return '${p.alias}.${column!._name} ${oper.text} ${preparedConditions.add(value[0])} and ${preparedConditions.add(value[1])} ';
+      case ColumnConditionOper.IS_NULL || ColumnConditionOper.IS_NOT_NULL:
+        return '${p.alias}.${column!._name} ${oper.text} ';
+      default:
+        return '${p.alias}.${column!._name} ${oper.text} ${preparedConditions.add(value)} ';
+    }
   }
 
   List<TableQuery> get _path => column == null ? [] : column!._path;
@@ -94,18 +101,13 @@ Iterable<List<TableQuery>> _getPath(QueryCondition value) sync* {
   }
 }
 
-enum JoinKind {
-  oneToOne,
-  oneToMany,
-  manyToOne,
-  manyToMany
-}
+enum JoinKind { oneToOne, oneToMany, manyToOne, manyToMany }
 
 final class JoinRelation {
   final JoinKind kind;
   final String mappedBy;
 
-  JoinRelation([this.kind=JoinKind.manyToOne, this.mappedBy=""]);
+  JoinRelation([this.kind = JoinKind.manyToOne, this.mappedBy = ""]);
 
   String get mappedByColumnName => genColumnName(mappedBy);
 }
@@ -278,7 +280,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   int maxRows = 0;
 
   TopTableQuery({Database? db})
-      : _db = db,
+      : _db = db ?? Database.defaultDb,
         super(null, "");
 
   QueryCondition and(List<QueryCondition> queryConditions) =>
@@ -323,7 +325,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     var clz = ModelInspector.meta('$T')!;
     var fields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.notExistsInDb);
- 
+
     var result = rows.map((row) {
       return toModel(row, fields);
     });
@@ -333,9 +335,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     // throw UnimplementedError();
   }
 
-
-  T toModel(
-      List<dynamic> dbRow, List<OrmMetaField> selectedFields,
+  T toModel(List<dynamic> dbRow, List<OrmMetaField> selectedFields,
       {T? existModel}) {
     T? model = existModel;
     var className = '$T';
@@ -345,12 +345,12 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
       if (idField != null) {
         int j = selectedFields.indexOf(idField);
         if (j >= 0) {
-          model = ModelInspector.newModel(className,
-              attachDb: true, id: dbRow[j]) as T;
+          model =
+              ModelInspector.newModel(className, attachDb: true, id: dbRow[j])
+                  as T;
         }
       } else {
-        model = ModelInspector.newModel(className,
-            attachDb: true) as T;
+        model = ModelInspector.newModel(className, attachDb: true) as T;
       }
     }
 
@@ -360,8 +360,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
       var value = dbRow[i];
       if (f.isModelType) {
         if (value != null) {
-          var obj = ModelInspector.newModel(f.elementType,
-              id: value, attachDb: true);
+          var obj =
+              ModelInspector.newModel(f.elementType, id: value, attachDb: true);
           modelInspector.setFieldValue(model!, name, obj);
         }
       } else {
@@ -386,7 +386,6 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
   /// return count of this query.
   Future<int> count({bool includeSoftDeleted = false}) async {
-
     var preparedQuery = _helper.toCountPreparedQuery();
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
@@ -400,7 +399,6 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   /// example: findListBySql(' , another_table t1 where t.column_name=t1.id and t.column_name2=@param1 and t1.column_name3=@param2 order by t0.id limit 10 offset 10 ', {'param1':100,'param2':'hello'})
   Future<List<T>> findListBySql(String rawSql,
       [Map<String, dynamic> params = const {}]) async {
-
     var clzName = '$T';
     var clz = ModelInspector.meta(clzName)!;
     var tableName = genTableName(clzName);
@@ -409,10 +407,10 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
       ..removeWhere((f) => f.notExistsInDb);
 
     var strAllFields = allFields.map((f) => "t0.${f.columnName}").join(',');
-    var rows = await _db!.query('select distinct $strAllFields from $tableName t0 $rawSql', params);
+    var rows = await _db!.query(
+        'select distinct $strAllFields from $tableName t0 $rawSql', params);
 
     print('result: $rows');
-
 
     var result = rows.map((row) {
       return toModel(row, allFields);
@@ -604,12 +602,12 @@ class JoinPath with ListMixin<TableQuery> {
   List<String> _findJoinColumns() {
     var joinRelation = path.last.joinRelation;
     var joinKind = joinRelation.kind;
-    if(joinKind==JoinKind.manyToOne){
-      return ['id',"${path.last._columnName}_id"];
-    }else if(joinKind==JoinKind.oneToMany){
+    if (joinKind == JoinKind.manyToOne) {
+      return ['id', "${path.last._columnName}_id"];
+    } else if (joinKind == JoinKind.oneToMany) {
       // find mappedBy
       var mappedByColumnName = joinRelation.mappedByColumnName;
-      return ["${mappedByColumnName}_id",'id'];
+      return ["${mappedByColumnName}_id", 'id'];
     }
     return ['id', "${path.last._name}_id"];
   }
@@ -1484,12 +1482,12 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
       if (idField != null) {
         int j = selectedFields.indexOf(idField);
         if (j >= 0) {
-          model = ModelInspector.newModel(className,
-              attachDb: true, id: dbRow[j]) as N;
+          model =
+              ModelInspector.newModel(className, attachDb: true, id: dbRow[j])
+                  as N;
         }
       } else {
-        model = ModelInspector.newModel(className,
-            attachDb: true) as N;
+        model = ModelInspector.newModel(className, attachDb: true) as N;
       }
     }
 
@@ -1499,8 +1497,8 @@ abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
       var value = dbRow[i];
       if (f.isModelType) {
         if (value != null) {
-          var obj = ModelInspector.newModel(f.elementType,
-              id: value, attachDb: true);
+          var obj =
+              ModelInspector.newModel(f.elementType, id: value, attachDb: true);
           modelInspector.setFieldValue(model!, name, obj);
         }
       } else {

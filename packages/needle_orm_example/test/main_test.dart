@@ -33,7 +33,7 @@ void main() async {
     var q = UserQuery(db: Database.lookup(dbPostgres));
     // test 1
     q.where([
-      // q.age.between(22, 33),  // disable between for the time being
+      q.age.between(12, 33),  // disable between for the time being
       q.name.startsWith('inner_'),
       q.age.IN([10,20,30]),
       // q.books.createdBy.name.startsWith('root'),
