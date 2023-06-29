@@ -64,12 +64,19 @@ void initLogger() {
         .where((element) => element.member != null)
         .firstWhere((element) => !element.member!.startsWith("Logger"));
     var frameInfo = "(${frame.location})";
+    var arr = [
+      record.level.name,
+      record.time.toString().padRight(24, '0').substring(0, 24),
+      record.loggerName,
+      frameInfo,
+      record.message,
+      if(record.error!=null) '${record.error}',
+      if (record.stackTrace != null) '${record.stackTrace}'
+    ];
     if (record.stackTrace != null) {
-      stderr.writeln(
-          '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName} $frameInfo: ${record.message}: ${record.error ?? ''} \n${record.stackTrace}');
+      stderr.writeln(arr.join(': '));
     } else {
-      print(
-          '${record.level.name}: ${record.time.toString().padRight(24, '0').substring(0, 24)} ${record.loggerName} $frameInfo: ${record.message}: ${record.error ?? ''}');
+      print(arr.join(': '));
     }
   });
 }

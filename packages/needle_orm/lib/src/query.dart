@@ -235,6 +235,31 @@ class TopTableQueryHelper<T> {
     sql += '\n where ${where.join(' AND ')}';
     return PreparedQuery(sql, preparedConditions);
   }
+
+  PreparedQuery toCountPreparedQuery() {
+    JoinTranslator joinTranslator = JoinTranslator.of(this);
+    joinTranslator._insertMidPath();
+    joinTranslator._assignTableAlias();
+    String joins = joinTranslator._joinSql().join('\n');
+    var clsName = '$T';
+    if (joins.isEmpty) {
+      joins = 'from ${genTableName(clsName)} t0';
+    }
+
+    String sql = 'select count(t0.*) $joins';
+
+    if (conditions.isEmpty) {
+      return PreparedQuery(sql, PreparedConditions());
+    }
+
+    var where = <String>[];
+    PreparedConditions preparedConditions = PreparedConditions();
+    for (var cond in conditions) {
+      where.add(cond.toSql(joinTranslator, preparedConditions));
+    }
+    sql += '\n where ${where.join(' AND ')}';
+    return PreparedQuery(sql, preparedConditions);
+  }
 }
 
 class PreparedQuery {
@@ -360,8 +385,15 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   }
 
   /// return count of this query.
-  Future<int> count({bool includeSoftDeleted = false}) {
-    throw UnimplementedError();
+  Future<int> count({bool includeSoftDeleted = false}) async {
+
+    var preparedQuery = _helper.toCountPreparedQuery();
+    var rows = await _db!.query(
+        preparedQuery.sql, preparedQuery.conditions.values,
+        tableName: "");
+
+    print(rows);
+    return (rows[0][0]).toInt();
   }
 
   /// select with raw sql.
