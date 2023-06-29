@@ -2,10 +2,6 @@ part of 'api.dart';
 
 /// Query for a Model
 abstract class ModelQuery<M extends Model> {
-  /* static ModelQuery newQuery(Database db, String className) {
-    return ModelInspector.lookup(className).newQuery(db, className);
-  } */
-
   ModelQuery();
 
   Database get db;
