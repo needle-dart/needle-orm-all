@@ -241,9 +241,20 @@ class TopTableQueryHelper<T> {
       joinTranslator.paths[0].alias = tableName;
     }
     String joins = joinTranslator._joinSqlForUpdate().join('\n');
-
     String sql =
-        'update $tableName set ${clz.softDeleteField!.columnName} = true $joins';
+        'update $tableName set ${clz.softDeleteField!.columnName} = true ';
+
+    if (clz.versionField != null) {
+      var versionColumn = clz.versionField!.columnName;
+      sql += ', $versionColumn = $versionColumn+1 ';
+    }
+
+    if (clz.whenModifiedField != null) {
+      var whenModifiedColumn = clz.whenModifiedField!.columnName;
+      sql += ", $whenModifiedColumn = 'now()' ";
+    }
+
+    sql += joins;
 
     return PreparedQuery.forUpdate(sql, joinTranslator, conditions);
   }
@@ -278,12 +289,14 @@ class PreparedQuery {
 
   factory PreparedQuery.forUpdate(String sqlPrefix,
       JoinTranslator joinTranslator, List<QueryCondition> conditions) {
-    if (conditions.isEmpty) {
-      return PreparedQuery(sqlPrefix, PreparedConditions());
-    }
     var where = <String>[];
     PreparedConditions preparedConditions = PreparedConditions();
     if (!joinTranslator.includeSoftDeleted) {
+      if (joinTranslator.helper.clz.softDeleteField != null) {
+        var softDeleteField = joinTranslator.helper.clz.softDeleteField!;
+        where.add(
+            '${joinTranslator.helper.tableName}.${softDeleteField.columnName} is false');
+      }
       // add where for first join
       var firstJoin =
           joinTranslator.paths.where((p) => p.length > 1).firstOrNull;

@@ -76,6 +76,10 @@ class OrmMetaClass {
   OrmMetaField? get versionField => allFields(searchParents: true).firstWhere(
       (f) => f.ormAnnotations.any((annot) => annot.runtimeType == Version));
 
+  OrmMetaField? get whenModifiedField =>
+      allFields(searchParents: true).firstWhere((f) =>
+          f.ormAnnotations.any((annot) => annot.runtimeType == WhenModified));
+
   List<OrmMetaField> serverSideFields(ActionType actionType,
       {bool searchParents = false}) {
     var fields = allFields(searchParents: false)

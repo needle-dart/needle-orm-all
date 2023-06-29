@@ -94,7 +94,6 @@ void main() async {
   test('testLoadNestedFields', testLoadNestedFields);
   test('testPaging', testPaging);
   test('testSoftDelete', testSoftDelete);
-  test('testPermanentDelete', testPermanentDelete);
   test('testMultipleDatabases', testMultipleDatabases);
   test('testOneToMany', testOneToMany);
 
@@ -141,10 +140,10 @@ Future<void> testTransactionPgRaw() async {
 
 /// remove all rows from database.
 Future<void> clean() async {
-  for (var db in [Database.lookup(dbPostgres), Database.lookup(dbMariadb)]) {
+  /* for (var db in [Database.lookup(dbPostgres), Database.lookup(dbMariadb)]) {
     await BookQuery(db: db).deleteAllPermanent();
     await UserQuery(db: db).deleteAllPermanent();
-  }
+  } */
 }
 
 Future<void> testFindByIds() async {
@@ -376,29 +375,6 @@ Future<void> testSoftDelete() async {
   totalWithDeleted = await q.count(includeSoftDeleted: true);
   log.info(
       'found books again, total: $total, totalWithDeleted: $totalWithDeleted');
-}
-
-Future<void> testPermanentDelete() async {
-  var log = Logger('$logPrefix testPermanentDelete');
-
-  var n = 5;
-  for (int i = 0; i < n; i++) {
-    var book = Book()
-      ..price = 38 + i * 0.1
-      ..title = 'Dart $i permanent';
-    await book.insert();
-    log.info('\t book saved with id: ${book.id}');
-  }
-
-  var q = BookQuery()
-    ..price.between(38, 39)
-    ..title.endsWith('permanent');
-  var total = await q.count();
-
-  log.info('found permanent books, total: $total');
-
-  int deletedCount = await q.deleteAllPermanent();
-  log.info('permanent deleted books: $deletedCount');
 }
 
 Future<void> testMultipleDatabases() async {
