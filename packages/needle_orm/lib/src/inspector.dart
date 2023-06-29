@@ -52,8 +52,7 @@ abstract class ModelInspector<M extends Model> {
 
   /// create a new instance of specified [className]
   /// newInstance() might return an instance cached in top query.
-  static Model newModel(String className,
-      {bool attachDb = false, dynamic id}) {
+  static Model newModel(String className, {bool attachDb = false, dynamic id}) {
 /*     if (id != null) {
       var cacheModel =
           (topQuery as _BaseModelQuery)._modelCache.find(className, id);
@@ -78,13 +77,8 @@ abstract class ModelInspector<M extends Model> {
 
   /// create a new instance of specified [className]
   /// newInstance() might return an instance cached in top query.
-  M newInstance(
-      {bool attachDb = false, dynamic id});
-/* 
-  ModelQuery newQuery(Database db, String className) {
-    throw UnimplementedError();
-  }
- */
+  M newInstance({bool attachDb = false, dynamic id});
+
   /// return class meta info for [className]
   static OrmMetaClass? meta(String className) => metaMap[className];
 

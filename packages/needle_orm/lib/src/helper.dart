@@ -4,11 +4,11 @@ import '../impl.dart';
 import 'api.dart';
 import 'sql.dart';
 
+final Logger _logger = Logger('ORM');
+
 /// [ModelHelper] keeps inner state of a [Model] instance.
 /// can ONLY be used by generators!
 class ModelHelper<M extends Model> {
-  static final Logger _logger = Logger('ORM');
-
   final M model;
   bool storeLoaded = false; // if fields has been loaded from db.
   bool storeAttached = false; // if this instance is created by Query

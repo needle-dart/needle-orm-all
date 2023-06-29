@@ -28,7 +28,6 @@ class NeedleOrmMetaInfoGenerator extends Generator {
     values.add(strModelCache);
     values.add(strFieldFilter);
     values.add(strModelMixin);
-    values.add(strBaseQuery);
     values.add(strOrmMetaInfoModel);
 
     all.add('_OrmMetaInfoModel()');

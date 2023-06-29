@@ -11,6 +11,8 @@ part 'domain.biz.dart';
 // all Field names must start with '_'
 // all business logic must be defined in file : 'domain.part.dart'
 
+final Logger _logger = Logger('EXAMPLE');
+
 @Entity()
 abstract class Basic extends Model {
   @Version()
@@ -95,12 +97,12 @@ class User extends Basic {
 
   @PrePersist()
   void beforeInsert() {
-    print('going to create user !!!');
+    _logger.info('going to create user !!!');
   }
 
   @PostPersist()
   void afterInsert() {
-    print('user created!!!');
+    _logger.info('user created!!!');
   }
 
   @PreRemove()
@@ -114,7 +116,7 @@ class User extends Basic {
 
   @PostLoad()
   void afterLoad() {
-    print('user loaded!!!');
+    _logger.info('user loaded!!!');
   }
 
   @PostUpdate()

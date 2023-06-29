@@ -1,16 +1,15 @@
 // ignore_for_file: constant_identifier_names
 import 'dart:collection';
-import 'dart:math';
 
 import 'package:logging/logging.dart';
-import 'package:recase/recase.dart';
 
 import 'api.dart';
 import 'generator.dart';
 import 'meta.dart';
 import 'inspector.dart';
 import 'sql.dart';
-import 'sql_query.dart';
+
+final Logger _logger = Logger('ORM');
 
 class QueryCondition {
   final ColumnConditionOper oper;
@@ -158,21 +157,21 @@ class TopTableQueryHelper<T> {
   }
 
   void debugQuery() {
-    print(conditions);
+    _logger.info(conditions);
 
-    print('------------ origin (sorted) \n');
+    _logger.info('------------ origin (sorted) \n');
     JoinTranslator joinTranslator = JoinTranslator.of(this);
     joinTranslator.debug();
 
-    print('------------ _insert Mid Path\n');
+    _logger.info('------------ _insert Mid Path\n');
     joinTranslator._insertMidPath();
     joinTranslator.debug();
 
-    print('------------ assign alias\n');
+    _logger.info('------------ assign alias\n');
     joinTranslator._assignTableAlias();
     joinTranslator.debug();
 
-    print('------------ join sql \n');
+    _logger.info('------------ join sql \n');
     String joins = joinTranslator._joinSql().join('\n');
     if (joins.isEmpty) {
       joins = 'from $T';
@@ -187,22 +186,22 @@ class TopTableQueryHelper<T> {
 
     String sql = 'select $strAllFields $joins';
 
-    print(sql);
+    _logger.info(sql);
 
     if (conditions.isEmpty) {
       return;
     }
 
     {
-      print('------------ with where sql[prepared style] \n');
+      _logger.info('------------ with where sql[prepared style] \n');
       var where = <String>[];
       PreparedConditions preparedConditions = PreparedConditions();
       for (var cond in conditions) {
         where.add(cond.toSql(joinTranslator, preparedConditions));
       }
       sql += '\n where ${where.join(' AND ')}';
-      print('sql: $sql');
-      print('preparedConditions: ${preparedConditions.values}');
+      _logger.info('sql: $sql');
+      _logger.info('preparedConditions: ${preparedConditions.values}');
     }
   }
 
@@ -320,7 +319,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
         tableName: "");
-    print('result: $rows');
+    _logger.info('result: $rows');
 
     var clz = ModelInspector.meta('$T')!;
     var fields = clz.allFields(searchParents: true)
@@ -391,7 +390,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
         preparedQuery.sql, preparedQuery.conditions.values,
         tableName: "");
 
-    print(rows);
+    _logger.info(rows);
     return (rows[0][0]).toInt();
   }
 
@@ -410,7 +409,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     var rows = await _db!.query(
         'select distinct $strAllFields from $tableName t0 $rawSql', params);
 
-    print('result: $rows');
+    _logger.info('result: $rows');
 
     var result = rows.map((row) {
       return toModel(row, allFields);
@@ -572,14 +571,14 @@ class JoinTranslator {
         result.add(
             'left join ${path._lastTableName()} ${path.alias} on ${path.alias}.${joinColumns[0]} = ${p.alias}.${joinColumns[1]} ');
       }
-      //print('${path.text} :: ${path.alias} ---> $join');
+      //_logger.info('${path.text} :: ${path.alias} ---> $join');
     }
     return result;
   }
 
   void debug() {
     for (var element in paths) {
-      print(element);
+      _logger.info(element);
     }
   }
 }
@@ -633,7 +632,6 @@ class JoinPath with ListMixin<TableQuery> {
 
 /// ColumnQuery defines operations for column
 class ColumnQuery<T> {
-  final List<ColumnCondition> _conditions = [];
   final String _name;
   final TableQuery? _tableQuery;
 
@@ -644,13 +642,7 @@ class ColumnQuery<T> {
   List<TableQuery> get _path =>
       _tableQuery == null ? [] : [..._tableQuery!._path, _tableQuery!];
 
-  bool get _hasCondition => _conditions.isNotEmpty;
-
   String get _columnName => genColumnName(_name);
-
-  void _clear() {
-    _conditions.clear();
-  }
 
   static String classNameForType(String type) {
     switch (type) {
@@ -671,64 +663,6 @@ class ColumnQuery<T> {
 
   QueryCondition eq(T value) =>
       QueryCondition(this, ColumnConditionOper.EQ, value);
-  // _addCondition(ColumnConditionOper.EQ, value);
-
-  Iterable<SqlCondition> toSqlConditions(
-      String tableAlias, String? softDeleteColumnName) {
-    return _conditions
-        .map((e) => _toSqlCondition(tableAlias, softDeleteColumnName, e));
-  }
-
-  SqlCondition _toSqlCondition(
-      String tableAlias, String? softDeleteColumnName, ColumnCondition cc) {
-    SqlCondition sc = SqlCondition("r.$softDeleteColumnName = 0");
-    String columnName = '$tableAlias.$_name';
-    String paramName = '${tableAlias}__$_name';
-    bool isRemote = false;
-    String? ssExpr;
-    if (cc.value is ServerSideExpr) {
-      isRemote = true;
-      ssExpr = (cc.value as ServerSideExpr).expr;
-    }
-    String op = toSql(cc.oper);
-    switch (cc.oper) {
-      case ColumnConditionOper.EQ:
-      case ColumnConditionOper.GT:
-      case ColumnConditionOper.LT:
-      case ColumnConditionOper.GE:
-      case ColumnConditionOper.LE:
-      case ColumnConditionOper.LIKE:
-        sc = isRemote
-            ? SqlCondition("$columnName $op ${ssExpr!} ")
-            : SqlCondition(
-                "$columnName $op @$paramName ", {paramName: cc.value});
-        break;
-      case ColumnConditionOper.BETWEEN:
-      case ColumnConditionOper.NOT_BETWEEN:
-        sc = SqlCondition(
-            "$columnName $op @${paramName}_from and @${paramName}_to",
-            {'${paramName}_from': cc.value[0], '${paramName}_to': cc.value[1]});
-        break;
-      case ColumnConditionOper.IN:
-      case ColumnConditionOper.NOT_IN:
-        sc =
-            SqlCondition("$columnName $op @$paramName ", {paramName: cc.value});
-        break;
-      case ColumnConditionOper.IS_NULL:
-      case ColumnConditionOper.IS_NOT_NULL:
-        sc = SqlCondition("$columnName $op ");
-        break;
-      case ColumnConditionOper.EXISTS:
-      case ColumnConditionOper.NOT_EXISTS:
-      case ColumnConditionOper.NOT:
-        break;
-      case ColumnConditionOper.AND:
-        break;
-      case ColumnConditionOper.OR:
-        break;
-    }
-    return sc;
-  }
 
   OrderField asc() => OrderField(this, Order.asc);
 
@@ -896,791 +830,3 @@ enum ColumnConditionOper {
     return text;
   }
 }
-
-const List<String> _sql = [
-  '=',
-  '>',
-  '<',
-  '>=',
-  '<=',
-  'between',
-  'not between',
-  'like',
-  'in',
-  'not in',
-  'is null',
-  'is not null'
-];
-
-String toSql(ColumnConditionOper oper) {
-  return _sql[oper.index];
-}
-
-/// basic implement for AbstractModelQuery
-abstract class BaseModelQuery<M extends Model> extends ModelQuery<M> {
-  static final Logger _logger = Logger('ORM');
-
-  @override
-  final Database db;
-  // final ModelInspector modelInspector;
-
-  late BaseModelQuery _topQuery;
-
-  final Map<String, BaseModelQuery> queryMap = {};
-
-  // String get className;
-
-  String _alias = '';
-
-  String get alias => _alias;
-
-  // IntColumn get id => IntColumn(this, "id");
-
-  // List<ColumnQuery> get columns => [id];
-  List<ColumnQuery> get columns => [];
-
-  // List<BaseModelQuery> get joins;
-
-  List<OrderField> orders = [];
-  int offset = 0;
-  int maxRows = 0;
-
-  // for join
-  BaseModelQuery? relatedQuery;
-  String? propName;
-
-  BaseModelQuery(this.db, {BaseModelQuery? topQuery, this.propName}) {
-    _topQuery = topQuery ?? this;
-  }
-/* 
-  bool __hasCondition([List<BaseModelQuery>? historyCache]) {
-    // prevent cycle reference
-    print('>> \t$propName:$className');
-    if (historyCache == null) {
-      historyCache = [this];
-    } else {
-      if (historyCache.contains(this)) {
-        return false;
-      } else {
-        historyCache.add(this);
-      }
-    }
-
-    var flag = columns.any((c) => c._hasCondition) ||
-        joins.any((j) => j.__hasCondition(historyCache));
-    print('<< \t$propName:$className.flag:$flag');
-    return flag;
-  } */
-
-  BaseModelQuery get topQuery => _topQuery;
-
-  SqlJoin _toSqlJoin() {
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-    var columnName = getColumnName(propName!);
-    var joinStmt = '${relatedQuery!._alias}.${columnName}_id = $_alias.id';
-
-    var join = SqlJoin(tableName, _alias, joinStmt);
-    columns.where((column) => column._hasCondition).forEach((column) {
-      join.conditions.appendAll(
-          column.toSqlConditions(_alias, clz.softDeleteField?.columnName));
-    });
-    return join;
-  }
-
-  String getColumnName(String fieldName) {
-    return ReCase(fieldName).snakeCase;
-  }
-
-  @override
-  Future<int> insert(M model) async {
-    var action = ActionType.insert;
-    var className = ModelInspector.getClassName(model);
-    var modelInspector = ModelInspector.lookup(className);
-    var clz = ModelInspector.meta(className)!;
-    var idField = clz.idFields.first;
-    var tableName = clz.tableName;
-
-    var softDeleteField = clz.softDeleteField;
-    if (softDeleteField != null) {
-      modelInspector.markDeleted(model, false);
-    }
-
-    var versionField = clz.versionField;
-    if (versionField != null) {
-      modelInspector.setFieldValue(model, versionField.name, 1);
-    }
-
-    modelInspector.setCurrentUser(model, insert: true, update: true);
-
-    var dirtyMap = modelInspector.getDirtyFields(model);
-    var ssFields = clz.serverSideFields(action, searchParents: true);
-
-    var ssFieldNames = ssFields.map((e) => e.name);
-    var columnNames = [...dirtyMap.keys, ...ssFieldNames]
-        .map((fn) => clz.findField(fn)!.columnName)
-        .join(',');
-
-    var ssFieldValues = ssFields.map((e) => e.ormAnnotations
-        .firstWhere((element) => element.isServerSide(action))
-        .serverSideExpr(action));
-
-    var fieldVariables = [
-      ...dirtyMap.keys.map((e) => '@$e'),
-      ...ssFieldValues,
-    ].join(',');
-    var sql =
-        'insert into $tableName( $columnNames ) values( $fieldVariables )';
-    _logger.fine('Insert SQL: $sql');
-
-    dirtyMap.forEach((key, value) {
-      if (value is Model) {
-        var clsName = ModelInspector.getClassName(value);
-        var inspector = ModelInspector.lookup(clsName);
-        var clz = ModelInspector.meta(clsName);
-        dirtyMap[key] =
-            inspector.getFieldValue(value, clz!.idFields.first.name);
-      }
-    });
-
-    var id = await db.query(sql, dirtyMap,
-        returningFields: [idField.columnName],
-        tableName: tableName,
-        hints: _hints(clz, dirtyMap));
-    _logger.fine(' >>> query returned: $id');
-    if (id.isNotEmpty) {
-      if (id[0].isNotEmpty) {
-        modelInspector.setFieldValue(model, idField.name, id[0][0]);
-        return id[0][0];
-      }
-    }
-    return 0;
-  }
-
-  Map<String, QueryHint> _hints(
-      OrmMetaClass metaClass, Map<String, dynamic> params) {
-    var hints = <String, QueryHint>{};
-    params.forEach((key, value) {
-      var f = metaClass.findField(key);
-      if (f != null) {
-        if (f.ormAnnotations.whereType<Lob>().isNotEmpty &&
-            !f.type.contains('String')) {
-          hints[key] = QueryHint.lob;
-        }
-      }
-    });
-    return hints;
-  }
-
-  Future<void> insertBatch(List<M> modelList, {int batchSize = 100}) async {
-    if (modelList.isEmpty) return;
-    if (modelList.length <= batchSize) return _insertBatch(modelList);
-
-    for (int i = 0; i < modelList.length; i += batchSize) {
-      var sublist = modelList.sublist(i, min(modelList.length, i + batchSize));
-      await _insertBatch(sublist);
-    }
-  }
-
-  Future<void> _insertBatch(List<M> modelList) async {
-    if (modelList.isEmpty) return;
-    var count = modelList.length;
-    // var action = ActionType.Insert;
-    var className = ModelInspector.getClassName(modelList[0]);
-    var modelInspector = ModelInspector.lookup(className);
-    var clz = ModelInspector.meta(className)!;
-    var idField = clz.idFields.first;
-    var idColumnName = idField.columnName;
-    var tableName = clz.tableName;
-
-    var softDeleteField = clz.softDeleteField;
-    if (softDeleteField != null) {
-      for (var model in modelList) {
-        modelInspector.markDeleted(model, false);
-      }
-    }
-
-    var versionField = clz.versionField;
-    if (versionField != null) {
-      for (var model in modelList) {
-        modelInspector.setFieldValue(model, versionField.name, 1);
-      }
-    }
-
-    for (var model in modelList) {
-      modelInspector.setCurrentUser(model, insert: true, update: true);
-    }
-
-    // all but id fields
-    var allFields = clz.allFields(searchParents: true)
-      ..removeWhere((f) => f.isIdField || f.notExistsInDb);
-
-    var columnNames = allFields.map((e) => e.columnName).join(',');
-
-    var fieldVariables = [];
-    //allFields.map((e) => '@${e.name}').join(',');
-
-    for (int i = 0; i < count; i++) {
-      var one = allFields.map((e) => '@${e.name}_$i').join(',');
-      fieldVariables.add('( $one )');
-    }
-
-    var sql =
-        'insert into $tableName( $columnNames ) values ${fieldVariables.join(",")}';
-    _logger.fine('Insert SQL: $sql');
-
-    var dirtyMap = <String, dynamic>{};
-
-    for (var f in allFields) {
-      for (int i = 0; i < count; i++) {
-        dirtyMap['${f.name}_$i'] =
-            modelInspector.getFieldValue(modelList[i], f.name);
-      }
-    }
-    dirtyMap.forEach((key, value) {
-      if (value is Model) {
-        var clz = ModelInspector.meta(ModelInspector.getClassName(value));
-        dirtyMap[key] =
-            modelInspector.getFieldValue(value, clz!.idFields.first.name);
-      }
-    });
-    var rows = await db.query(sql, dirtyMap,
-        returningFields: [idColumnName],
-        tableName: tableName,
-        hints: _hints(clz, dirtyMap));
-    _logger.fine(' >>> query returned: $rows');
-    if (rows.isNotEmpty) {
-      for (int i = 0; i < rows.length; i++) {
-        var id = rows[i][0];
-        modelInspector.setFieldValue(modelList[i], idField.name, id);
-      }
-    }
-  }
-
-  @override
-  Future<void> update(M model) async {
-    var action = ActionType.update;
-    var className = ModelInspector.getClassName(model);
-    var modelInspector = ModelInspector.lookup(className);
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-
-    modelInspector.setCurrentUser(model, insert: false, update: true);
-
-    var dirtyMap = modelInspector.getDirtyFields(model);
-
-    var idField = clz.idFields.first; // @TODO
-    dirtyMap.remove(idField.name);
-
-    var versionField = clz.versionField;
-    if (versionField != null) {
-      dirtyMap.remove(versionField.name);
-    }
-
-    var idValue = modelInspector.getFieldValue(model, clz.idFields.first.name);
-
-    var ssFields = clz.serverSideFields(action, searchParents: true);
-
-    var setClause = <String>[];
-
-    for (var name in dirtyMap.keys) {
-      setClause.add('${clz.findField(name)!.columnName}=@$name');
-    }
-
-    for (var field in ssFields) {
-      // var name = field.name;
-      var value = field.ormAnnotations
-          .firstWhere((element) => element.isServerSide(action))
-          .serverSideExpr(action);
-
-      setClause.add("${field.columnName}=$value");
-    }
-
-    dirtyMap[idField.name] = idValue;
-    var sql =
-        'update $tableName set ${setClause.join(',')} where ${idField.name}=@${idField.name}';
-    if (versionField != null) {
-      int oldVersion =
-          modelInspector.getFieldValue(model, versionField.name) as int;
-      sql =
-          'update $tableName set ${setClause.join(',')}, ${versionField.columnName}=${oldVersion + 1} where ${idField.name}=@${idField.name} and ${versionField.columnName}=$oldVersion';
-    }
-    _logger.fine('Update SQL: $sql');
-
-    dirtyMap.forEach((key, value) {
-      if (value is Model) {
-        var clz = ModelInspector.meta(ModelInspector.getClassName(value));
-        dirtyMap[key] =
-            modelInspector.getFieldValue(value, clz!.idFields.first.name);
-      }
-    });
-
-    var queryResult = await db.query(sql, dirtyMap,
-        tableName: tableName, hints: _hints(clz, dirtyMap));
-    if (versionField != null && queryResult.affectedRowCount != 1) {
-      throw 'update failed, expected 1 row affected, but ${queryResult.affectedRowCount} rows affected actually!';
-    }
-  }
-
-  @override
-  Future<void> delete(M model) async {
-    var className = ModelInspector.getClassName(model);
-    var modelInspector = ModelInspector.lookup(className);
-    var clz = ModelInspector.meta(className)!;
-    var softDeleteField = clz.softDeleteField;
-    if (softDeleteField == null) {
-      return deletePermanent(model);
-    }
-    var idField = clz.idFields.first;
-    var idValue = modelInspector.getFieldValue(model, idField.name);
-    var tableName = clz.tableName;
-    _logger.fine('delete $tableName , fields: $idValue');
-    var sql =
-        'update $tableName set ${softDeleteField.columnName} = 1 where ${idField.columnName} = @id ';
-    var versionField = clz.versionField;
-    if (versionField != null) {
-      sql =
-          'update $tableName set ${softDeleteField.columnName} = 1, ${versionField.columnName}=${versionField.columnName}+1 where ${idField.columnName} = @id ';
-    }
-    await db.query(sql, {"id": idValue}, tableName: tableName);
-  }
-
-  @override
-  Future<void> deletePermanent(M model) async {
-    var className = ModelInspector.getClassName(model);
-    var modelInspector = ModelInspector.lookup(className);
-    var clz = ModelInspector.meta(className)!;
-    var idField = clz.idFields.first;
-    var idValue = modelInspector.getFieldValue(model, idField.name);
-    var tableName = clz.tableName;
-    _logger.fine('deleteOnePermanent $tableName , id: $idValue');
-    var sql = 'delete $tableName where ${idField.columnName} = @id ';
-    await db.query(sql, {"id": idValue}, tableName: tableName);
-  }
-
-  @override
-  Future<int> deleteAll() async {
-    // init all table aliases.
-    _beforeQuery();
-
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-    var idField = clz.idFields.first;
-    var softDeleteField = clz.softDeleteField;
-
-    if (softDeleteField == null) {
-      return deleteAllPermanent();
-    }
-
-    SqlQuery q = SqlQuery(tableName, _alias);
-
-    // _allJoins().map((e) => )
-    q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
-
-    var conditions = columns.fold<List<SqlCondition>>(
-        [],
-        (init, e) => init
-          ..addAll(e.toSqlConditions(_alias, softDeleteField.columnName)));
-
-    q.conditions.appendAll(conditions);
-
-    var sql = q.toSoftDeleteSql(idField.columnName, softDeleteField.columnName,
-        clz.versionField?.columnName);
-    var params = q.params;
-    params['deleted'] = true;
-    _logger.fine('\t soft delete sql: $sql');
-    var rows = await db.query(sql, params, tableName: tableName);
-    _logger.fine('\t soft delete result rows: ${rows.affectedRowCount}');
-    return rows.affectedRowCount ?? -1;
-  }
-
-  @override
-  Future<int> deleteAllPermanent() async {
-    // init all table aliases.
-    _beforeQuery();
-
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-    var idField = clz.idFields.first;
-
-    SqlQuery q = SqlQuery(tableName, _alias);
-
-    // _allJoins().map((e) => )
-    q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
-
-    var conditions = columns.fold<List<SqlCondition>>(
-        [], (init, e) => init..addAll(e.toSqlConditions(_alias, null)));
-
-    q.conditions.appendAll(conditions);
-
-    var sql = q.toPermanentDeleteSql(idField.columnName);
-    var params = q.params;
-    _logger.fine('\t hard delete sql: $sql');
-
-    var rows = await db.query(sql, params, tableName: tableName);
-    _logger.fine('\t hard delete result rows: ${rows.affectedRowCount}');
-    return rows.affectedRowCount ?? -1;
-  }
-
-  @override
-  Future<M?> findById(dynamic id,
-      {M? existModel, bool includeSoftDeleted = false}) async {
-    var clz = ModelInspector.meta(className)!;
-
-    var idFields = clz.idFields;
-    var idFieldName = idFields.first.name;
-    var tableName = clz.tableName;
-    var softDeleteField = clz.softDeleteField;
-
-    var allFields = clz.allFields(searchParents: true)
-      ..removeWhere((f) => f.notExistsInDb);
-
-    var columnNames = allFields.map((f) => f.columnName).join(',');
-
-    var sql = 'select $columnNames from $tableName where $idFieldName = $id';
-    var params = <String, dynamic>{};
-
-    if (softDeleteField != null && !includeSoftDeleted) {
-      sql += ' and ${softDeleteField.columnName}=@_deleted ';
-      params['_deleted'] = false;
-    }
-
-    _logger.fine('findById: $className [$id] => $sql');
-
-    var rows = await db.query(sql, params, tableName: tableName);
-
-    if (rows.isNotEmpty) {
-      return toModel(rows[0], allFields, className, existModel: existModel);
-    }
-    return null;
-  }
-
-  @override
-  Future<List<M>> findByIds(List idList,
-      {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
-    var clz = ModelInspector.meta(className)!;
-
-    var idFields = clz.idFields;
-    var idFieldName = idFields.first.name;
-    var tableName = clz.tableName;
-    var softDeleteField = clz.softDeleteField;
-
-    var allFields = clz.allFields(searchParents: true)
-      ..removeWhere((f) => f.notExistsInDb);
-
-    var columnNames = allFields.map((f) => f.columnName).join(',');
-
-    var sql =
-        'select $columnNames from $tableName where $idFieldName in @idList';
-    var params = <String, dynamic>{'idList': idList};
-    if (softDeleteField != null && !includeSoftDeleted) {
-      sql += ' and ${softDeleteField.columnName}=@_deleted ';
-      params['_deleted'] = false;
-    }
-    _logger.fine('findByIds: $className $idList => $sql');
-
-    var rows = await db.query(sql, params, tableName: tableName);
-    // _logger.info('\t rows: ${rows.length}');
-
-    return _toModel(rows, allFields, idFieldName, existModeList);
-  }
-
-  List<M> _toModel(DbQueryResult rows, List<OrmMetaField> allFields,
-      String idFieldName, List<Model>? existModeList) {
-    var modelInspector = ModelInspector.lookup(className);
-
-    if (rows.isNotEmpty) {
-      var idIndex = 0;
-      if (existModeList != null) {
-        for (int i = 0; i < allFields.length; i++) {
-          if (allFields[i].name == idFieldName) {
-            idIndex = i;
-            break;
-          }
-        }
-      }
-      var result = <M>[];
-      for (int i = 0; i < rows.length; i++) {
-        if (existModeList == null) {
-          result.add(toModel(rows[i], allFields, className));
-        } else {
-          var id = rows[i][idIndex];
-          // _logger.info('\t id: $id');
-          M? m;
-          var list = existModeList.where((element) =>
-              modelInspector.getFieldValue(element, idFieldName) == id);
-          if (list.isNotEmpty) {
-            m = list.first as M;
-          }
-          // _logger.info('\t existModel: $m');
-          result.add(toModel(rows[i], allFields, className, existModel: m));
-        }
-      }
-      return result;
-    }
-    return [];
-  }
-
-  @override
-  Future<List<M>> findBy(Map<String, dynamic> params,
-      {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
-    var clz = ModelInspector.meta(className)!;
-    var modelInspector = ModelInspector.lookup(className);
-
-    var idFields = clz.idFields;
-    var idFieldName = idFields.first.name;
-    var tableName = clz.tableName;
-    var softDeleteField = clz.softDeleteField;
-
-    var allFields = clz.allFields(searchParents: true)
-      ..removeWhere((f) => f.notExistsInDb);
-
-    var columnNames = allFields.map((f) => f.columnName).join(',');
-
-    var sql = 'select $columnNames from $tableName where ';
-
-    sql += params.keys.map((key) {
-      var f = allFields.firstWhere((element) => element.name == key);
-      if (f.isModelType) {
-        // replace model with it's id.
-        var m = params[key];
-        if (ModelInspector.isModelType(m.runtimeType.toString())) {
-          var idFieldName =
-              ModelInspector.idFields(ModelInspector.getClassName(m))!
-                  .first
-                  .name;
-          params[key] = modelInspector.getFieldValue(m, idFieldName);
-        }
-        return '${f.columnName}=@$key';
-      }
-      return '${f.columnName}=@$key';
-    }).join(' and ');
-
-    if (softDeleteField != null && !includeSoftDeleted) {
-      sql += ' and ${softDeleteField.columnName}=@_deleted ';
-      params['_deleted'] = false;
-    }
-    //_logger.fine('findByIds: ${className} $idList => $sql');
-
-    var rows = await db.query(sql, params, tableName: tableName);
-
-    return _toModel(rows, allFields, idFieldName, existModeList);
-  }
-
-  paging(int pageNumber, int pageSize) {
-    maxRows = pageSize;
-    offset = pageNumber * pageSize;
-  }
-
-  N toModel<N extends Model>(
-      List<dynamic> dbRow, List<OrmMetaField> selectedFields, String className,
-      {N? existModel}) {
-    N? model = existModel;
-    var modelInspector = ModelInspector.lookup(className);
-    if (existModel == null) {
-      var idField = ModelInspector.idFields(className)?.first;
-      if (idField != null) {
-        int j = selectedFields.indexOf(idField);
-        if (j >= 0) {
-          model =
-              ModelInspector.newModel(className, attachDb: true, id: dbRow[j])
-                  as N;
-        }
-      } else {
-        model = ModelInspector.newModel(className, attachDb: true) as N;
-      }
-    }
-
-    for (int i = 0; i < dbRow.length; i++) {
-      var f = selectedFields[i];
-      var name = f.name;
-      var value = dbRow[i];
-      if (f.isModelType) {
-        if (value != null) {
-          var obj =
-              ModelInspector.newModel(f.elementType, id: value, attachDb: true);
-          modelInspector.setFieldValue(model!, name, obj);
-        }
-      } else {
-        modelInspector.setFieldValue(model!, name, value);
-      }
-    }
-    modelInspector.markLoaded(model!);
-    return model;
-  }
-
-  @override
-  Future<List<M>> findList({bool includeSoftDeleted = false}) async {
-    // init all table aliases.
-    _beforeQuery();
-
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-    var softDeleteField = clz.softDeleteField;
-
-    var allFields = clz.allFields(searchParents: true)
-      ..removeWhere((f) => f.notExistsInDb);
-
-    SqlQuery q = SqlQuery(tableName, _alias);
-    q.columns.addAll(allFields.map((f) => "$_alias.${f.columnName}"));
-
-    q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
-
-    if (softDeleteField != null && !includeSoftDeleted) {
-      q.conditions.append(
-          SqlCondition('$_alias.${softDeleteField.columnName}=@_deleted'));
-    }
-
-    var conditions = columns.fold<List<SqlCondition>>(
-        [],
-        (init, e) => init
-          ..addAll(e.toSqlConditions(_alias, softDeleteField?.columnName)));
-    q.conditions.appendAll(conditions);
-
-    var sql = q.toSelectSql();
-    var params = q.params;
-    if (softDeleteField != null && !includeSoftDeleted) {
-      params['_deleted'] = false;
-    }
-
-    if (orders.isNotEmpty) {
-      sql += ' order by ${orders.map((e) => e.toString()).join(',')}';
-    }
-
-    if (maxRows > 0) {
-      sql += ' limit $maxRows';
-    }
-
-    if (offset > 0) {
-      sql += ' offset $offset';
-    }
-
-    var rows = await db.query(sql, params, tableName: tableName);
-
-    _logger.fine('\t sql: $sql');
-    _logger.fine('\t rows: ${rows.length}');
-
-    var result = rows.map((row) {
-      return toModel<M>(row, allFields, className);
-    });
-
-    return result.toList();
-  }
-
-  @override
-  Future<List<M>> findListBySql(String rawSql,
-      [Map<String, dynamic> params = const {}]) async {
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-
-    var allFields = clz.allFields(searchParents: true)
-      ..removeWhere((f) => f.notExistsInDb);
-
-    var rows = await db.query(rawSql, params, tableName: tableName);
-
-    _logger.fine('\t sql: $rawSql');
-    _logger.fine('\t rows: ${rows.length}');
-
-    var fields = rows.columnDescriptions
-        .map((c) => allFields.firstWhere((f) => f.columnName == c.columnName))
-        .toList();
-
-    var result = rows.map((row) {
-      return toModel<M>(row, fields, className);
-    });
-
-    return result.toList();
-  }
-
-  @override
-  Future<int> count({bool includeSoftDeleted = false}) async {
-    // init all table aliases.
-    _beforeQuery();
-
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-    var softDeleteField = clz.softDeleteField;
-
-    var idColumnName = clz.idFields.first.columnName;
-
-    SqlQuery q = SqlQuery(tableName, _alias);
-
-    // _allJoins().map((e) => )
-    q.joins.addAll(_allJoins().map((e) => e._toSqlJoin()));
-
-    if (softDeleteField != null && !includeSoftDeleted) {
-      q.conditions.append(
-          SqlCondition('$_alias.${softDeleteField.columnName}=@_deleted'));
-    }
-
-    var conditions = columns.fold<List<SqlCondition>>(
-        [],
-        (init, e) => init
-          ..addAll(e.toSqlConditions(_alias, softDeleteField?.columnName)));
-    q.conditions.appendAll(conditions);
-
-    var sql = q.toCountSql(idColumnName);
-    var params = q.params;
-
-    if (softDeleteField != null && !includeSoftDeleted) {
-      params['_deleted'] = false;
-    }
-
-    var rows = await db.query(sql, params, tableName: tableName);
-
-    _logger.fine('\t sql: $sql');
-    _logger.fine('\t rows: ${rows.length} \t\t $rows');
-    return (rows[0][0]).toInt();
-  }
-
-  T findQuery<T extends BaseModelQuery>(Database db, String ownerModelName,
-      String propName, String propModelName) {
-    var key = '$ownerModelName-$propName';
-    print('>> lookup query: $key');
-    var q = topQuery.queryMap[key];
-
-/*  @TODO   
-    if (q == null) {
-      q = ModelInspector.lookup(propModelName).newQuery(db, propModelName)
-          as BaseModelQuery
-        .._topQuery = this
-        ..propName = propName
-        ..relatedQuery = this;
-      topQuery.queryMap[key] = q;
-    }
- */
-    return q as T;
-  }
-
-  void _beforeQuery() {
-    if (_topQuery != this) return;
-    var allJoins = _allJoins();
-    int i = 0;
-    _alias = "t${i++}";
-    for (var join in allJoins) {
-      join._alias = "t${i++}";
-    }
-  }
-
-  List<BaseModelQuery> _allJoins() {
-    return _subJoins([], []);
-  }
-
-  List<BaseModelQuery> _subJoins(
-      List<BaseModelQuery> refrenceCache, List<BaseModelQuery> historyCache) {
-    /* print('==allJoins of $this , $className');
-    var joins2 = joins
-        // filter those with conditions
-        .where((j) => j._hasCondition(historyCache))
-        .toList();
-    // prevent cycle reference
-    var joins3 = joins2.where((j) => !refrenceCache.contains(j)).toList();
-    joins3.forEach((j) {
-      refrenceCache.add(j);
-    });
-    return refrenceCache; */
-    return [];
-  }
-}
-
-/// lazy list
