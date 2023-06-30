@@ -14,7 +14,7 @@ class PostgreSqlDatabase extends Database {
   late Logger logger;
 
   PostgreSqlDatabase(this._connection, {Logger? logger})
-      : super(DatabaseType.PostgreSQL, '10.0') {
+      : super(DbType(DbCategory.PostgreSQL, '10.0')) {
     this.logger = logger ?? Logger('PostgreSqlDatabase');
   }
 
@@ -127,7 +127,7 @@ class PostgreSqlDatabasePool extends Database {
   final _connMutex = Pool(1);
 
   PostgreSqlDatabasePool(this.size, this.connectionFactory, {Logger? logger})
-      : super(DatabaseType.PostgreSQL, '10.0') {
+      : super(DbType(DbCategory.PostgreSQL, '10.0')) {
     _pool = Pool(size);
     if (logger != null) {
       this.logger = logger;

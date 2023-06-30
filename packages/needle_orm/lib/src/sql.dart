@@ -1,14 +1,20 @@
 import 'dart:async';
 
 // ignore: constant_identifier_names
-enum DatabaseType { MariaDB, PostgreSQL }
+enum DbCategory { MariaDB, PostgreSQL }
+
+class DbType {
+  final DbCategory category;
+  final String version;
+
+  DbType(this.category, this.version);
+}
 
 /// abstract class for all kinds of Database.
 abstract class Database {
-  final DatabaseType databaseType;
-  final String databaseVersion;
+  final DbType dbType;
 
-  const Database(this.databaseType, this.databaseVersion);
+  const Database(this.dbType);
 
   static const String defaultDbName = "defaultDb";
   static final Map<String, Database> _map = {};

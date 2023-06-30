@@ -13,7 +13,7 @@ class MariaDbDatabase extends Database {
   // _connection; // connection can be of type MySqlConnection / TransactionContext
 
   MariaDbDatabase(this._connection, {Logger? logger})
-      : super(DatabaseType.MariaDB, '10.0') {
+      : super(DbType(DbCategory.MariaDB, '10.0')) {
     this.logger = logger ?? Logger('MariaDbDatabase');
   }
 

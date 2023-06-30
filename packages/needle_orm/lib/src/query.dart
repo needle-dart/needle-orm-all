@@ -150,12 +150,20 @@ class TopTableQueryHelper<T> {
   final String tableName;
   final OrmMetaClass clz;
 
+  int offset = 0;
+  int maxRows = 0;
+
   List<QueryCondition> conditions = [];
 
   TopTableQueryHelper()
       : className = '$T',
         tableName = genTableName('$T'),
         clz = ModelInspector.meta('$T')!;
+
+  void paging(int pageNumber, int pageSize) {
+    maxRows = pageSize;
+    offset = pageNumber * pageSize;
+  }
 
   void addCondition(QueryCondition queryCondition) {
     conditions.add(queryCondition);
@@ -165,7 +173,7 @@ class TopTableQueryHelper<T> {
     conditions.addAll(queryConditions);
   }
 
-  void debugQuery({bool includeSoftDeleted = false}) {
+  void debugQuery(DbType dbType, {bool includeSoftDeleted = false}) {
     _logger.info(conditions);
 
     _logger.info('------------ origin (sorted) \n');
@@ -182,7 +190,7 @@ class TopTableQueryHelper<T> {
     joinTranslator.debug();
 
     _logger.info('------------ join sql \n');
-    String joins = joinTranslator._joinSql().join('\n');
+    String joins = joinTranslator._joinSql(dbType).join(' ');
 
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.notExistsInDb);
@@ -203,12 +211,13 @@ class TopTableQueryHelper<T> {
     }
   }
 
-  PreparedQuery toPreparedQuery({bool includeSoftDeleted = false}) {
+  PreparedQuery toPreparedQuery(DbType dbType,
+      {bool includeSoftDeleted = false}) {
     JoinTranslator joinTranslator =
         JoinTranslator.of(this, includeSoftDeleted: includeSoftDeleted);
     joinTranslator._insertMidPath();
     joinTranslator._assignTableAlias();
-    String joins = joinTranslator._joinSql().join('\n');
+    String joins = joinTranslator._joinSql(dbType).join(' ');
 
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.notExistsInDb);
@@ -217,22 +226,31 @@ class TopTableQueryHelper<T> {
 
     String sql = 'select distinct $strAllFields $joins';
 
+    if (maxRows > 0) {
+      sql += ' limit $maxRows';
+    }
+
+    if (offset > 0) {
+      sql += ' offset $offset';
+    }
+
     return PreparedQuery.forSelect(sql, joinTranslator, conditions);
   }
 
-  PreparedQuery toCountPreparedQuery({bool includeSoftDeleted = false}) {
+  PreparedQuery toCountPreparedQuery(DbType dbType,
+      {bool includeSoftDeleted = false}) {
     JoinTranslator joinTranslator =
         JoinTranslator.of(this, includeSoftDeleted: includeSoftDeleted);
     joinTranslator._insertMidPath();
     joinTranslator._assignTableAlias();
-    String joins = joinTranslator._joinSql().join('\n');
+    String joins = joinTranslator._joinSql(dbType).join(' ');
 
-    String sql = 'select count(t0.*) $joins';
+    String sql = 'select count(t0.${clz.idFields.first.columnName}) $joins';
 
     return PreparedQuery.forSelect(sql, joinTranslator, conditions);
   }
 
-  PreparedQuery toSoftDeletePreparedQuery() {
+  PreparedQuery toSoftDeletePreparedQuery(DbType dbType) {
     JoinTranslator joinTranslator =
         JoinTranslator.of(this, includeSoftDeleted: false);
     joinTranslator._insertMidPath();
@@ -240,7 +258,7 @@ class TopTableQueryHelper<T> {
     if (joinTranslator.paths.isNotEmpty) {
       joinTranslator.paths[0].alias = tableName;
     }
-    String joins = joinTranslator._joinSqlForUpdate().join('\n');
+    String joins = joinTranslator._joinSqlForUpdate(dbType).join(' ');
     String sql =
         'update $tableName set ${clz.softDeleteField!.columnName} = true ';
 
@@ -249,9 +267,10 @@ class TopTableQueryHelper<T> {
       sql += ', $versionColumn = $versionColumn+1 ';
     }
 
+    var strNow = dbType.category == DbCategory.PostgreSQL ? "'now()'" : "now()";
     if (clz.whenModifiedField != null) {
       var whenModifiedColumn = clz.whenModifiedField!.columnName;
-      sql += ", $whenModifiedColumn = 'now()' ";
+      sql += ", $whenModifiedColumn = $strNow ";
     }
 
     sql += joins;
@@ -323,8 +342,6 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   final Database? _db;
 
   List<OrderField> orders = [];
-  int offset = 0;
-  int maxRows = 0;
 
   TopTableQuery({Database? db})
       : _db = db ?? Database.defaultDb,
@@ -345,12 +362,15 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   }
 
   void debugQuery() {
-    _helper.debugQuery();
+    _helper.debugQuery(DbType(DbCategory.PostgreSQL, "10.0"));
   }
 
   void paging(int pageNumber, int pageSize) {
-    maxRows = pageSize;
-    offset = pageNumber * pageSize;
+    _helper.paging(pageNumber, pageSize);
+  }
+
+  void noPaging() {
+    _helper.paging(0, 0);
   }
 
   @override
@@ -362,8 +382,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
   /// find list
   Future<List<T>> findList({bool includeSoftDeleted = false}) async {
-    var preparedQuery =
-        _helper.toPreparedQuery(includeSoftDeleted: includeSoftDeleted);
+    var preparedQuery = _helper.toPreparedQuery(_db!.dbType,
+        includeSoftDeleted: includeSoftDeleted);
 
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
@@ -432,8 +452,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
   /// return count of this query.
   Future<int> count({bool includeSoftDeleted = false}) async {
-    var preparedQuery =
-        _helper.toCountPreparedQuery(includeSoftDeleted: includeSoftDeleted);
+    var preparedQuery = _helper.toCountPreparedQuery(_db!.dbType,
+        includeSoftDeleted: includeSoftDeleted);
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
         tableName: "");
@@ -470,16 +490,12 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     if (_helper.clz.softDeleteField == null) {
       throw 'deleteAll() only support soft delete model for safety.';
     }
-    var preparedQuery = _helper.toSoftDeletePreparedQuery();
+    var preparedQuery = _helper.toSoftDeletePreparedQuery(_db!.dbType);
 
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
         tableName: "");
     return rows.affectedRowCount ?? 0;
-  }
-
-  Future<void> insertBatch(List<T> modelList, {int batchSize = 100}) {
-    throw UnimplementedError();
   }
 }
 
@@ -614,7 +630,7 @@ class JoinTranslator {
     return paths[index];
   }
 
-  List<String> _joinSql() {
+  List<String> _joinSql(dbType) {
     var result = <String>[];
     for (var path in paths) {
       if (path.length == 1) {
@@ -639,14 +655,16 @@ class JoinTranslator {
 
     if (result.isEmpty) {
       result = [
-        'from ${genTableName(helper.className)} t0',
+        ' from ${genTableName(helper.className)} t0',
+        if (helper.clz.softDeleteField != null)
+          ' where t0.${helper.clz.softDeleteField!.columnName} is false'
       ];
     }
 
     return result;
   }
 
-  List<String> _joinSqlForUpdate() {
+  List<String> _joinSqlForUpdate(DbType dbType) {
     var result = <String>[];
     for (var path in paths) {
       if (path.length == 1) {

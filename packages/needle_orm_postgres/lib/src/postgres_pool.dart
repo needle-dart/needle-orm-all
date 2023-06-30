@@ -13,7 +13,7 @@ class PostgreSqlPoolDatabase extends Database {
   late Logger logger;
 
   PostgreSqlPoolDatabase(this._pool, {Logger? logger})
-      : super(DatabaseType.PostgreSQL, '10.0') {
+      : super(DbType(DbCategory.PostgreSQL, '10.0')) {
     this.logger = logger ?? Logger('PostgreSqlPoolDatabase');
   }
 
