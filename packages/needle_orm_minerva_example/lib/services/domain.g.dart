@@ -121,104 +121,8 @@ class _FieldFilter {
   }
 }
 
-abstract class _BaseModelQuery<T extends Model> extends BaseModelQuery<T> {
-  late _QueryModelCache _modelCache;
-  final logger = Logger('_BaseModelQuery');
-
-  _BaseModelQuery({BaseModelQuery? topQuery, String? propName, Database? db})
-      : super(db ?? Database.defaultDb,
-            topQuery: topQuery, propName: propName) {
-    _modelCache = _QueryModelCache();
-  }
-
-  void cache(Model m) {
-    _modelCache.add(m);
-  }
-
-  @override
-  Future<void> ensureLoaded(Model m, {int batchSize = 1}) async {
-    var inspector = _inspector(m);
-    if (inspector.isStoreLoaded(m)) return;
-    var className = ModelInspector.getClassName(m);
-    var idFieldName = ModelInspector.idFields(className)![0].name;
-
-    List<Model> modelList;
-
-    if (batchSize > 1) {
-      modelList = _modelCache.findUnloadedList(className).toList();
-
-      // limit to 100 rows
-      if (modelList.length > batchSize) {
-        modelList = modelList.sublist(0, batchSize);
-      }
-      // maybe 101 here
-      if (!modelList.contains(m)) {
-        logger.info('\t not contains , add now ...');
-        modelList.add(m);
-      }
-    } else {
-      modelList = [m];
-    }
-    var modelInspector = ModelInspector.lookup(className);
-    List<dynamic> idList = modelList
-        .map((e) => modelInspector.getFieldValue(e, idFieldName))
-        .toSet()
-        .toList(growable: false);
-    var newQuery = modelInspector.newQuery(db, className);
-    var modelListResult =
-        await newQuery.findByIds(idList, existModeList: modelList);
-    for (Model m in modelListResult) {
-      _inspector(m).markLoaded(m);
-    }
-    _inspector(m).markLoaded(m);
-    // lock.release();
-  }
-
-  ModelInspector _inspector(Model m) =>
-      ModelInspector.lookup(ModelInspector.getClassName(m));
-
-  @override
-  Future<T?> findById(dynamic id,
-      {T? existModel, bool includeSoftDeleted = false}) async {
-    var model = await super.findById(id,
-        existModel: existModel, includeSoftDeleted: includeSoftDeleted);
-    if (model != null) {
-      _inspector(model).postLoad(model);
-    }
-    return model;
-  }
-
-  /// find models by [idList]
-  @override
-  Future<List<T>> findByIds(List idList,
-      {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
-    var list = await super.findByIds(idList, existModeList: existModeList);
-    for (var model in list) {
-      _inspector(model).postLoad(model);
-    }
-    return list;
-  }
-
-  @override
-  Future<List<T>> findBy(Map<String, dynamic> params,
-      {List<Model>? existModeList, bool includeSoftDeleted = false}) async {
-    var list = await super.findBy(params,
-        existModeList: existModeList, includeSoftDeleted: includeSoftDeleted);
-    for (var model in list) {
-      _inspector(model).postLoad(model);
-    }
-    return list;
-  }
-
-  /// find list
-  @override
-  Future<List<T>> findList({bool includeSoftDeleted = false}) async {
-    var list = await super.findList();
-    for (var model in list) {
-      _inspector(model).postLoad(model);
-    }
-    return list;
-  }
+mixin ModelMixin<T> on TableQuery<T> {
+  IntColumn get id => IntColumn(this, "id");
 }
 
 class _OrmMetaInfoModel extends OrmMetaClass {
@@ -230,9 +134,9 @@ class _OrmMetaInfoModel extends OrmMetaClass {
         ], methods: []);
 }
 
-class _OrmMetaInfoBasic extends OrmMetaClass {
-  _OrmMetaInfoBasic()
-      : super('Basic',
+class _OrmMetaInfoModelBase extends OrmMetaClass {
+  _OrmMetaInfoModelBase()
+      : super('ModelBase',
             isAbstract: true,
             superClassName: 'Model',
             ormAnnotations: [
@@ -251,11 +155,13 @@ class _OrmMetaInfoBasic extends OrmMetaClass {
               OrmMetaField('updatedAt', 'DateTime?', ormAnnotations: [
                 WhenModified(),
               ]),
-              OrmMetaField('createdBy', 'String?', ormAnnotations: [
+              OrmMetaField('createdBy', 'User?', ormAnnotations: [
                 WhoCreated(),
+                ManyToOne(),
               ]),
-              OrmMetaField('lastUpdatedBy', 'String?', ormAnnotations: [
+              OrmMetaField('lastUpdatedBy', 'User?', ormAnnotations: [
                 WhoModified(),
+                ManyToOne(),
               ]),
               OrmMetaField('remark', 'String?', ormAnnotations: [
                 Column(),
@@ -271,7 +177,7 @@ class _OrmMetaInfoBook extends OrmMetaClass {
   _OrmMetaInfoBook()
       : super('Book',
             isAbstract: false,
-            superClassName: 'Basic',
+            superClassName: 'ModelBase',
             ormAnnotations: [
               Table(),
               Entity(),
@@ -300,7 +206,7 @@ class _OrmMetaInfoUser extends OrmMetaClass {
   _OrmMetaInfoUser()
       : super('User',
             isAbstract: false,
-            superClassName: 'Basic',
+            superClassName: 'ModelBase',
             ormAnnotations: [
               Table(name: 'users'),
               Entity(),
@@ -322,7 +228,7 @@ class _OrmMetaInfoUser extends OrmMetaClass {
                 Column(),
               ]),
               OrmMetaField('books', 'List<Book>?', ormAnnotations: [
-                OneToMany(mappedBy: "_author"),
+                OneToMany(mappedBy: "author"),
               ]),
             ],
             methods: [
@@ -360,7 +266,7 @@ class _OrmMetaInfoJob extends OrmMetaClass {
   _OrmMetaInfoJob()
       : super('Job',
             isAbstract: false,
-            superClassName: 'Basic',
+            superClassName: 'ModelBase',
             ormAnnotations: [
               Entity(),
             ],
@@ -374,7 +280,7 @@ class _OrmMetaInfoJob extends OrmMetaClass {
 
 final _allModelMetaClasses = [
   _OrmMetaInfoModel(),
-  _OrmMetaInfoBasic(),
+  _OrmMetaInfoModelBase(),
   _OrmMetaInfoBook(),
   _OrmMetaInfoUser(),
   _OrmMetaInfoJob()
@@ -384,98 +290,88 @@ final _allModelMetaClasses = [
 // NeedleOrmModelGenerator
 // **************************************************************************
 
-abstract class BasicQuery<T extends Basic> extends _BaseModelQuery<T> {
-  @override
-  String get className => 'Basic';
-
-  BasicQuery({super.db, super.topQuery, super.propName});
-
-  IntColumn version = IntColumn("version");
-  BoolColumn softDeleted = BoolColumn("soft_deleted");
-  DateTimeColumn createdAt = DateTimeColumn("created_at");
-  DateTimeColumn updatedAt = DateTimeColumn("updated_at");
-  StringColumn createdBy = StringColumn("created_by");
-  StringColumn lastUpdatedBy = StringColumn("last_updated_by");
-  StringColumn remark = StringColumn("remark");
-
-  @override
-  List<ColumnQuery> get columns => [
-        version,
-        softDeleted,
-        createdAt,
-        updatedAt,
-        createdBy,
-        lastUpdatedBy,
-        remark,
-        ...super.columns
-      ];
-
-  @override
-  List<BaseModelQuery> get joins => [];
+mixin ModelBaseMixin<T> on TableQuery<T> {
+  IntColumn get version => IntColumn(this, "version");
+  BoolColumn get softDeleted => BoolColumn(this, "softDeleted");
+  DateTimeColumn get createdAt => DateTimeColumn(this, "createdAt");
+  DateTimeColumn get updatedAt => DateTimeColumn(this, "updatedAt");
+  UserColumn get createdBy =>
+      UserColumn(this, "createdBy")..joinRelation = JoinRelation();
+  UserColumn get lastUpdatedBy =>
+      UserColumn(this, "lastUpdatedBy")..joinRelation = JoinRelation();
+  StringColumn get remark => StringColumn(this, "remark");
 }
 
-class BookQuery extends BasicQuery<Book> {
-  @override
-  String get className => 'Book';
-
-  BookQuery({super.db, super.topQuery, super.propName});
-
-  StringColumn title = StringColumn("title");
-  DoubleColumn price = DoubleColumn("price");
-  UserQuery get author => topQuery.findQuery(db, "User", "author");
-  ColumnQuery image = ColumnQuery("image");
-  StringColumn content = StringColumn("content");
-
-  @override
-  List<ColumnQuery> get columns =>
-      [title, price, image, content, ...super.columns];
-
-  @override
-  List<BaseModelQuery> get joins => [author, ...super.joins];
+class ModelBaseColumn extends TableQuery<ModelBase>
+    with ModelMixin, ModelBaseMixin {
+  ModelBaseColumn(super.owner, super.name);
 }
 
-class UserQuery extends BasicQuery<User> {
-  @override
-  String get className => 'User';
-
-  UserQuery({super.db, super.topQuery, super.propName});
-
-  StringColumn name = StringColumn("name");
-  StringColumn loginName = StringColumn("login_name");
-  StringColumn password = StringColumn("password");
-  StringColumn address = StringColumn("address");
-  IntColumn age = IntColumn("age");
-  BookQuery get books => topQuery.findQuery(db, "Book", "books");
-
-  @override
-  List<ColumnQuery> get columns =>
-      [name, loginName, password, address, age, ...super.columns];
-
-  @override
-  List<BaseModelQuery> get joins => [books, ...super.joins];
+class ModelBaseQuery extends TopTableQuery<ModelBase>
+    with ModelMixin, ModelBaseMixin {
+  ModelBaseQuery({super.db});
 }
 
-class JobQuery extends BasicQuery<Job> {
-  @override
-  String get className => 'Job';
+mixin BookMixin on TableQuery<Book> {
+  StringColumn get title => StringColumn(this, "title");
+  DoubleColumn get price => DoubleColumn(this, "price");
+  UserColumn get author =>
+      UserColumn(this, "author")..joinRelation = JoinRelation();
+  ColumnQuery get image => ColumnQuery(this, "image");
+  StringColumn get content => StringColumn(this, "content");
+}
 
-  JobQuery({super.db, super.topQuery, super.propName});
+class BookColumn extends TableQuery<Book>
+    with ModelBaseMixin, ModelMixin, BookMixin {
+  BookColumn(super.owner, super.name);
+}
 
-  StringColumn name = StringColumn("name");
+class BookQuery extends TopTableQuery<Book>
+    with ModelBaseMixin, ModelMixin, BookMixin {
+  BookQuery({super.db});
+}
 
-  @override
-  List<ColumnQuery> get columns => [name, ...super.columns];
+mixin UserMixin on TableQuery<User> {
+  StringColumn get name => StringColumn(this, "name");
+  StringColumn get loginName => StringColumn(this, "loginName");
+  StringColumn get password => StringColumn(this, "password");
+  StringColumn get address => StringColumn(this, "address");
+  IntColumn get age => IntColumn(this, "age");
+  BookColumn get books => BookColumn(this, "books")
+    ..joinRelation = JoinRelation(JoinKind.oneToMany, "author");
+}
 
-  @override
-  List<BaseModelQuery> get joins => [...super.joins];
+class UserColumn extends TableQuery<User>
+    with ModelBaseMixin, ModelMixin, UserMixin {
+  UserColumn(super.owner, super.name);
+}
+
+class UserQuery extends TopTableQuery<User>
+    with ModelBaseMixin, ModelMixin, UserMixin {
+  UserQuery({super.db});
+}
+
+mixin JobMixin on TableQuery<Job> {
+  StringColumn get name => StringColumn(this, "name");
+}
+
+class JobColumn extends TableQuery<Job>
+    with ModelBaseMixin, ModelMixin, JobMixin {
+  JobColumn(super.owner, super.name);
+}
+
+class JobQuery extends TopTableQuery<Job>
+    with ModelBaseMixin, ModelMixin, JobMixin {
+  JobQuery({super.db});
 }
 
 // **************************************************************************
 // NeedleOrmImplGenerator
 // **************************************************************************
 
-extension BasicImpl on Basic {
-  ModelInspector<Basic> get _modelInspector => ModelInspector.lookup("Basic");
+extension ModelBaseImpl on ModelBase {
+  ModelInspector<ModelBase> get _modelInspector =>
+      ModelInspector.lookup("ModelBase");
 
   int? get version {
     _modelInspector.ensureLoaded(this);
@@ -517,22 +413,22 @@ extension BasicImpl on Basic {
     _updatedAt = v;
   }
 
-  String? get createdBy {
+  User? get createdBy {
     _modelInspector.ensureLoaded(this);
     return _createdBy;
   }
 
-  set createdBy(String? v) {
+  set createdBy(User? v) {
     _modelInspector.markDirty(this, 'createdBy', _createdBy, v);
     _createdBy = v;
   }
 
-  String? get lastUpdatedBy {
+  User? get lastUpdatedBy {
     _modelInspector.ensureLoaded(this);
     return _lastUpdatedBy;
   }
 
-  set lastUpdatedBy(String? v) {
+  set lastUpdatedBy(User? v) {
     _modelInspector.markDirty(this, 'lastUpdatedBy', _lastUpdatedBy, v);
     _lastUpdatedBy = v;
   }
@@ -706,12 +602,12 @@ bool? toBool(value) {
   throw '${value.runtimeType}($value) can not be converted to bool';
 }
 
-class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
+class _ModelBaseModelInspector<T extends ModelBase> extends ModelInspector<T> {
   @override
-  String get className => "Basic";
+  String get className => "ModelBase";
 
   @override
-  T newInstance({bool attachDb = false, id, required ModelQuery<T> topQuery}) {
+  T newInstance({bool attachDb = false, id}) {
     throw UnimplementedError();
   }
 
@@ -774,23 +670,17 @@ class _BasicModelInspector<T extends Basic> extends ModelInspector<T> {
   }
 }
 
-class _BookModelInspector extends _BasicModelInspector<Book> {
+class _BookModelInspector extends _ModelBaseModelInspector<Book> {
   @override
   String get className => "Book";
 
   @override
-  Book newInstance(
-      {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+  Book newInstance({bool attachDb = false, id}) {
     var m = Book();
     m.id = id;
-    initInstance(m, topQuery: topQuery);
-    m._modelInspector.markAttached(m, topQuery: topQuery);
+    initInstance(m);
+    m._modelInspector.markAttached(m);
     return m;
-  }
-
-  @override
-  BookQuery newQuery(Database db, String className) {
-    return BookQuery(db: db);
   }
 
   @override
@@ -837,38 +727,17 @@ class _BookModelInspector extends _BasicModelInspector<Book> {
   }
 }
 
-class _UserModelInspector extends _BasicModelInspector<User> {
+class _UserModelInspector extends _ModelBaseModelInspector<User> {
   @override
   String get className => "User";
 
   @override
-  User newInstance(
-      {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+  User newInstance({bool attachDb = false, id}) {
     var m = User();
     m.id = id;
-    initInstance(m, topQuery: topQuery);
-    m._modelInspector.markAttached(m, topQuery: topQuery);
+    initInstance(m);
+    m._modelInspector.markAttached(m);
     return m;
-  }
-
-  /// init model properties after [newInstance()]
-  @override
-  void initInstance(User m, {required ModelQuery<Model> topQuery}) {
-    {
-      var meta = ModelInspector.lookupClass('Book');
-      var field = meta
-          .allFields(searchParents: true)
-          .firstWhere((f) => f.name == 'author');
-      m.books = LazyOneToManyList(
-          db: topQuery.db, clz: meta, refField: field, refFieldValue: m.id);
-    }
-
-    super.initInstance(m, topQuery: topQuery);
-  }
-
-  @override
-  UserQuery newQuery(Database db, String className) {
-    return UserQuery(db: db);
   }
 
   @override
@@ -965,23 +834,17 @@ class _UserModelInspector extends _BasicModelInspector<User> {
   }
 }
 
-class _JobModelInspector extends _BasicModelInspector<Job> {
+class _JobModelInspector extends _ModelBaseModelInspector<Job> {
   @override
   String get className => "Job";
 
   @override
-  Job newInstance(
-      {bool attachDb = false, id, required ModelQuery<Model> topQuery}) {
+  Job newInstance({bool attachDb = false, id}) {
     var m = Job();
     m.id = id;
-    initInstance(m, topQuery: topQuery);
-    m._modelInspector.markAttached(m, topQuery: topQuery);
+    initInstance(m);
+    m._modelInspector.markAttached(m);
     return m;
-  }
-
-  @override
-  JobQuery newQuery(Database db, String className) {
-    return JobQuery(db: db);
   }
 
   @override
@@ -1009,7 +872,7 @@ class _JobModelInspector extends _BasicModelInspector<Job> {
 }
 
 final _allModelInspectors = <ModelInspector>[
-  _BasicModelInspector(),
+  _ModelBaseModelInspector(),
   _BookModelInspector(),
   _UserModelInspector(),
   _JobModelInspector()

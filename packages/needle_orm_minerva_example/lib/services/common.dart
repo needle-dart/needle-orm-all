@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:minerva/minerva.dart' hide Logger;
 import 'package:needle_orm/api.dart';
+import 'package:needle_orm_minerva_example/common/ncontext.dart';
 
 import '../common/common.dart';
 import 'domain.dart';
@@ -27,6 +28,6 @@ Future<void> initService(ServerContext context) async {
   initNeedle();
 
   Needle.currentUser = () {
-    return Zone.current[#username];
+    return NContext.current?.auth?.user;
   };
 }

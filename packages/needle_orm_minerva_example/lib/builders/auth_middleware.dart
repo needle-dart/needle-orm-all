@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:minerva/minerva.dart';
+import 'package:needle_orm_minerva_example/common/ncontext.dart';
+import 'package:needle_orm_minerva_example/services/domain.dart';
 
 class AuthMiddleware extends Middleware {
   late ServerContext serverContext;
@@ -24,32 +26,34 @@ class AuthMiddleware extends Middleware {
       return NotFoundResult();
     }
 
-    return await runZoned(() async {
-      // print(Zone.current[#username]);
+    User? user = await context.request.user(context.context);
+    NContext ctx =
+        NContext(auth: Auth(user), logger: context.context.logPipeline);
 
+    return await runZoned(() async {
       var result = await next.handle(context);
 
       return result;
-    }, zoneValues: {
-      #username: context.request.username(context.context),
-      #logger: context.context.logPipeline
-    });
+    }, zoneValues: {NContext.key: ctx});
   }
 }
 
 late final SecretKey _key;
 
 extension _AuthExtension on MinervaRequest {
-  String? username(ServerContext context) {
+  Future<User?> user(ServerContext context) async {
     if (authContext.jwt == null) {
       return null;
     }
-    return _getUsername(authContext.jwt!.token, context);
+    return _getUser(authContext.jwt!.token, context);
   }
 
-  String? _getUsername(String token, ServerContext context) {
+  Future<User?> _getUser(String token, ServerContext context) async {
     var jwt = JWT.verify(token, _key);
-    context.logPipeline.info('payload: ${jwt.payload}, sub: ${jwt.subject}');
-    return jwt.payload['username'];
+    // context.logPipeline.info('payload: ${jwt.payload}, sub: ${jwt.subject}');
+    var userId = jwt.payload['id'];
+    var q = UserQuery();
+    q.where([q.id.eq(userId)]);
+    return await q.findUnique();
   }
 }

@@ -9,7 +9,7 @@ part 'domain.g.dart'; // auto generated code
 // all Field names must start with '_'
 
 @Entity()
-abstract class Basic extends Model {
+abstract class ModelBase extends Model {
   @Version()
   int? _version;
 
@@ -23,10 +23,12 @@ abstract class Basic extends Model {
   DateTime? _updatedAt;
 
   @WhoCreated()
-  String? _createdBy; // user login name
+  @ManyToOne()
+  User? _createdBy; // user login name
 
   @WhoModified()
-  String? _lastUpdatedBy; // user login name
+  @ManyToOne()
+  User? _lastUpdatedBy; // user login name
 
   @Column()
   String? _remark;
@@ -34,12 +36,12 @@ abstract class Basic extends Model {
   @Transient()
   Map<String, dynamic>? _extra;
 
-  Basic();
+  ModelBase();
 }
 
 @Table()
 @Entity()
-class Book extends Basic {
+class Book extends ModelBase {
   @Column()
   String? _title;
 
@@ -62,7 +64,7 @@ class Book extends Basic {
 
 @Table(name: 'users')
 @Entity()
-class User extends Basic {
+class User extends ModelBase {
   @Column()
   String? _name;
 
@@ -78,7 +80,7 @@ class User extends Basic {
   @Column()
   int? _age;
 
-  @OneToMany(mappedBy: "_author")
+  @OneToMany(mappedBy: "author")
   List<Book>? _books;
 
   User();
@@ -114,7 +116,7 @@ class User extends Basic {
 }
 
 @Entity()
-class Job extends Basic {
+class Job extends ModelBase {
   @Column()
   String? _name;
 

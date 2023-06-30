@@ -438,6 +438,12 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
     return model;
   }
 
+  /// find first
+  Future<T?> findFirst({bool includeSoftDeleted = false}) async {
+    paging(0, 1);
+    return await findUnique(includeSoftDeleted: includeSoftDeleted);
+  }
+
   /// find unique
   Future<T?> findUnique({bool includeSoftDeleted = false}) async {
     var list = await findList(includeSoftDeleted: includeSoftDeleted);

@@ -1,16 +1,16 @@
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
 import 'package:minerva/minerva.dart';
 
-class ProtectedApi extends Api {
+import 'common.dart';
+
+class ProtectedApi extends ApiBase {
   late final SecretKey _key;
 
   @override
   Future<void> initialize(ServerContext context) async {
-    var configuration = ConfigurationManager();
-
-    await configuration.load();
-
-    _key = SecretKey(configuration['secret']);
+    super.initialize(context).then((value) {
+      _key = SecretKey(config['secret']);
+    });
   }
 
   @override
@@ -32,9 +32,9 @@ class ProtectedApi extends Api {
   }
 
   dynamic _second(ServerContext context, MinervaRequest request) {
-    request.headers.forEach((name, values) {
+    /* request.headers.forEach((name, values) {
       print('request header: $name: $values');
-    });
+    }); */
     var username = _getUsername(request.authContext.jwt!.token);
 
     return 'Second protected data for user: $username.';

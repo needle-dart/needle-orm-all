@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      needle_orm_generator|needle_orm_generator:
+        enabled: true
+        generate_for:
+          - lib/services/domain.dart
+      needle_orm_migration_generator:
+        enabled: true

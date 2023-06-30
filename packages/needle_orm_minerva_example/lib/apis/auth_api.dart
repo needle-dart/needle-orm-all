@@ -5,17 +5,16 @@ import 'package:minerva/minerva.dart';
 
 import '../services/domain.biz.dart';
 import '../services/domain.dart';
+import 'common.dart';
 
-class AuthApi extends Api {
+class AuthApi extends ApiBase {
   late final SecretKey _key;
 
   @override
   Future<void> initialize(ServerContext context) async {
-    var configuration = ConfigurationManager();
-
-    await configuration.load();
-
-    _key = SecretKey(configuration['secret']);
+    super.initialize(context).then((value) {
+      _key = SecretKey(config['secret']);
+    });
   }
 
   @override
@@ -23,8 +22,7 @@ class AuthApi extends Api {
     var filter = RequestFilter(
         body: JsonFilter(fields: [
       JsonField(name: 'username', type: JsonFieldType.string),
-      JsonField(name: 'password', type: JsonFieldType.string),
-      JsonField(name: 'role', type: JsonFieldType.string)
+      JsonField(name: 'password', type: JsonFieldType.string)
     ]));
 
     endpoints.post('/auth', _auth, filter: filter);
@@ -32,8 +30,6 @@ class AuthApi extends Api {
 
   dynamic _auth(ServerContext context, MinervaRequest request) async {
     var json = await request.body.asJson();
-
-    var permissionLevel = json['permissionLevel'] as int?;
 
     String username = json['username'];
     String password = json['password'];
@@ -48,14 +44,11 @@ class AuthApi extends Api {
       return {'error': 'auth failed [$username]'};
     }
 
-    LogPipeline logger = Zone.current[#logger];
     logger.info('logged in as user (${user.id}): [$username]');
 
     var jwt = JWT({
       'id': user.id,
       'username': json['username'],
-      'role': json['role'],
-      if (permissionLevel != null) 'permissionLevel': permissionLevel
     }, subject: json['username']);
 
     var token = jwt.sign(_key, expiresIn: Duration(hours: 24));

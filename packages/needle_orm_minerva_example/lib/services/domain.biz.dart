@@ -22,7 +22,7 @@ extension BizUser on User {
   static Future<User?> findByLoginName(String loginName) {
     var query = UserQuery()
       ..loginName.eq(loginName)
-      ..maxRows = 1;
+      ..paging(0, 1);
     return query.findUnique();
   }
 }

@@ -23,7 +23,7 @@ A few resources to get you started if this is your first Minerva project:
 
     curl --location --request POST 'http://localhost:5000/auth' \
     --header 'Content-Type: application/json' \
-    --data-raw '{"username":"admin","role":"Admin"}'
+    --data-raw '{"username":"name_2","password":"newPassw0rd"}'
 
 will return a Bearer JWT token.
 

@@ -1,8 +1,9 @@
 import 'package:minerva/minerva.dart';
 
 import '../services/services.dart';
+import 'common.dart';
 
-class BookApi extends Api {
+class BookApi extends ApiBase {
   @override
   void build(Endpoints endpoints) {
     endpoints.get('/book', findOneBook);
@@ -12,5 +13,7 @@ class BookApi extends Api {
     endpoints.get('/book3', findSomeBooks);
 
     endpoints.get('/book4', findSomeBooks2);
+
+    endpoints.get('/init', initData);
   }
 }

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:minerva/minerva.dart';
 
+import '../common/ncontext.dart';
 import './domain.dart';
 
 import 'dart:async';
@@ -9,11 +10,10 @@ import 'dart:async';
 final random = Random();
 
 Future<Book?> findOneBook(ServerContext context, MinervaRequest request) async {
-  LogPipeline logger = Zone.current[#logger];
-  logger.info("username: ${Zone.current[#username]}");
+  LogPipeline logger = NContext.current!.logger!;
+  logger.info("username: ${NContext.current?.auth?.user?.loginName}");
 
-  var q = BookQuery();
-  q.maxRows = 1;
+  var q = BookQuery()..paging(0, 1);
 
   var books = await q.findList();
   if (books.isNotEmpty) {
@@ -24,8 +24,7 @@ Future<Book?> findOneBook(ServerContext context, MinervaRequest request) async {
 
 Future<List<Book>> findSomeBooks(
     ServerContext context, MinervaRequest request) async {
-  var q = BookQuery();
-  q.maxRows = 5;
+  var q = BookQuery()..paging(0, 5);
 
   return await q.findList()
     ..forEach((book) {
@@ -35,14 +34,13 @@ Future<List<Book>> findSomeBooks(
 
 Future<List<Map>> findSomeBooks2(
     ServerContext context, MinervaRequest request) async {
-  var q = BookQuery();
-  q.maxRows = 5;
+  var q = BookQuery()..paging(0, 5);
 
   var books = await q.findList();
 
   for (var book in books) {
     book.extra = {"bbq": "bbqbbq"};
-    await book.author?.load(batchSize: 1000);
+    // await book.author?.load(batchSize: 1000);
   }
   return books
       .map((e) => e.toMap(fields: "id,title,price,author(id,address)"))

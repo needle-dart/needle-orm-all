@@ -1,5 +1,5 @@
 {
-  "debug": { "compile-type": "JIT", "host": "127.0.0.1", "port": 5000 },
+  "debug": { "compile-type": "JIT", "host": "127.0.0.1", "port": 5500 },
   "release": { "compile-type": "AOT", "host": "0.0.0.0", "port": 8080 },
   "values": {
     "secret": "u6D3BDMX2zgv$X*%Gol4VRw4",
