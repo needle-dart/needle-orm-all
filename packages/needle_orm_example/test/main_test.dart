@@ -20,8 +20,8 @@ void main() async {
     initLogger();
 
     // the first db will be the default one as well : Database.defaultDb
-    Database.register(dbMariadb, await initMariaDb());
     Database.register(dbPostgres, await initPostgreSQL());
+    Database.register(dbMariadb, await initMariaDb());
     // await clean();
   });
 
@@ -233,6 +233,13 @@ Future<void> testPaging() async {
 
 Future<void> testUpdate() async {
   var log = Logger('$logPrefix testUpdate');
+
+  {
+    var q = UserQuery();
+    q.paging(0, 1);
+    var u = await q.findUnique();
+    Needle.currentUser = () => u;
+  }
 
   var user = User();
 
