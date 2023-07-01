@@ -6,6 +6,7 @@ import 'package:mysql1/mysql1.dart';
 import 'package:needle_orm/api.dart';
 import 'package:needle_orm_mariadb/needle_orm_mariadb.dart';
 import 'package:needle_orm_postgres/needle_orm_postgres.dart';
+import 'package:needle_orm_sqlite/needle_orm_sqlite.dart';
 import 'package:postgres_pool/postgres_pool.dart';
 import 'package:stack_trace/stack_trace.dart';
 
@@ -23,6 +24,10 @@ Future<MySqlConnection> initMariaConnection(Map<String, dynamic> params) async {
 Future<Database> initMariaDb(Map<String, dynamic> params) async {
   return MariaDbDatabase(
       await initMariaConnection(params)); // used in domain.dart
+}
+
+Future<Database> initSqlite(Map<String, dynamic> params) async {
+  return SqliteDatabase(params['path']);
 }
 
 Future<PgPool> initPgPool(Map<String, dynamic> params) async {

@@ -12,11 +12,12 @@ class SqliteMigrationRunner implements MigrationRunner {
 
   final Map<String, Migration> migrations = {};
   final Queue<Migration> _migrationQueue = Queue();
-  final sqlite.Database connection;
+  late final sqlite.Database _connection;
   bool _connected = false;
 
-  SqliteMigrationRunner(this.connection,
+  SqliteMigrationRunner(String path,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
+    _connection = sqlite.sqlite3.open(path);
     if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
     _connected = connected == true;
   }
@@ -37,7 +38,7 @@ class SqliteMigrationRunner implements MigrationRunner {
       _connected = true;
     }
 
-    var stmt = connection.prepare('''
+    var stmt = _connection.prepare('''
     CREATE TABLE IF NOT EXISTS migrations (
       id serial,
       batch integer,
@@ -51,7 +52,7 @@ class SqliteMigrationRunner implements MigrationRunner {
   @override
   Future up() async {
     await _init();
-    var result = connection.select('SELECT path from migrations;');
+    var result = _connection.select('SELECT path from migrations;');
 
     var existing = <String>[];
     if (result.isNotEmpty) {
@@ -64,7 +65,7 @@ class SqliteMigrationRunner implements MigrationRunner {
     });
 
     if (toRun.isNotEmpty) {
-      var result = connection.select('SELECT MAX(batch) from migrations;');
+      var result = _connection.select('SELECT MAX(batch) from migrations;');
       var curBatch = 0;
       if (result.isNotEmpty) {
         var batch = result[0][0];
@@ -84,8 +85,8 @@ class SqliteMigrationRunner implements MigrationRunner {
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
         try {
-          await schema.run(connection).then((_) async {
-            connection
+          await schema.run(_connection).then((_) async {
+            _connection
                 .prepare(
                     "INSERT INTO migrations (batch, path) VALUES ($batch, '$k')")
                 .execute();
@@ -104,7 +105,7 @@ class SqliteMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    var result = connection.select('SELECT MAX(batch) from migrations;');
+    var result = _connection.select('SELECT MAX(batch) from migrations;');
 
     var curBatch = 0;
     if (result.isNotEmpty) {
@@ -112,7 +113,7 @@ class SqliteMigrationRunner implements MigrationRunner {
       curBatch = int.tryParse(firstRow[0][0]) as int;
     }
 
-    result = connection
+    result = _connection
         .select('SELECT path from migrations WHERE batch = $curBatch;');
     var existing = <String>[];
     if (result.isNotEmpty) {
@@ -131,8 +132,8 @@ class SqliteMigrationRunner implements MigrationRunner {
         var schema = SqliteSchema();
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
-        await schema.run(connection).then((_) {
-          connection
+        await schema.run(_connection).then((_) {
+          _connection
               .prepare('DELETE FROM migrations WHERE path = \'$k\';')
               .execute();
           return;
@@ -147,7 +148,7 @@ class SqliteMigrationRunner implements MigrationRunner {
   Future reset() async {
     await _init();
     var r =
-        connection.select('SELECT path from migrations ORDER BY batch DESC;');
+        _connection.select('SELECT path from migrations ORDER BY batch DESC;');
     var existing = <String>[];
     if (r.isNotEmpty) {
       existing = r.map((x) => x['path']).cast<String>().toList();
@@ -161,8 +162,8 @@ class SqliteMigrationRunner implements MigrationRunner {
         var schema = SqliteSchema();
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
-        await schema.run(connection).then((_) {
-          connection
+        await schema.run(_connection).then((_) {
+          _connection
               .prepare('DELETE FROM migrations WHERE path = \'$k\';')
               .execute();
           return;
@@ -175,6 +176,6 @@ class SqliteMigrationRunner implements MigrationRunner {
 
   @override
   Future close() async {
-    return connection.dispose();
+    return _connection.dispose();
   }
 }

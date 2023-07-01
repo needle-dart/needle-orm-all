@@ -4,7 +4,7 @@
   "values": {
     "secret": "u6D3BDMX2zgv$X*%Gol4VRw4",
     "data-sources": {
-      "default": "postgresql",
+      "default": "sqlite",
       "postgresql": {
         "type": "postgresql",
         "host": "localhost",
@@ -22,6 +22,10 @@
         "password": "needle",
         "database": "needle_minerva",
         "pool-size": 5
+      },
+      "sqlite": {
+        "type": "sqlite",
+        "path": "/home/tony/minerva.sqlite3"
       }
     }
   },

@@ -15,6 +15,7 @@ dependencies:
   needle_orm: ^0.1.1
   needle_orm_mariadb: ^0.1.1
   needle_orm_postgres: ^0.1.1
+  needle_orm_sqlite: ^0.1.1
   postgres_pool: ^2.1.4
   stack_trace: ^1.11.0
 

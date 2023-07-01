@@ -30,7 +30,7 @@ void main(List<String> args) async {
   }
  */
   {
-    var migrationRunner = SqliteMigrationRunner(await initSqliteConnection(),
+    var migrationRunner = SqliteMigrationRunner(initSqliteConnection(),
         migrations: allMigrations);
     await runMigrations(migrationRunner, args);
   }

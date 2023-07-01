@@ -85,9 +85,9 @@ void initLogger() {
 }
 
 Future<Database> initSqlite() async {
-  return SqliteDatabase("/home/tony/needle.sqlite3"); // used in domain.dart
+  return SqliteDatabase(initSqliteConnection()); // used in domain.dart
 }
 
-Future<sqlite.Database> initSqliteConnection() async {
-  return sqlite.sqlite3.open("/home/tony/needle.sqlite3");
+String initSqliteConnection() {
+  return "/home/tony/needle.sqlite3";
 }

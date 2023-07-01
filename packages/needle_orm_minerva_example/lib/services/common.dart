@@ -23,6 +23,8 @@ Future<void> initService(ServerContext context) async {
     Database.register(dsName, await initPostgreSQL(dsCfg));
   } else if (dsCfg['type'] == 'mariadb') {
     Database.register(dsName, await initMariaDb(dsCfg));
+  } else if (dsCfg['type'] == 'sqlite') {
+    Database.register(dsName, await initSqlite(dsCfg));
   }
 
   initNeedle();

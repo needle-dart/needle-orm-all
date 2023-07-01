@@ -449,6 +449,13 @@ packages:
       relative: true
     source: path
     version: "0.1.1"
+  needle_orm_sqlite:
+    dependency: "direct main"
+    description:
+      path: "../needle_orm_sqlite"
+      relative: true
+    source: path
+    version: "0.1.1"
   node_preamble:
     dependency: transitive
     description:
