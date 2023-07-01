@@ -41,7 +41,8 @@ class MigrationColumn extends TableColumn {
       : MigrationColumn(column.type,
           isNullable: column.isNullable,
           length: column.length,
-          indexType: column.indexType);
+          indexType: column.indexType,
+          comment: column.comment);
 
   MigrationColumn notNull() => this.._nullable = false;
 

@@ -18,6 +18,7 @@ class PostgresSchema extends Schema {
     //return connection.execute(compile());
     var result = await connection.transaction((ctx) async {
       var sql = compile();
+      print(sql);
       var result = await ctx.query(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
       });

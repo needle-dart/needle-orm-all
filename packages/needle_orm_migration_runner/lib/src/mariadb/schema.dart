@@ -19,6 +19,8 @@ class MariaDbSchema extends Schema {
     int affectedRows = 0;
     await connection.transaction((ctx) async {
       var sql = compile();
+
+      print(sql);
       Results? result = await ctx.query(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
         throw e;
