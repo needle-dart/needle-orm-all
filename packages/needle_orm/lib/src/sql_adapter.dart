@@ -39,3 +39,13 @@ dynamic convertValue(dynamic value, OrmMetaField field, DbType dbType) {
 }
 
 final _df = DateFormat('yyyy-MM-dd HH:mm:ss');
+
+String truncateTable(String tableName, DbType dbType) {
+  switch (dbType.category) {
+    case DbCategory.Sqlite:
+      return 'delete from $tableName';
+    default:
+      // case DbCategory.MariaDB || DbCategory.PostgreSQL:
+      return 'truncate $tableName';
+  }
+}

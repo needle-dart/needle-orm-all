@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'sql_adapter.dart';
+
 // ignore: constant_identifier_names
 enum DbCategory { MariaDB, PostgreSQL, Sqlite }
 
@@ -65,6 +67,10 @@ abstract class Database {
   Future<T> transaction<T>(FutureOr<T> Function(Database) f);
 
   Future<void> close();
+
+  Future<void> truncate(String tableName) {
+    return query(truncateTable(tableName, dbType), {});
+  }
 }
 
 enum QueryHint {

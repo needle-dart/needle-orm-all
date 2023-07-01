@@ -14,7 +14,7 @@ class OrmMetaClass {
   final List<OrmMetaMethod> methods;
   // final ModelInspector modelInspector;
 
-  String? _tableName;
+  late final String tableName;
 
   OrmMetaClass(this.name,
       {this.superClassName,
@@ -26,13 +26,12 @@ class OrmMetaClass {
       f.clz = this;
     }
     var tables = ormAnnotations.whereType<Table>();
+    var _tableName = name;
     if (tables.isNotEmpty) {
-      _tableName = tables.first.name;
+      _tableName = tables.first.name ?? name;
     }
-    _tableName = _tableName ?? _getTableName(name);
+    tableName = _getTableName(_tableName);
   }
-
-  String get tableName => _tableName!;
 
   String _getTableName(String className) {
     return pluralize(ReCase(className).snakeCase);
@@ -106,18 +105,38 @@ class OrmMetaField {
   final List<OrmAnnotation> ormAnnotations;
 
   late OrmMetaClass clz;
-  OrmMetaField(this.name, this.type, {this.ormAnnotations = const []});
+  late final String elementType;
+  late final bool isIdField;
 
-  bool get isModelType => ModelInspector.isModelType(elementType);
+  bool? _isModelType;
+  String? _columnName;
 
-  bool get isIdField => ormAnnotations.whereType<ID>().isNotEmpty;
+  OrmMetaField(this.name, this.type, {this.ormAnnotations = const []}) {
+    elementType = _elementType(type);
+    isIdField = ormAnnotations.whereType<ID>().isNotEmpty;
+  }
+
+  bool get isModelType =>
+      _isModelType ??= ModelInspector.isModelType(elementType);
+
+  String get columnName => _columnName ??= _genColumnName(name);
+
+  String _genColumnName(String fieldName) {
+    var columns = ormAnnotations.whereType<Column>();
+    var cn = name;
+    if (columns.isNotEmpty) {
+      cn = columns.first.name ?? name;
+    }
+    cn = ReCase(cn).snakeCase;
+    return isModelType ? '${cn}_id' : cn;
+  }
 
   bool get notExistsInDb =>
       ormAnnotations.whereType<ManyToMany>().isNotEmpty ||
       ormAnnotations.whereType<OneToMany>().isNotEmpty ||
       ormAnnotations.whereType<Transient>().isNotEmpty;
 
-  String get elementType {
+  String _elementType(String type) {
     var t = type;
     if (t.startsWith('List<')) {
       t = t.substring(5, t.length - 1);
@@ -129,12 +148,6 @@ class OrmMetaField {
       t = t.substring(0, t.length - 1);
     }
     return t;
-  }
-
-  String get columnName {
-    var s = ReCase(name).snakeCase;
-    if (isModelType) s += '_id';
-    return s;
   }
 }
 

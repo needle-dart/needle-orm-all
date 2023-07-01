@@ -241,13 +241,15 @@ class ModelHelper<M extends Model> {
     }
 
     dirtyMap[idField.name] = idValue;
+    var newVersion = -1;
     var sql =
         'update $tableName set ${setClause.join(',')} where ${idField.name}=@${idField.name}';
     if (versionField != null) {
       int oldVersion =
           modelInspector.getFieldValue(model, versionField.name) as int;
+      newVersion = oldVersion + 1;
       sql =
-          'update $tableName set ${setClause.join(',')}, ${versionField.columnName}=${oldVersion + 1} where ${idField.name}=@${idField.name} and ${versionField.columnName}=$oldVersion';
+          'update $tableName set ${setClause.join(',')}, ${versionField.columnName}=$newVersion where ${idField.name}=@${idField.name} and ${versionField.columnName}=$oldVersion';
     }
     _logger.fine('Update SQL: $sql');
 
@@ -263,16 +265,16 @@ class ModelHelper<M extends Model> {
 
     var queryResult = await db.query(sql, dirtyMap,
         tableName: tableName,
-        returningFields: [if (versionField != null) versionField.columnName],
+        // returningFields: [if (versionField != null) versionField.columnName],
         hints: _hints(clz, dirtyMap));
 
     // _logger.info(' >>> query returned: $queryResult');
 
     // update version field
     if (queryResult.affectedRowCount! > 0) {
-      if (versionField != null) {
-        var v = convertValue(queryResult[0][0], versionField, db.dbType);
-        modelInspector.setFieldValue(model, versionField.name, v);
+      if (versionField != null && newVersion > 0) {
+        // var v = convertValue(queryResult[0][0], versionField, db.dbType);
+        modelInspector.setFieldValue(model, versionField.name, newVersion);
       }
       return;
     }

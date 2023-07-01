@@ -123,43 +123,29 @@ class TableQuery<T> extends ColumnQuery<T> {
             ? []
             : [...parentTableQuery._path, parentTableQuery];
 
-  String get _innerType => '$T';
+  String get className => '$T';
 
   @override
   String toString() {
-    return '${super._name}:$_innerType';
+    return '${super._name}:$className';
   }
 }
 
-/* 
-  SqlJoin _toSqlJoin() {
-    var clz = ModelInspector.meta(className)!;
-    var tableName = clz.tableName;
-    var columnName = getColumnName(propName!);
-    var joinStmt = '${relatedQuery!._alias}.${columnName}_id = $_alias.id';
-
-    var join = SqlJoin(tableName, _alias, joinStmt);
-    columns.where((column) => column._hasCondition).forEach((column) {
-      join.conditions.appendAll(
-          column.toSqlConditions(_alias, clz.softDeleteField?.columnName));
-    });
-    return join;
-  } */
-
 class TopTableQueryHelper<T> {
-  final String className;
-  final String tableName;
-  final OrmMetaClass clz;
+  late final String className;
+  late final String tableName;
+  late final OrmMetaClass clz;
 
   int offset = 0;
   int maxRows = 0;
 
   List<QueryCondition> conditions = [];
 
-  TopTableQueryHelper()
-      : className = '$T',
-        tableName = genTableName('$T'),
-        clz = ModelInspector.meta('$T')!;
+  TopTableQueryHelper() {
+    className = '$T';
+    clz = ModelInspector.meta('$T')!;
+    tableName = clz.tableName;
+  }
 
   void paging(int pageNumber, int pageSize) {
     maxRows = pageSize;
@@ -484,9 +470,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
   /// example: findListBySql(' , another_table t1 where t.column_name=t1.id and t.column_name2=@param1 and t1.column_name3=@param2 order by t0.id limit 10 offset 10 ', {'param1':100,'param2':'hello'})
   Future<List<T>> findListBySql(String rawSql,
       [Map<String, dynamic> params = const {}]) async {
-    var clzName = '$T';
-    var clz = ModelInspector.meta(clzName)!;
-    var tableName = genTableName(clzName);
+    var clz = _helper.clz;
+    var tableName = _helper.tableName;
 
     var allFields = clz.allFields(searchParents: true)
       ..removeWhere((f) => f.notExistsInDb);
@@ -657,7 +642,7 @@ class JoinTranslator {
         var p = _searchLeftJoin(path);
         // join = '${p.text} :: ${p.alias}';
         var joinColumns = path._findJoinColumns();
-        var type = path.last._innerType;
+        var type = path.last.className;
         var clz = ModelInspector.meta(type)!;
         var softDeleteField = clz.softDeleteField;
         if (softDeleteField != null && !includeSoftDeleted) {
@@ -673,7 +658,7 @@ class JoinTranslator {
 
     if (result.isEmpty) {
       result = [
-        ' from ${genTableName(helper.className)} t0',
+        ' from ${helper.tableName} t0',
         if (helper.clz.softDeleteField != null)
           ' where t0.${helper.clz.softDeleteField!.columnName} is false'
       ];
@@ -695,7 +680,7 @@ class JoinTranslator {
         }
         // join = '${p.text} :: ${p.alias}';
         var joinColumns = path._findJoinColumns();
-        var type = path.last._innerType;
+        var type = path.last.className;
         var clz = ModelInspector.meta(type)!;
         var softDeleteField = clz.softDeleteField;
         if (softDeleteField != null && !includeSoftDeleted) {
@@ -731,11 +716,11 @@ class JoinPath with ListMixin<TableQuery> {
   }
 
   String _lastClassName() {
-    return path.last._innerType;
+    return path.last.className;
   }
 
   String _lastTableName() {
-    return genTableName(path.last._innerType);
+    return ModelInspector.meta(path.last.className)!.tableName;
   }
 
   List<String> _findJoinColumns() {
@@ -775,14 +760,15 @@ class ColumnQuery<T> {
   final String _name;
   final TableQuery? _tableQuery;
 
-  ColumnQuery(TableQuery? parentTableQuery, String columnName)
+  ColumnQuery(TableQuery? parentTableQuery, String fieldName)
       : _tableQuery = parentTableQuery,
-        _name = columnName;
+        _name = fieldName;
 
   List<TableQuery> get _path =>
       _tableQuery == null ? [] : [..._tableQuery!._path, _tableQuery!];
 
-  String get _columnName => genColumnName(_name);
+  String get _columnName =>
+      ModelInspector.meta(_tableQuery!.className)!.findField(_name)!.columnName;
 
   static String classNameForType(String type) {
     switch (type) {

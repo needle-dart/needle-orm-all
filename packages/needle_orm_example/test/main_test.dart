@@ -25,66 +25,14 @@ void main() async {
     Database.register(dbSqlite, await initSqlite());
     Database.register(dbPostgres, await initPostgreSQL());
     Database.register(dbMariadb, await initMariaDb());
-    // await clean();
+    await clean();
   });
 
   tearDown(() async {
     // await Database.closeAll();
   });
 
-  test('testQueryCondition', () async {
-    var q = UserQuery();
-    // test 1
-    q.where([
-      q.age.between(12, 33), // disable between for the time being
-      q.name.startsWith('inner_'),
-      q.age.IN([5, 10, 20, 30]),
-      // q.books.createdBy.name.startsWith('root'),
-      q.books.price.ge(20.0),
-      // q.not(q.age.lt(25)),
-      // q.not(q.and([
-      //   q.createdBy.name.startsWith('root'),
-      //   q.or([
-      //     q.books.lastUpdatedBy.name.endsWith('_user'),
-      //     q.lastUpdatedBy.name.endsWith('_guest')
-      //   ])
-      // ])),
-    ]);
-
-    // test 2
-    /* q.where([
-      q.age.gt(18),
-      q.books.lastUpdatedBy.name.endsWith('_user'),
-    ]); */
-
-    /* q.books.createdBy.name.startsWith('root');
-    q.lastUpdatedBy.name.endsWith('_user');
-    q.books.isNotEmpty();
-    q.createdBy.name.startsWith('root');
-    q.not(q.createdBy.name.startsWith('root'));
-    q.and([
-      q.createdBy.name.startsWith('root'),
-      q.lastUpdatedBy.name.endsWith('_user')
-    ]);
-    q.and([
-      q.createdBy.name.startsWith('root'),
-      q.or([
-        q.lastUpdatedBy.name.endsWith('_user'),
-        q.lastUpdatedBy.name.endsWith('_guest')
-      ])
-    ]);
-    q.or([
-      q.createdBy.name.startsWith('root'),
-      q.lastUpdatedBy.name.endsWith('_user')
-    ]); */
-    q.orders = [q.age.asc(), q.id.desc()];
-    q.paging(1, 10);
-    q.debugQuery();
-    var list = await q.findList();
-    // print(list);
-    print(list.map((e) => e.toMap()));
-  });
-
+  test('testQueryCondition', testQueryCondition);
   test('testCount', testCount);
   test('testInsert', testInsert);
   test('testUpdate', testUpdate);
@@ -95,14 +43,36 @@ void main() async {
   test('testSoftDelete', testSoftDelete);
   test('testMultipleDatabases', testMultipleDatabases);
   test('testOneToMany', testOneToMany);
+  test('testAllDb', testAllDb);
 
   // test('testTransactionMariaDb', testTransactionMariaDb,
   //     timeout: Timeout.factor(2));
-  test('testTransactionMariaDbRaw', testTransactionMariaDbRaw);
-  test('testTransactionPg', testTransactionPg);
-  test('testTransactionPgRaw', testTransactionPgRaw);
+  // test('testTransactionMariaDbRaw', testTransactionMariaDbRaw);
+  // test('testTransactionPg', testTransactionPg);
+  // test('testTransactionPgRaw', testTransactionPgRaw);
 
   // exit(0);
+}
+
+Future<void> testAllDb() async {
+  for (var db in [
+    Database.lookup(dbPostgres)!,
+    Database.lookup(dbMariadb)!,
+    Database.lookup(dbSqlite)!
+  ]) {
+    //
+    Database.defaultDb = db;
+    await testQueryCondition();
+    await testCount();
+    await testInsert();
+    await testUpdate();
+    await testVersion();
+    await testFindByIds();
+    await testFindListBySql();
+    await testPaging();
+    await testSoftDelete();
+    await testOneToMany();
+  }
 }
 
 Future<void> testTransactionMariaDb() async {
@@ -139,10 +109,68 @@ Future<void> testTransactionPgRaw() async {
 
 /// remove all rows from database.
 Future<void> clean() async {
-  /* for (var db in [Database.lookup(dbPostgres), Database.lookup(dbMariadb)]) {
-    await BookQuery(db: db).deleteAllPermanent();
-    await UserQuery(db: db).deleteAllPermanent();
-  } */
+  for (var db in [
+    Database.lookup(dbPostgres)!,
+    Database.lookup(dbMariadb)!,
+    Database.lookup(dbSqlite)!
+  ]) {
+    db.truncate("users");
+    db.truncate("books");
+    db.truncate("devices");
+  }
+}
+
+Future<void> testQueryCondition() async {
+  var q = UserQuery();
+  // test 1
+  q.where([
+    q.age.between(12, 33), // disable between for the time being
+    q.name.startsWith('inner_'),
+    q.age.IN([5, 10, 20, 30]),
+    // q.books.createdBy.name.startsWith('root'),
+    q.books.price.ge(20.0),
+    // q.not(q.age.lt(25)),
+    // q.not(q.and([
+    //   q.createdBy.name.startsWith('root'),
+    //   q.or([
+    //     q.books.lastUpdatedBy.name.endsWith('_user'),
+    //     q.lastUpdatedBy.name.endsWith('_guest')
+    //   ])
+    // ])),
+  ]);
+
+  // test 2
+  /* q.where([
+      q.age.gt(18),
+      q.books.lastUpdatedBy.name.endsWith('_user'),
+    ]); */
+
+  /* q.books.createdBy.name.startsWith('root');
+    q.lastUpdatedBy.name.endsWith('_user');
+    q.books.isNotEmpty();
+    q.createdBy.name.startsWith('root');
+    q.not(q.createdBy.name.startsWith('root'));
+    q.and([
+      q.createdBy.name.startsWith('root'),
+      q.lastUpdatedBy.name.endsWith('_user')
+    ]);
+    q.and([
+      q.createdBy.name.startsWith('root'),
+      q.or([
+        q.lastUpdatedBy.name.endsWith('_user'),
+        q.lastUpdatedBy.name.endsWith('_guest')
+      ])
+    ]);
+    q.or([
+      q.createdBy.name.startsWith('root'),
+      q.lastUpdatedBy.name.endsWith('_user')
+    ]); */
+  q.orders = [q.age.asc(), q.id.desc()];
+  q.paging(1, 10);
+  q.debugQuery();
+  var list = await q.findList();
+  // print(list);
+  print(list.map((e) => e.toMap()));
 }
 
 Future<void> testFindByIds() async {

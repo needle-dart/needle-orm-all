@@ -3,6 +3,7 @@ Needle ORM for dart.
 ## Databases supported
 
 - [x] PostgreSQL
+- [x] SQLite
 - [x] MariaDB (except that transaction is still not working )
 
 Try to be a familar ORM framework to java programmers, so it will obey javax.persistence spec.
@@ -28,8 +29,8 @@ some other useful annotations , just like [Ebean ORM for Java/Kotlin](https://eb
 - [x] @SoftDelete
 - [x] @WhenCreated
 - [x] @WhenModified
-- [ ] @WhoCreated
-- [ ] @WhoModified
+- [x] @WhoCreated
+- [x] @WhoModified
 - [x] @PreInsert
 - [x] @PreUpdate
 - [x] @PreRemove
@@ -87,7 +88,7 @@ class _User extends _BaseModel {
   @Column()
   int? _age;
 
-  @OneToMany(mappedBy: "_author")
+  @OneToMany(mappedBy: "author")
   List<_Book>? books;
 
   _User();
