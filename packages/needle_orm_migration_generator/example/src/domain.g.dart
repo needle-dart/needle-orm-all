@@ -10,7 +10,7 @@ class BookMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('books', (table) {
-      table.varChar('title', length: 255);
+      table.varChar('title', length: 255, comment: 'xxx');
 
       table.float('price');
 

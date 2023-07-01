@@ -24,7 +24,8 @@ class MigrationColumn extends TableColumn {
       {bool isNullable = true,
       int length = 255,
       IndexType indexType = IndexType.standardIndex,
-      dynamic defaultValue})
+      dynamic defaultValue,
+      super.comment})
       : super(
             type: type,
             length: length,
@@ -140,6 +141,8 @@ class TableColumn {
   /// Specifies the default values.
   final dynamic defaultValue;
 
+  final String? comment;
+
   const TableColumn(
       {this.isNullable = true,
       this.length = 255,
@@ -150,7 +153,8 @@ class TableColumn {
       this.type = ColumnType.varChar,
       this.indexType = IndexType.none,
       this.expression,
-      this.defaultValue});
+      this.defaultValue,
+      this.comment});
 
   /// Returns `true` if [expression] is not `null`.
   bool get hasExpression => expression != null;

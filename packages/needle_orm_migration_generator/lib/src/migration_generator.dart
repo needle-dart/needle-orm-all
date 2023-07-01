@@ -66,9 +66,25 @@ class ClassMigrationGenerator {
   final ClassElement clazz;
   final Iterable<ClassElement> allClasses;
   String name;
+  String? comment;
+  late String tableName;
 
   ClassMigrationGenerator(this.clazz, this.allClasses)
-      : name = clazz.name.removePrefix();
+      : name = clazz.name.removePrefix() {
+    var commentAnnot =
+        clazz.metadata.ormAnnotations().whereType<Comment>().firstOrNull;
+    if (commentAnnot != null) {
+      comment = commentAnnot.comment;
+    }
+
+    var tableAnnot =
+        clazz.metadata.ormAnnotations().whereType<Table>().firstOrNull;
+    if (tableAnnot != null && tableAnnot.name != null) {
+      tableName = tableAnnot.name!;
+    } else {
+      tableName = getTableName(name);
+    }
+  }
 
   List<FieldElement> getAllFields(ClassElement clz) {
     var superClass = clz.supertype?.element as ClassElement?;
@@ -82,12 +98,11 @@ class ClassMigrationGenerator {
   String get migrationInstance => '_${name}Migration()';
 
   String generate() {
-    var tableName = getTableName(name);
-
     var allFields = getAllFields(clazz);
 
     var fields = allFields.map((e) => ColumnGenerator(e).generate()).join('\n');
 
+    var strComment = comment == null ? '' : ", comment: '$comment'";
     return '''
       class _${name}Migration extends Migration {
         @override
@@ -96,7 +111,7 @@ class ClassMigrationGenerator {
             table.serial('id').primaryKey();
 
             $fields
-          });
+          } $strComment);
         }
 
         @override
@@ -111,7 +126,14 @@ class ClassMigrationGenerator {
 class ColumnGenerator {
   final FieldElement field;
   String name;
-  ColumnGenerator(this.field) : name = field.name.removePrefix();
+  String? comment;
+  ColumnGenerator(this.field) : name = field.name.removePrefix() {
+    var commentAnnot =
+        field.metadata.ormAnnotations().whereType<Comment>().firstOrNull;
+    if (commentAnnot != null) {
+      comment = commentAnnot.comment;
+    }
+  }
 
   String generate() {
     if (shouldIgnore(field)) {
@@ -127,8 +149,9 @@ class ColumnGenerator {
     var lengthParam = columnMethodName == 'varChar' && columnLength() > 0
         ? ', length: ${columnLength()}'
         : '';
+    var strComment = comment != null ? ", comment: '$comment'" : '';
     return '''
-      table.$columnMethodName('$columnName'$lengthParam);
+      table.$columnMethodName('$columnName' $lengthParam $strComment);
       ''';
   }
 

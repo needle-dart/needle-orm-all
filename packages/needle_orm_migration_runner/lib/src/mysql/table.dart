@@ -57,6 +57,10 @@ abstract class MySqlGenerator {
       buf.write(' ${compileReference(ref)}');
     }
 
+    if (column.comment != null) {
+      buf.write(" comment '${column.comment}' ");
+    }
+
     return buf.toString();
   }
 

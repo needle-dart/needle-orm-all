@@ -53,7 +53,8 @@ class PostgresSchema extends Schema {
   }
 
   void _create(String tableName, void Function(MigrationTable table) callback,
-      bool ifNotExists) {
+      bool ifNotExists,
+      {String? comment}) {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = PostgresTable();
     callback(tbl);
@@ -64,11 +65,13 @@ class PostgresSchema extends Schema {
   }
 
   @override
-  void create(String tableName, void Function(MigrationTable table) callback) =>
-      _create(tableName, callback, false);
+  void create(String tableName, void Function(MigrationTable table) callback,
+          {String? comment}) =>
+      _create(tableName, callback, false, comment: comment);
 
   @override
   void createIfNotExists(
-          String tableName, void Function(MigrationTable table) callback) =>
-      _create(tableName, callback, true);
+          String tableName, void Function(MigrationTable table) callback,
+          {String? comment}) =>
+      _create(tableName, callback, true, comment: comment);
 }

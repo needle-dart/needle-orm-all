@@ -16,7 +16,7 @@ void main(List<String> args) async {
 
   args = ['refresh'];
 
-  /* {
+  {
     var migrationRunner = MariaDbMigrationRunner(await initMariaConnection(),
         migrations: allMigrations);
     await runMigrations(migrationRunner, args);
@@ -28,7 +28,7 @@ void main(List<String> args) async {
         migrations: allMigrations);
     await runMigrations(migrationRunner, args);
   }
- */
+
   {
     var migrationRunner = SqliteMigrationRunner(initSqliteConnection(),
         migrations: allMigrations);

@@ -41,15 +41,19 @@ abstract class Basic extends Model {
   Basic();
 }
 
-@Table()
+@Table(name: 'my_books')
+@Comment('My Books')
 @Entity()
 class Book extends Basic {
+  @Comment('book title')
   @Column()
   String? _title;
 
+  @Comment('book price')
   @Column()
   double? _price;
 
+  @Comment('book author')
   @ManyToOne()
   User? _author;
 
@@ -58,6 +62,7 @@ class Book extends Basic {
   List<int>? _image;
 
   // clob
+  @Comment('book content')
   @Lob()
   String? _content;
 
@@ -67,6 +72,7 @@ class Book extends Basic {
 @Table(name: 'users')
 @Entity()
 class User extends Basic {
+  @Comment('user name')
   @Column()
   String? _name;
 

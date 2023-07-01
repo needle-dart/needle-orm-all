@@ -9,18 +9,18 @@ import 'package:needle_orm_migration/needle_orm_migration.dart';
 class _BookMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('books', (table) {
+    schema.create('my_books', (table) {
       table.serial('id').primaryKey();
 
-      table.varChar('title', length: 255);
+      table.varChar('title', length: 255, comment: 'book title');
 
-      table.float('price');
+      table.float('price', comment: 'book price');
 
-      table.integer('author_id');
+      table.integer('author_id', comment: 'book author');
 
       table.blob('image');
 
-      table.clob('content');
+      table.clob('content', comment: 'book content');
 
       table.integer('version');
 
@@ -35,12 +35,12 @@ class _BookMigration extends Migration {
       table.integer('last_updated_by_id');
 
       table.varChar('remark', length: 255);
-    });
+    }, comment: 'My Books');
   }
 
   @override
   void down(Schema schema) {
-    schema.drop('books');
+    schema.drop('my_books');
   }
 }
 
@@ -50,7 +50,7 @@ class _UserMigration extends Migration {
     schema.create('users', (table) {
       table.serial('id').primaryKey();
 
-      table.varChar('name', length: 255);
+      table.varChar('name', length: 255, comment: 'user name');
 
       table.varChar('login_name', length: 255);
 

@@ -267,11 +267,11 @@ class Transient extends OrmAnnotation {
   const Transient();
 }
 
-/// @DbComment , NOT implemented yet!
-// io.ebean extension
-class DbComment extends OrmAnnotation {
+/// @Comment
+// io.ebean extension: @DbComment
+class Comment extends OrmAnnotation {
   final String comment;
-  const DbComment(this.comment);
+  const Comment(this.comment);
 }
 
 /// @SoftDelete

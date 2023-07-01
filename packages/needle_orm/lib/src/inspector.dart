@@ -45,6 +45,14 @@ abstract class ModelInspector<M extends Model> {
     return clz;
   }
 
+  static OrmMetaClass lookupType(Type type) {
+    var clz = metaMap[type.toString()];
+    if (clz == null) {
+      throw UnimplementedError();
+    }
+    return clz;
+  }
+
   /// return the class name of [model]
   static String getClassName(Model model) {
     return model.runtimeType.toString();

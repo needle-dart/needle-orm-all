@@ -176,23 +176,28 @@ class _OrmMetaInfoBook extends OrmMetaClass {
             isAbstract: false,
             superClassName: 'Basic',
             ormAnnotations: [
-              Table(),
+              Table(name: 'my_books'),
+              Comment('My Books'),
               Entity(),
             ],
             fields: [
               OrmMetaField('title', 'String?', ormAnnotations: [
+                Comment('book title'),
                 Column(),
               ]),
               OrmMetaField('price', 'double?', ormAnnotations: [
+                Comment('book price'),
                 Column(),
               ]),
               OrmMetaField('author', 'User?', ormAnnotations: [
+                Comment('book author'),
                 ManyToOne(),
               ]),
               OrmMetaField('image', 'List<int>?', ormAnnotations: [
                 Lob(),
               ]),
               OrmMetaField('content', 'String?', ormAnnotations: [
+                Comment('book content'),
                 Lob(),
               ]),
             ],
@@ -210,6 +215,7 @@ class _OrmMetaInfoUser extends OrmMetaClass {
             ],
             fields: [
               OrmMetaField('name', 'String?', ormAnnotations: [
+                Comment('user name'),
                 Column(),
               ]),
               OrmMetaField('loginName', 'String?', ormAnnotations: [

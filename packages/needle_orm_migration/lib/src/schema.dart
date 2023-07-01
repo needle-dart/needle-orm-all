@@ -9,10 +9,12 @@ abstract class Schema {
     }
   }
 
-  void create(String tableName, void Function(MigrationTable table) callback);
+  void create(String tableName, void Function(MigrationTable table) callback,
+      {String? comment});
 
   void createIfNotExists(
-      String tableName, void Function(MigrationTable table) callback);
+      String tableName, void Function(MigrationTable table) callback,
+      {String? comment});
 
   void alter(String tableName, void Function(MutableTable table) callback);
 }

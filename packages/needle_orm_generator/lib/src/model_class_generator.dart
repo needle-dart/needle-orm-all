@@ -45,8 +45,8 @@ class FieldInspector {
     ce.metadata.forEach((annot) {
       var name = annot.name;
       switch (name) {
-        case 'DbComment':
-          ormAnnotations.add(annot.toDbComment());
+        case 'Comment':
+          ormAnnotations.add(annot.toComment());
           break;
         case 'Column':
           ormAnnotations.add(annot.toColumn());
@@ -126,9 +126,10 @@ class FieldInspector {
       return '$queryClassName get $name => $queryClassName(this, "$name");';
     } else {
       var strJoinRelation = '..joinRelation=JoinRelation()';
-      if(isOneToMany){
+      if (isOneToMany) {
         var oneToMany = ormAnnotations.whereType<OneToMany>().first;
-        strJoinRelation = '..joinRelation=JoinRelation(JoinKind.oneToMany,"${oneToMany.mappedBy}")';
+        strJoinRelation =
+            '..joinRelation=JoinRelation(JoinKind.oneToMany,"${oneToMany.mappedBy}")';
       }
       return '${_queryCleanType}Column get $name => ${_queryCleanType}Column(this, "$name")$strJoinRelation;';
     }

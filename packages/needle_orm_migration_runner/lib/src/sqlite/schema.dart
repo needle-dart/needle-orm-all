@@ -59,11 +59,13 @@ class SqliteSchema extends Schema {
   }
 
   @override
-  void create(String tableName, void Function(MigrationTable table) callback) =>
+  void create(String tableName, void Function(MigrationTable table) callback,
+          {String? comment}) =>
       _create(tableName, callback, false);
 
   @override
   void createIfNotExists(
-          String tableName, void Function(MigrationTable table) callback) =>
+          String tableName, void Function(MigrationTable table) callback,
+          {String? comment}) =>
       _create(tableName, callback, true);
 }

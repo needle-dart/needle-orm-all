@@ -1,3 +1,4 @@
+import 'package:needle_orm/impl.dart';
 import 'package:needle_orm_example/common.dart';
 import 'package:needle_orm_example/domain.dart';
 
@@ -114,9 +115,9 @@ Future<void> clean() async {
     Database.lookup(dbMariadb)!,
     Database.lookup(dbSqlite)!
   ]) {
-    db.truncate("users");
-    db.truncate("books");
-    db.truncate("devices");
+    db.truncate(ModelInspector.lookupType(User).tableName);
+    db.truncate(ModelInspector.lookupType(Book).tableName);
+    db.truncate(ModelInspector.lookupType(User).tableName);
   }
 }
 

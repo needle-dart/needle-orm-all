@@ -57,9 +57,10 @@ extension OrmAnnotationConverter on ElementAnnotation {
 
   OrmAnnotation ormAnnotation() {
     // print('************ ${this.toSource()} ');
+
     switch (name) {
-      case 'DbComment':
-        return toDbComment();
+      case 'Comment':
+        return toComment();
       case 'Entity':
         return toEntity();
       case 'Table':
@@ -136,9 +137,9 @@ extension OrmAnnotationConverter on ElementAnnotation {
     );
   }
 
-  DbComment toDbComment() {
-    assert(name == 'DbComment');
-    return DbComment(stringValue('comment')!);
+  Comment toComment() {
+    assert(name == 'Comment');
+    return Comment(stringValue('comment')!);
   }
 
   Table toTable() {
