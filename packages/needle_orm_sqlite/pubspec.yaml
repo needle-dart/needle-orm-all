@@ -1,0 +1,19 @@
+name: needle_orm_sqlite
+description: ORM for dart. This package supports SQLite (using sqlite3).
+version: 0.1.1
+homepage: https://github.com/needle-dart/needle-orm-all
+repository: https://github.com/needle-dart/needle-orm-all.git
+
+environment:
+  sdk: '>=3.0.0 <3.2.0'
+
+# Add regular dependencies here.
+dependencies:
+  logging: ^1.0.2
+  needle_orm: ^0.1.1
+  sqlite3: ^2.0.0
+  # path: ^1.8.0
+
+dev_dependencies:
+  lints: ^2.0.0
+  test: ^1.21.0

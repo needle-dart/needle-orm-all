@@ -9,6 +9,8 @@ import 'package:test/test.dart';
 
 const dbMariadb = "mariadb";
 const dbPostgres = "postgres";
+const dbSqlite = "sqlite";
+
 void main() async {
   initNeedle();
 
@@ -20,6 +22,7 @@ void main() async {
     initLogger();
 
     // the first db will be the default one as well : Database.defaultDb
+    Database.register(dbSqlite, await initSqlite());
     Database.register(dbPostgres, await initPostgreSQL());
     Database.register(dbMariadb, await initMariaDb());
     // await clean();

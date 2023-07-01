@@ -267,7 +267,7 @@ class TopTableQueryHelper<T> {
       sql += ', $versionColumn = $versionColumn+1 ';
     }
 
-    var strNow = dbType.category == DbCategory.PostgreSQL ? "'now()'" : "now()";
+    var strNow = serverNowExpr(dbType);
     if (clz.whenModifiedField != null) {
       var whenModifiedColumn = clz.whenModifiedField!.columnName;
       sql += ", $whenModifiedColumn = $strNow ";
@@ -387,7 +387,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
-        tableName: "");
+        tableName: _helper.tableName);
     _logger.info('result: $rows');
 
     var clz = ModelInspector.meta('$T')!;
@@ -462,7 +462,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
         includeSoftDeleted: includeSoftDeleted);
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
-        tableName: "");
+        tableName: _helper.tableName);
 
     _logger.info(rows);
     return (rows[0][0]).toInt();
@@ -500,7 +500,7 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
 
     var rows = await _db!.query(
         preparedQuery.sql, preparedQuery.conditions.values,
-        tableName: "");
+        tableName: _helper.tableName);
     return rows.affectedRowCount ?? 0;
   }
 }

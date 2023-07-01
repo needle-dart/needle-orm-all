@@ -1,7 +1,7 @@
 import 'dart:async';
 
 // ignore: constant_identifier_names
-enum DbCategory { MariaDB, PostgreSQL }
+enum DbCategory { MariaDB, PostgreSQL, Sqlite }
 
 class DbType {
   final DbCategory category;

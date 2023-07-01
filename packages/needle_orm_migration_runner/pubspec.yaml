@@ -15,6 +15,7 @@ dependencies:
   postgres: ^2.4.0
   mysql_client: ^0.0.24
   mysql1: ^0.20.0
+  sqlite3: ^2.0.0
   logging: ^1.0.0
 
 dev_dependencies:

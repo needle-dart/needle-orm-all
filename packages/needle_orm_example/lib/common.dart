@@ -5,7 +5,9 @@ import 'package:mysql1/mysql1.dart';
 import 'package:needle_orm/api.dart';
 import 'package:needle_orm_mariadb/needle_orm_mariadb.dart';
 import 'package:needle_orm_postgres/needle_orm_postgres.dart';
+import 'package:needle_orm_sqlite/needle_orm_sqlite.dart';
 import 'package:postgres_pool/postgres_pool.dart';
+import 'package:sqlite3/sqlite3.dart' as sqlite;
 import 'package:stack_trace/stack_trace.dart';
 
 const logPrefix = 'NeedleOrmExample';
@@ -70,7 +72,7 @@ void initLogger() {
       record.loggerName,
       frameInfo,
       record.message,
-      if(record.error!=null) '${record.error}',
+      if (record.error != null) '${record.error}',
       if (record.stackTrace != null) '${record.stackTrace}'
     ];
     if (record.stackTrace != null) {
@@ -79,4 +81,12 @@ void initLogger() {
       print(arr.join(': '));
     }
   });
+}
+
+Future<Database> initSqlite() async {
+  return SqliteDatabase("/home/tony/needle.sqlite3"); // used in domain.dart
+}
+
+Future<sqlite.Database> initSqliteConnection() async {
+  return sqlite.sqlite3.open("/home/tony/needle.sqlite3");
 }

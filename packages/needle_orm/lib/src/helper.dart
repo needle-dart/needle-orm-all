@@ -142,9 +142,12 @@ class ModelHelper<M extends Model> {
         .map((fn) => clz.findField(fn)!.columnName)
         .join(',');
 
-    var ssFieldValues = ssFields.map((e) => e.ormAnnotations
-        .firstWhere((element) => element.isServerSide(action))
-        .serverSideExpr(action));
+    var ssFieldValues = ssFields.map((e) {
+      var annot = e.ormAnnotations
+          .firstWhere((element) => element.isServerSide(action));
+
+      return serverSideExpr(annot, action, db!.dbType);
+    });
 
     var fieldVariables = [
       ...dirtyMap.keys.map((e) => '@$e'),
@@ -225,9 +228,9 @@ class ModelHelper<M extends Model> {
 
     for (var field in ssFields) {
       // var name = field.name;
-      var value = field.ormAnnotations
-          .firstWhere((element) => element.isServerSide(action))
-          .serverSideExpr(action);
+      var ann = field.ormAnnotations
+          .firstWhere((element) => element.isServerSide(action));
+      var value = serverSideExpr(ann, action, db.dbType);
 
       setClause.add("${field.columnName}=$value");
     }

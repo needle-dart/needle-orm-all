@@ -233,6 +233,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.2.3"
+  ffi:
+    dependency: transitive
+    description:
+      name: ffi
+      sha256: ed5337a5660c506388a9f012be0288fb38b49020ce2b45fe1f8b8323fe429f99
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.2"
   file:
     dependency: transitive
     description:
@@ -625,6 +633,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "1.10.0"
+  sqlite3:
+    dependency: transitive
+    description:
+      name: sqlite3
+      sha256: f7511ddd6a2dda8ded9d849f8a925bb6020e0faa59db2443debc18d484e59401
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "2.0.0"
   stack_trace:
     dependency: "direct main"
     description:

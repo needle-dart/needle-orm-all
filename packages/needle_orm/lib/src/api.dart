@@ -87,9 +87,6 @@ abstract class OrmAnnotation {
 
   /// whether it's executed at the database side.
   bool isServerSide(ActionType actionType) => false;
-
-  /// expression which will be executed at the database side.
-  String serverSideExpr(ActionType actionType) => '';
 }
 
 /// ActionType: Insert, Update, Delete, Select
@@ -291,9 +288,6 @@ class WhenCreated extends OrmAnnotation {
   @override
   bool isServerSide(ActionType actionType) =>
       actionType == ActionType.insert ? true : false;
-  @override
-  String serverSideExpr(ActionType actionType) =>
-      actionType == ActionType.insert ? 'now()' : '';
 }
 
 /// @WhenModified
@@ -305,11 +299,6 @@ class WhenModified extends OrmAnnotation {
       actionType == ActionType.update || actionType == ActionType.insert
           ? true
           : false;
-  @override
-  String serverSideExpr(ActionType actionType) =>
-      actionType == ActionType.update || actionType == ActionType.insert
-          ? 'now()'
-          : '';
 }
 
 /// @WhoCreated
