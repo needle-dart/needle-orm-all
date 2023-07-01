@@ -43,7 +43,7 @@ class PostgreSqlDatabase extends Database {
       sql = '$sql $returning';
     }
 
-    logger.config('query: $sql ; params: $substitutionValues');
+    // logger.config('query: $sql ; params: $substitutionValues');
 
     // expand List first
     var param = <String, dynamic>{};
@@ -67,8 +67,8 @@ class PostgreSqlDatabase extends Database {
       }
     });
 
-    return PgQueryResult(
-        await _connection.query(sql, substitutionValues: param));
+    var rs = await _connection.query(sql, substitutionValues: param);
+    return PgQueryResult(rs);
   }
 
   @override

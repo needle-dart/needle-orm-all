@@ -1,18 +1,7 @@
-import 'package:inflection3/inflection3.dart';
-import 'package:needle_orm/src/sql.dart';
-import 'package:recase/recase.dart';
+import 'package:needle_orm/impl.dart';
 
 import '../api.dart';
-
-/// generate table name based on [className]
-String genTableName(String className) {
-  return pluralize(ReCase(className).snakeCase);
-}
-
-/// generate table name based on [className]
-String genColumnName(String fieldName) {
-  return ReCase(fieldName).snakeCase;
-}
+import 'package:intl/intl.dart';
 
 String serverNowExpr(DbType dbType) {
   return switch (dbType.category) {
@@ -35,3 +24,18 @@ String serverSideExpr(OrmAnnotation ann, ActionType action, DbType dbType) {
   }
   return '';
 }
+
+//
+dynamic convertValue(dynamic value, OrmMetaField field, DbType dbType) {
+  if (value is String && field.elementType == 'int') {
+    return int.parse(value);
+  }
+  if (dbType.category == DbCategory.Sqlite) {
+    if (field.elementType == 'DateTime' && value != null && value is String) {
+      return _df.parse(value);
+    }
+  }
+  return value;
+}
+
+final _df = DateFormat('yyyy-MM-dd HH:mm:ss');

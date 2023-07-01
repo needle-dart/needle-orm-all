@@ -54,6 +54,7 @@ Future<PostgreSQLConnection> initPostgreSQLConnection() async {
 }
 
 Future<Database> initPostgreSQL() async {
+  // return PostgreSqlDatabase(await initPgPool());
   return PostgreSqlPoolDatabase(await initPgPool());
 }
 

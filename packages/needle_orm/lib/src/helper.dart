@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import '../impl.dart';
 import 'api.dart';
 import 'sql.dart';
+import 'sql_adapter.dart';
 
 final Logger _logger = Logger('ORM');
 
@@ -86,10 +87,13 @@ class ModelHelper<M extends Model> {
 
   Future<void> update({Database? db}) async {
     inspector.preUpdate(model);
-    if (dirtyFields.isNotEmpty) {
-      __update(db: db);
-      cleanDirty();
+
+    if (dirtyFields.isEmpty) {
+      return;
     }
+
+    await __update(db: db);
+    cleanDirty();
     inspector.postUpdate(model);
   }
 
@@ -174,8 +178,9 @@ class ModelHelper<M extends Model> {
     _logger.fine(' >>> query returned: $id');
     if (id.isNotEmpty) {
       if (id[0].isNotEmpty) {
-        modelInspector.setFieldValue(model, idField.name, id[0][0]);
-        return id[0][0];
+        var value = convertValue(id[0][0], idField, db.dbType);
+        modelInspector.setFieldValue(model, idField.name, value);
+        return value;
       }
     }
     return 0;
@@ -254,8 +259,24 @@ class ModelHelper<M extends Model> {
       }
     });
 
+    // _logger.info(' >>> query sql: $sql');
+
     var queryResult = await db.query(sql, dirtyMap,
-        tableName: tableName, hints: _hints(clz, dirtyMap));
+        tableName: tableName,
+        returningFields: [if (versionField != null) versionField.columnName],
+        hints: _hints(clz, dirtyMap));
+
+    // _logger.info(' >>> query returned: $queryResult');
+
+    // update version field
+    if (queryResult.affectedRowCount! > 0) {
+      if (versionField != null) {
+        var v = convertValue(queryResult[0][0], versionField, db.dbType);
+        modelInspector.setFieldValue(model, versionField.name, v);
+      }
+      return;
+    }
+
     if (versionField != null && queryResult.affectedRowCount != 1) {
       throw 'update failed, expected 1 row affected, but ${queryResult.affectedRowCount} rows affected actually!';
     }

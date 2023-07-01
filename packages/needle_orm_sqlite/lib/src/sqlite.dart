@@ -60,28 +60,37 @@ class SqliteDatabase extends Database {
       sql += ' RETURNING ${returningFields.join(',')}';
     }
 
-    logger.config('query: $sql ; params: $params2');
+    // logger.config('query: $sql ; params: $params2');
     try {
       final stmt = _connection.prepare(sql);
       var start = sql.trim().toLowerCase();
       if (start.startsWith("select ")) {
         sqlite.ResultSet resultSet = stmt.select(params2);
-        return SqliteQueryResult(resultSet);
+        return SqliteQueryResult(rs: resultSet);
       } else if (start.startsWith('insert ')) {
         stmt.execute(params2);
         // return last insert id
         sqlite.ResultSet resultSet = _connection
             .select("select last_insert_rowid() from $tableName LIMIT 1;");
-        return SqliteQueryResult(resultSet);
+        return SqliteQueryResult(rs: resultSet);
+      } else if (start.startsWith('update ') && returningFields.isNotEmpty) {
+        sqlite.ResultSet rs1 = stmt.select(params2);
+        sqlite.ResultSet rs2 = _connection.select("select changes();");
+        return SqliteQueryResult(
+            rs: rs1, affectedRowCount: rs2.first[0] as int);
+      } else if (start.startsWith('update ') || start.startsWith('delete ')) {
+        //
+        stmt.execute(params2);
+        sqlite.ResultSet resultSet = _connection.select("select changes();");
+        return SqliteQueryResult(affectedRowCount: resultSet.first[0] as int);
       } else {
         stmt.execute(params2);
       }
-      logger.config('query return');
     } catch (e, s) {
-      logger.severe('query error', e, s);
+      // logger.severe('query error', e, s);
       rethrow;
     } finally {
-      logger.config('query end!');
+      // logger.config('query end!');
     }
     return SqliteQueryResult();
   }
@@ -117,27 +126,27 @@ class _PositionValue {
 }
 
 class SqliteQueryResult extends DbQueryResult with ListMixin<List> {
-  final sqlite.ResultSet? resultSet;
-  final List<_Row>? rows;
-
-  SqliteQueryResult([this.resultSet])
-      : rows = resultSet?.map((e) => _Row(e)).toList();
+  final sqlite.ResultSet? rs;
+  final List<_Row>? _rows;
 
   @override
-  int get length => resultSet?.length ?? 0;
+  final int affectedRowCount;
+
+  SqliteQueryResult({this.rs, this.affectedRowCount = 0})
+      : _rows = rs?.map((e) => _Row(e)).toList();
+
+  @override
+  int get length => rs?.length ?? 0;
   @override
   set length(int value) {}
 
   @override
-  List operator [](int index) {
-    return rows![index];
+  List<Object?> operator [](int index) {
+    return _rows![index];
   }
 
   @override
   void operator []=(int index, List value) {}
-
-  @override
-  int? get affectedRowCount => 0;
 
   @override
   List<DbColumnDescription> get columnDescriptions => [];

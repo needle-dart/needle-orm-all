@@ -39,7 +39,7 @@ class PostgreSqlPoolDatabase extends Database {
       sql = '$sql $returning';
     }
 
-    // logger.config('query: $sql ; params: $substitutionValues');
+    // logger.config('query2: $sql ; params: $substitutionValues');
 
     // expand List first
     var param = <String, dynamic>{};
@@ -64,10 +64,10 @@ class PostgreSqlPoolDatabase extends Database {
     });
 
     // logger.config('final query: $sql ; params: $param');
-
-    return PgQueryResult(await _pool.run<PostgreSQLResult>((pgContext) async {
-      return await pgContext.query(sql, substitutionValues: param);
-    }));
+    PostgreSQLResult rs = await _pool.run<PostgreSQLResult>((pgContext) {
+      return pgContext.query(sql, substitutionValues: param);
+    });
+    return PgQueryResult(rs);
   }
 
   /// Run query in a transaction.

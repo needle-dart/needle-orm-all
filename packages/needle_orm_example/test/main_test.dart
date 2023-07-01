@@ -286,20 +286,31 @@ Future<void> testVersion() async {
     ..age = 23;
 
   await user.save(); // insert
+  await user.save(); // nothing happened
 
   var user2 = User()
     ..id = user.id
     ..version = user.version
-    ..name = 'changed';
+    ..name = 'update1';
 
   await user2.save(); // updated
 
+  var user3 = User()
+    ..id = user.id
+    ..version = user2.version
+    ..name = 'update2';
+
+  await user3.save(); // updated
+
   try {
     user.name = 'change again';
+    user.version = user2.version;
     await user.save(); // optimistic lock failure expected!
   } catch (e, st) {
-    log.severe('user update failed as expected', e, st);
+    log.info('user update failed as expected', e, st);
   }
+
+  log.info('== testVersion end');
 }
 
 Future<void> testSoftDelete() async {

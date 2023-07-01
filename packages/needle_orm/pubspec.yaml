@@ -11,6 +11,7 @@ dependencies:
   inflection3: ^0.5.3+2
   recase: ^4.0.0
   logging: ^1.0.2
+  intl: ^0.18.1
 
 dev_dependencies:
   lints: ^2.0.0

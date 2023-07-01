@@ -4,7 +4,8 @@ import 'dart:collection';
 import 'package:logging/logging.dart';
 
 import 'api.dart';
-import 'generator.dart';
+import 'sql_adapter.dart';
+import 'sql_generator.dart';
 import 'meta.dart';
 import 'inspector.dart';
 import 'sql.dart';
@@ -226,15 +227,8 @@ class TopTableQueryHelper<T> {
 
     String sql = 'select distinct $strAllFields $joins';
 
-    if (maxRows > 0) {
-      sql += ' limit $maxRows';
-    }
-
-    if (offset > 0) {
-      sql += ' offset $offset';
-    }
-
-    return PreparedQuery.forSelect(sql, joinTranslator, conditions);
+    return PreparedQuery.forSelect(sql, joinTranslator, conditions,
+        offset: offset, maxRows: maxRows);
   }
 
   PreparedQuery toCountPreparedQuery(DbType dbType,
@@ -286,8 +280,16 @@ class PreparedQuery {
   PreparedQuery(this.sql, this.conditions);
 
   factory PreparedQuery.forSelect(String sqlPrefix,
-      JoinTranslator joinTranslator, List<QueryCondition> conditions) {
+      JoinTranslator joinTranslator, List<QueryCondition> conditions,
+      {int offset = 0, int maxRows = 0}) {
     if (conditions.isEmpty) {
+      if (maxRows > 0) {
+        sqlPrefix += ' limit $maxRows';
+      }
+
+      if (offset > 0) {
+        sqlPrefix += ' offset $offset';
+      }
       return PreparedQuery(sqlPrefix, PreparedConditions());
     }
     var where = <String>[];
@@ -303,6 +305,15 @@ class PreparedQuery {
       where.add(cond.toSql(joinTranslator, preparedConditions));
     }
     sqlPrefix += '\n where ${where.join(' AND ')}';
+
+    if (maxRows > 0) {
+      sqlPrefix += ' limit $maxRows';
+    }
+
+    if (offset > 0) {
+      sqlPrefix += ' offset $offset';
+    }
+
     return PreparedQuery(sqlPrefix, preparedConditions);
   }
 
@@ -431,7 +442,8 @@ class TopTableQuery<T extends Model> extends TableQuery<T> {
           modelInspector.setFieldValue(model!, name, obj);
         }
       } else {
-        modelInspector.setFieldValue(model!, name, value);
+        modelInspector.setFieldValue(
+            model!, name, convertValue(value, f, _db!.dbType));
       }
     }
     modelInspector.markLoaded(model!);
